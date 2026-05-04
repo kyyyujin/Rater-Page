@@ -307,9 +307,10 @@
 
   /* OUTPUT SECTION */
   .output-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-  .output-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); background: var(--surface2); gap: 8px; flex-wrap: wrap; }
+  .output-header { display: flex; flex-direction: column; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border); background: var(--surface2); gap: 10px; }
   .output-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
-  .output-actions { display: flex; align-items: center; gap: 8px; }
+  .output-actions { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: nowrap; width: 100%; }
+  .btn-export { display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
   .copy-feedback { font-size: 12px; color: var(--accent); opacity: 0; transition: opacity 0.3s; }
   .copy-feedback.show { opacity: 1; }
   .btn-export { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
@@ -730,6 +731,109 @@
   .best-card-row-sub { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; flex-shrink: 0; }
   .best-card-row-score { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800; min-width: 36px; text-align: right; flex-shrink: 0; }
   .best-card-row-rank { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 800; min-width: 28px; text-align: right; flex-shrink: 0; }
+
+  /* ── FOOTER ── */
+  .site-footer {
+    margin-top: 48px;
+    border-top: 1px solid var(--border);
+    padding: 28px 20px 20px;
+  }
+  .footer-inner {
+    max-width: 680px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    align-items: center;
+  }
+  .footer-credits {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .footer-credit-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted);
+  }
+  .footer-logos {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .footer-logo-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+  }
+  .footer-logo-item:hover { opacity: 1; }
+  .footer-logo-img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    border-radius: 6px;
+  }
+  .footer-logo-mb {
+    width: 80px;
+    height: 28px;
+    border-radius: 0;
+  }
+  .footer-logo-svg {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+  }
+  .footer-logo-name {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+  .footer-sig {
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+  }
+  .footer-sig-name {
+    color: rgba(200,240,96,0.35);
+    font-style: italic;
+  }
+
+  /* ── WELCOME MODAL ── */
+  .welcome-modal-box {
+    background: var(--surface);
+    border: 1px solid rgba(96,212,240,0.3);
+    border-radius: 16px;
+    padding: 32px 28px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(96,212,240,0.1);
+    animation: fadeInUp 0.35s ease;
+  }
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+  .welcome-modal-icon { font-size: 2.4rem; margin-bottom: 14px; }
+  .welcome-modal-title { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; color: var(--text); margin-bottom: 14px; }
+  .welcome-modal-title span { color: var(--accent2); }
+  .welcome-modal-desc { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 22px; }
+  .welcome-modal-desc strong { color: var(--text); }
+  .welcome-modal-desc em { color: rgba(200,240,96,0.7); font-style: normal; }
+  .welcome-modal-btn {
+    padding: 10px 28px; border-radius: 8px;
+    border: none; background: var(--accent2);
+    color: #0d0d0f; font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 13px; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .welcome-modal-btn:hover { background: #80e4ff; }
 </style>
 </head>
 <body>
@@ -917,7 +1021,7 @@
   <div class="actions">
     <button class="btn btn-add" onclick="addRow()">＋ Añadir</button>
     <button class="btn btn-primary" onclick="generate()">⚡ Generar</button>
-    <button class="btn" onclick="saveToHistory()" style="color:var(--accent2);border-color:rgba(96,212,240,0.3)">📚 Guardar</button>
+    <button class="btn btn-save-db" id="btn-save-db" onclick="saveToDatabase()" disabled title="Genera primero el resultado para guardar" style="color:var(--accent2);border-color:rgba(96,212,240,0.3);opacity:0.4;cursor:not-allowed;">💾 Guardar</button>
     <button class="btn" onclick="copyResult()">📋 Copiar</button>
     <button class="btn btn-toggle" id="rescore-btn" onclick="toggleRescore()">
       <span class="toggle-dot"></span> Re-score
@@ -944,6 +1048,43 @@
       </div>
     </div>
     <div id="output-text"></div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-credits">
+      <span class="footer-credit-label">Data Credit:</span>
+      <div class="footer-logos">
+        <div class="footer-logo-item">
+          <img src="https://www.last.fm/static/images/lastfm_avatar_twitter.png" alt="Last.fm" class="footer-logo-img" onerror="this.style.display='none'" />
+          <span class="footer-logo-name">Last.fm</span>
+        </div>
+        <div class="footer-logo-item">
+          <img src="https://cdn.discordapp.com/attachments/899414766882283600/1500688994370064475/100_sin_titulo_20260503203540.png?ex=69f95909&is=69f80789&hm=62137fe30e9fdf369e98583c98544846ac63880d13ba0bcd785c42832ad7d3de&" alt="MusicBrainz" class="footer-logo-img" onerror="this.style.display='none'" />
+          <span class="footer-logo-name">MusicBrainz</span>
+        </div>
+        <div class="footer-logo-item">
+          <img src="https://cdn.discordapp.com/attachments/899414766882283600/1500689004826464298/100_sin_titulo_20260503203945.png?ex=69f9590c&is=69f8078c&hm=7bc38a83f5e7d883edcbd8a1cf0839df8db9590da00c70692f4cfa49589ce2ef&" alt="iTunes" class="footer-logo-img" onerror="this.style.display='none'" />
+          <span class="footer-logo-name">iTunes</span>
+        </div>
+      </div>
+    </div>
+    <div class="footer-sig">a <span class="footer-sig-name">Kyujin's</span> Page</div>
+  </div>
+</footer>
+
+<!-- WELCOME MODAL: new Guardar feature -->
+<div id="welcome-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:2000;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
+  <div class="welcome-modal-box">
+    <div class="welcome-modal-icon">💾</div>
+    <h2 class="welcome-modal-title">Nueva función: <span>Guardar</span></h2>
+    <p class="welcome-modal-desc">
+      El botón <strong>💾 Guardar</strong> ahora guarda el álbum rateado directamente en la base de datos en la nube, igual que el botón de Discord.<br><br>
+      <em>Solo se puede usar después de generar el resultado.</em>
+    </p>
+    <button class="welcome-modal-btn" onclick="closeWelcomeModal()">Entendido ✓</button>
   </div>
 </div>
 
@@ -1349,6 +1490,15 @@
     outputEl.appendChild(card);
     outputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     showToast('✓ Resultado generado');
+
+    // Enable the Guardar button now that result is generated
+    const btnSaveDb = document.getElementById('btn-save-db');
+    if (btnSaveDb) {
+      btnSaveDb.disabled = false;
+      btnSaveDb.style.opacity = '1';
+      btnSaveDb.style.cursor = 'pointer';
+      btnSaveDb.title = 'Guardar en la base de datos';
+    }
   }
 
   /* ── COPY (plain text) ── */
@@ -1520,6 +1670,9 @@
     updatePageBg(null);
     document.getElementById('rescore-total-val').textContent = '+0.00';
     updateAverage(); saveData(); addRow();
+    // Disable Guardar button again
+    const btnSaveDb = document.getElementById('btn-save-db');
+    if (btnSaveDb) { btnSaveDb.disabled = true; btnSaveDb.style.opacity = '0.4'; btnSaveDb.style.cursor = 'not-allowed'; btnSaveDb.title = 'Genera primero el resultado para guardar'; }
   }
 
   /* ── STORAGE ── */
@@ -2833,6 +2986,140 @@
 
   /* ── DISCORD SETTINGS ── */
   const BOT_SERVER = 'https://album-rater-bot-production.up.railway.app';
+
+  /* ── WELCOME MODAL (first visit) ── */
+  function closeWelcomeModal() {
+    const m = document.getElementById('welcome-modal');
+    m.style.display = 'none';
+    localStorage.setItem('albumRater_saveFeatureSeen', '1');
+  }
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!localStorage.getItem('albumRater_saveFeatureSeen')) {
+      const m = document.getElementById('welcome-modal');
+      m.style.display = 'flex';
+    }
+  });
+  // Close modal clicking outside
+  document.getElementById('welcome-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeWelcomeModal();
+  });
+
+  /* ── SAVE TO DATABASE (new Guardar behavior) ── */
+  async function saveToDatabase() {
+    const card = document.querySelector('.out-card');
+    if (!card) { showToast('⚠ Genera primero el resultado'); return; }
+
+    const btn = document.getElementById('btn-save-db');
+    const origText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Guardando…';
+
+    try {
+      // Build image canvas (same as Discord)
+      const savedWidth = card.style.width;
+      const savedMaxWidth = card.style.maxWidth;
+      card.style.width    = '640px';
+      card.style.maxWidth = '640px';
+      card.getBoundingClientRect();
+
+      const score11Els = card.querySelectorAll('.score-11 .out-track-num, .score-11 .out-track-name, .score-11 .out-track-score');
+      const savedStyles = [];
+      score11Els.forEach(el => {
+        savedStyles.push({ el, style: el.getAttribute('style') || '' });
+        el.style.cssText = 'color:#60d4f0; -webkit-text-fill-color:#60d4f0; background:none; -webkit-background-clip:unset; background-clip:unset; filter:none; font-weight:700; text-shadow: 0 0 8px #60d4f0, 0 0 20px #b060f0;';
+      });
+
+      const cardCanvas = await html2canvas(card, {
+        backgroundColor: null, scale: 2, useCORS: true, allowTaint: true,
+        logging: false, ignoreElements: el => el.classList.contains('out-card-bg')
+      });
+
+      savedStyles.forEach(({ el, style }) => el.setAttribute('style', style));
+      card.style.width    = savedWidth;
+      card.style.maxWidth = savedMaxWidth;
+
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width  = cardCanvas.width;
+      finalCanvas.height = cardCanvas.height;
+      const ctx = finalCanvas.getContext('2d');
+      ctx.fillStyle = '#15151a';
+      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+
+      if (currentAlbum?.coverUrl) {
+        await new Promise(resolve => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            ctx.save();
+            const size = Math.max(finalCanvas.width, finalCanvas.height) * 1.2;
+            const x = (finalCanvas.width  - size) / 2;
+            const y = (finalCanvas.height - size) / 2;
+            ctx.filter = 'blur(40px) saturate(1.4)';
+            ctx.globalAlpha = 0.22;
+            ctx.drawImage(img, x, y, size, size);
+            ctx.restore();
+            resolve();
+          };
+          img.onerror = resolve;
+          img.src = currentAlbum.coverUrl;
+        });
+      }
+      ctx.globalAlpha = 1;
+      ctx.drawImage(cardCanvas, 0, 0);
+
+      const blob = await new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
+
+      const albumTitle  = (currentAlbum?.title  || 'Álbum').toUpperCase();
+      const albumArtist = (currentAlbum?.artist || '').toUpperCase();
+      const title = albumArtist ? `- ${albumTitle} [${albumArtist}]` : `- ${albumTitle}`;
+
+      const threadId = localStorage.getItem('discord_thread_id') || '';
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('album_title', currentAlbum?.title || '');
+      formData.append('file', blob, 'rating.png');
+      formData.append('thread_id', threadId);
+
+      const userId = localStorage.getItem('discord_user_id') || '';
+      if (userId) formData.append('user_id', userId);
+      formData.append('artist',    currentAlbum?.artist   || '');
+      formData.append('year',      currentAlbum?.year     || '');
+      formData.append('genre',     currentAlbum?.genre    || '');
+      formData.append('cover_url', currentAlbum?.coverUrl || '');
+      formData.append('final_score', document.querySelector('.out-final-avg')?.textContent || '');
+      formData.append('final_rank',  document.querySelector('.out-final-rank')?.textContent || '');
+
+      const trackInputRows = document.querySelectorAll('#rows-body .row');
+      const tracks = [];
+      trackInputRows.forEach(row => {
+        const nameEl  = row.querySelector('input[type="text"]');
+        const scoreEl = row.querySelector('input[type="number"]');
+        const name  = nameEl  ? nameEl.value.trim()  : '';
+        const score = scoreEl ? scoreEl.value.trim() : '';
+        if (name) tracks.push({ name, score });
+      });
+      formData.append('tracks', JSON.stringify(tracks));
+      formData.append('db_only', '1'); // flag: skip Discord post, DB only
+
+      const res = await fetch(`${BOT_SERVER}/post`, { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (res.ok) {
+        showToast('✅ Guardado en la base de datos');
+        btn.innerHTML = '✓ Guardado';
+        setTimeout(() => { btn.innerHTML = origText; btn.disabled = false; }, 3000);
+      } else {
+        showToast('⚠ Error al guardar');
+        btn.innerHTML = origText;
+        btn.disabled = false;
+      }
+    } catch(e) {
+      console.error(e);
+      showToast('⚠ Error al conectar con el servidor');
+      btn.innerHTML = origText;
+      btn.disabled = false;
+    }
+  }
 
   function openDiscordSettings() {
     document.getElementById('discord-thread-input').value = localStorage.getItem('discord_thread_id') || '';
