@@ -844,6 +844,7 @@
     <h1>Califica<br><span>tus álbumes</span></h1>
     <p class="subtitle">Ponle nota a cada track — el promedio se calcula solo</p>
   <button onclick="openDiscordSettings()" style="margin-top:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(88,101,242,0.4);background:rgba(88,101,242,0.08);color:#7289da;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">⚙ Configurar Discord</button>
+  <button onclick="openDedupModal()" style="margin-top:8px;padding:6px 14px;border-radius:6px;border:1px solid rgba(220,60,60,0.35);background:rgba(220,60,60,0.07);color:#e05555;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">🗑 Borrar duplicados</button>
   </header>
 
   <!-- DISCORD SETTINGS MODAL -->
@@ -865,6 +866,23 @@
         <button onclick="saveDiscordSettings()" style="padding:8px 16px;border-radius:6px;border:none;background:rgba(88,101,242,0.8);color:#fff;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;font-weight:700;">Guardar</button>
       </div>
       <p id="discord-settings-status" style="font-size:11px;color:#5865f2;margin-top:12px;text-align:center;min-height:16px;"></p>
+    </div>
+  </div>
+
+  <!-- DEDUP MODAL -->
+  <div id="dedup-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(6px);">
+    <div style="background:#1e1e26;border:1px solid rgba(96,212,240,0.25);border-radius:14px;padding:28px;width:94%;max-width:520px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,0.7);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:#fff;">🗑 Borrar duplicados</span>
+        <button onclick="closeDedupModal()" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer;line-height:1;">✕</button>
+      </div>
+      <p style="font-size:12px;color:#888;margin-bottom:18px;line-height:1.5;">Álbumes con el mismo título y artista guardados más de una vez. Seleccioná los que querés eliminar.</p>
+      <div id="dedup-list" style="overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:10px;margin-bottom:18px;"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #2a2a3a;padding-top:16px;">
+        <button onclick="closeDedupModal()" style="padding:8px 16px;border-radius:6px;border:1px solid #333;background:transparent;color:#888;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;">Cancelar</button>
+        <button id="dedup-delete-btn" onclick="deleteSelectedDups()" style="padding:8px 20px;border-radius:6px;border:none;background:rgba(220,60,60,0.85);color:#fff;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;font-weight:700;opacity:0.4;pointer-events:none;">🗑 Eliminar seleccionados</button>
+      </div>
+      <p id="dedup-status" style="font-size:11px;color:var(--accent2);margin-top:10px;text-align:center;min-height:16px;"></p>
     </div>
   </div>
 
@@ -3119,6 +3137,143 @@
       btn.disabled = false;
     }
   }
+
+  /* ── DEDUP MODAL ── */
+  let dedupSelected = new Set();
+
+  async function openDedupModal() {
+    const userId = localStorage.getItem('discord_user_id') || '';
+    if (!userId) { alert('Primero configurá tu nombre de usuario en ⚙ Configurar Discord.'); return; }
+
+    const modal = document.getElementById('dedup-modal');
+    const list  = document.getElementById('dedup-list');
+    const status = document.getElementById('dedup-status');
+    dedupSelected.clear();
+    list.innerHTML = '<p style="color:#888;font-size:12px;text-align:center;padding:20px 0;">Buscando duplicados…</p>';
+    status.textContent = '';
+    updateDedupBtn();
+    modal.style.display = 'flex';
+
+    try {
+      const res  = await fetch(`${BOT_SERVER}/history?user_id=${encodeURIComponent(userId)}`);
+      const data = await res.json();
+
+      // Group by normalized title+artist
+      const groups = {};
+      data.forEach(r => {
+        const key = (r.album_title || '').toLowerCase().trim() + '||' + (r.artist || '').toLowerCase().trim();
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(r);
+      });
+
+      const dups = Object.values(groups).filter(g => g.length > 1);
+
+      if (!dups.length) {
+        list.innerHTML = '<p style="color:#888;font-size:12px;text-align:center;padding:20px 0;">✅ No se encontraron duplicados.</p>';
+        return;
+      }
+
+      list.innerHTML = '';
+      dups.forEach(group => {
+        const header = document.createElement('div');
+        header.style.cssText = 'font-size:11px;color:#aaa;font-family:"DM Mono",monospace;letter-spacing:1px;margin-bottom:4px;';
+        header.textContent = (group[0].album_title || '—').toUpperCase() + (group[0].artist ? ' — ' + group[0].artist : '');
+        list.appendChild(header);
+
+        group.forEach((r, i) => {
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;border:1px solid #2a2a3a;background:#15151a;cursor:pointer;transition:border-color .15s;';
+
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.style.cssText = 'width:15px;height:15px;accent-color:#e05555;flex-shrink:0;cursor:pointer;';
+          // Auto-check all but the first (oldest kept, duplicates selected)
+          if (i > 0) { cb.checked = true; dedupSelected.add(r.id); }
+
+          cb.addEventListener('change', () => {
+            if (cb.checked) dedupSelected.add(r.id);
+            else dedupSelected.delete(r.id);
+            updateDedupBtn();
+          });
+
+          const img = document.createElement('img');
+          img.src = r.cover_url || '';
+          img.style.cssText = 'width:36px;height:36px;object-fit:cover;border-radius:4px;flex-shrink:0;background:#2a2a3a;';
+          img.onerror = () => { img.style.display = 'none'; };
+
+          const info = document.createElement('div');
+          info.style.cssText = 'flex:1;min-width:0;';
+          const date = r.created_at ? new Date(r.created_at).toLocaleString('es') : '—';
+          info.innerHTML = `<div style="font-size:12px;color:#ddd;font-family:'DM Mono',monospace;">${r.final_rank || '—'} · ${r.final_score || '—'}</div>
+                            <div style="font-size:10px;color:#666;margin-top:2px;">${date}</div>`;
+
+          const badge = i === 0
+            ? '<span style="font-size:9px;color:#3ab870;border:1px solid rgba(58,184,112,0.4);padding:1px 6px;border-radius:4px;flex-shrink:0;">conservar</span>'
+            : '';
+
+          row.appendChild(cb);
+          row.appendChild(img);
+          row.appendChild(info);
+          if (badge) { const b = document.createElement('div'); b.innerHTML = badge; row.appendChild(b.firstChild); }
+
+          row.addEventListener('click', e => { if (e.target !== cb) cb.click(); });
+          list.appendChild(row);
+        });
+
+        const sep = document.createElement('div');
+        sep.style.cssText = 'height:1px;background:#2a2a3a;margin:4px 0 8px;';
+        list.appendChild(sep);
+      });
+
+      updateDedupBtn();
+    } catch(e) {
+      list.innerHTML = '<p style="color:#e05555;font-size:12px;text-align:center;padding:20px 0;">Error al cargar los datos.</p>';
+    }
+  }
+
+  function updateDedupBtn() {
+    const btn = document.getElementById('dedup-delete-btn');
+    const has = dedupSelected.size > 0;
+    btn.style.opacity = has ? '1' : '0.4';
+    btn.style.pointerEvents = has ? 'auto' : 'none';
+    btn.textContent = has ? `🗑 Eliminar ${dedupSelected.size} seleccionado${dedupSelected.size !== 1 ? 's' : ''}` : '🗑 Eliminar seleccionados';
+  }
+
+  async function deleteSelectedDups() {
+    if (!dedupSelected.size) return;
+    const userId = localStorage.getItem('discord_user_id') || '';
+    const btn    = document.getElementById('dedup-delete-btn');
+    const status = document.getElementById('dedup-status');
+    btn.style.pointerEvents = 'none';
+    btn.textContent = '⏳ Eliminando…';
+    status.textContent = '';
+
+    let ok = 0, fail = 0;
+    for (const id of dedupSelected) {
+      try {
+        const res = await fetch(`${BOT_SERVER}/delete`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, user_id: userId })
+        });
+        if (res.ok) ok++; else fail++;
+      } catch { fail++; }
+    }
+
+    if (ok)   status.textContent = `✅ ${ok} eliminado${ok !== 1 ? 's' : ''} correctamente.`;
+    if (fail) status.textContent += ` ⚠ ${fail} error${fail !== 1 ? 'es' : ''}.`;
+
+    // Refresh list
+    await openDedupModal();
+    status.textContent = ok ? `✅ ${ok} eliminado${ok !== 1 ? 's' : ''} correctamente.` : '⚠ Error al eliminar.';
+  }
+
+  function closeDedupModal() {
+    document.getElementById('dedup-modal').style.display = 'none';
+  }
+  document.getElementById('dedup-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('dedup-modal')) closeDedupModal();
+  });
 
   function openDiscordSettings() {
     document.getElementById('discord-thread-input').value = localStorage.getItem('discord_thread_id') || '';
