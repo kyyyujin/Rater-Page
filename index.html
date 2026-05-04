@@ -2183,16 +2183,24 @@
       rows.forEach(row => {
         if (existingIds.has(row.id)) return; // already synced
         const rank = getRank(parseFloat(row.final_score));
+        // Clean the album title in case old entries have Discord format
+        let cleanTitle = row.album_title || '';
+        if (cleanTitle.startsWith('- ')) {
+          cleanTitle = cleanTitle.replace(/^- /, '').replace(/\s*\[.*\]$/, '').trim();
+          // Restore proper case from artist field if needed
+        }
+
         const entry = {
           id:         row.created_at ? new Date(row.created_at).getTime() : Date.now(),
           supabase_id: row.id,
           album: {
-            title:    row.album_title,
-            artist:   row.artist   || '',
+            title:    cleanTitle,
+            artist:   row.artist    || '',
             coverUrl: row.cover_url || '',
-            genre:    ''
+            year:     row.year      || '',
+            genre:    row.genre     || ''
           },
-          rows:     Array.isArray(row.tracks) ? row.tracks.map(t => ({ name: t.name, score: t.score, rscore: '' })) : [],
+          rows:     Array.isArray(row.tracks) ? row.tracks.map(t => ({ name: t.name, score: String(t.score || ''), rscore: '' })) : [],
           cover:    '',
           comment:  row.notes || '',
           avg:      row.final_score ? parseFloat(row.final_score).toFixed(2) : null,
@@ -2945,7 +2953,8 @@
       const title = albumArtist ? `- ${albumTitle} [${albumArtist}]` : `- ${albumTitle}`;
 
       const formData = new FormData();
-      formData.append('title', title);
+      formData.append('title', title);           // Discord format: - BLONDE [FRANK OCEAN]
+      formData.append('album_title', currentAlbum?.title || '');  // Clean title for Supabase
       formData.append('file', blob, 'rating.png');
 
       formData.append('thread_id', threadId);
@@ -2953,17 +2962,21 @@
       // Add user identity and rating data for Supabase
       const userId = localStorage.getItem('discord_user_id') || '';
       if (userId) formData.append('user_id', userId);
-      formData.append('artist', currentAlbum?.artist || '');
+      formData.append('artist',    currentAlbum?.artist   || '');
+      formData.append('year',      currentAlbum?.year     || '');
+      formData.append('genre',     currentAlbum?.genre    || '');
       formData.append('cover_url', currentAlbum?.coverUrl || '');
       formData.append('final_score', document.querySelector('.out-final-avg')?.textContent || '');
-      formData.append('final_rank', document.querySelector('.out-final-rank')?.textContent || '');
+      formData.append('final_rank',  document.querySelector('.out-final-rank')?.textContent || '');
 
-      // Collect track scores
-      const trackRows = document.querySelectorAll('.out-track-row');
+      // Collect track scores from the input rows (not the output display)
+      const trackInputRows = document.querySelectorAll('#rows-body .row');
       const tracks = [];
-      trackRows.forEach(row => {
-        const name  = row.querySelector('.out-track-name')?.textContent || '';
-        const score = row.querySelector('.out-track-score')?.textContent || '';
+      trackInputRows.forEach(row => {
+        const nameEl  = row.querySelector('input[type="text"]');
+        const scoreEl = row.querySelector('input[type="number"]');
+        const name  = nameEl  ? nameEl.value.trim()  : '';
+        const score = scoreEl ? scoreEl.value.trim() : '';
         if (name) tracks.push({ name, score });
       });
       formData.append('tracks', JSON.stringify(tracks));
