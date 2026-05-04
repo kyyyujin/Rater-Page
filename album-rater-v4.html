@@ -1,0 +1,3074 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Album Rater</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0d0f; --surface: #15151a; --surface2: #1e1e26;
+    --border: #2a2a38; --accent: #c8f060; --accent2: #60d4f0;
+    --text: #f0ede8; --muted: #6b6b80; --danger: #f06070; --radius: 12px;
+  }
+  body {
+    font-family: 'DM Mono', monospace; background: var(--bg); color: var(--text);
+    min-height: 100vh; padding: 40px 20px;
+    background-image:
+      radial-gradient(ellipse at 10% 0%, rgba(200,240,96,0.07) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 100%, rgba(96,212,240,0.06) 0%, transparent 50%);
+    position: relative; overflow-x: hidden;
+  }
+
+  /* Album ambient background */
+  #page-bg {
+    position: fixed; inset: 0; z-index: -1;
+    background-size: cover; background-position: center;
+    filter: blur(80px) saturate(1.6) brightness(0.35);
+    opacity: 0;
+    transition: opacity 1.2s ease;
+    transform: scale(1.15);
+    pointer-events: none;
+  }
+  #page-bg.loaded { opacity: 1; }
+  .container { max-width: 680px; margin: 0 auto; }
+  header { margin-bottom: 40px; }
+  .badge {
+    display: inline-block; font-size: 11px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--accent);
+    border: 1px solid rgba(200,240,96,0.3); padding: 4px 10px;
+    border-radius: 4px; margin-bottom: 16px;
+  }
+  h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(2rem,6vw,3.2rem); line-height: 1.05; letter-spacing: -0.02em; }
+  h1 span { color: var(--accent); }
+  .subtitle { margin-top: 10px; color: var(--muted); font-size: 13px; }
+
+  /* SEARCH */
+  .search-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 24px; }
+  .search-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 10px; display: block; }
+  .search-row { display: flex; gap: 8px; }
+  .search-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; padding: 10px 36px 10px 14px; outline: none; transition: border-color 0.2s; }
+  .search-input:focus { border-color: rgba(200,240,96,0.4); }
+  .search-input::placeholder { color: var(--muted); }
+  .search-clear { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 16px; padding: 4px; display: none; flex-shrink: 0; }
+  .search-clear.show { display: block; }
+  .btn-search { padding: 10px 18px; border-radius: 8px; border: 1px solid var(--accent); background: rgba(200,240,96,0.1); color: var(--accent); font-family: 'DM Mono', monospace; font-size: 13px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .btn-search:hover { background: rgba(200,240,96,0.2); }
+  .btn-search:disabled { opacity: 0.5; cursor: not-allowed; }
+  .search-inputs { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .search-input-wrap { display: flex; align-items: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; transition: border-color 0.2s; }
+  .search-input-wrap:focus-within { border-color: rgba(200,240,96,0.4); }
+  .search-input-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); padding: 0 8px 0 12px; white-space: nowrap; flex-shrink: 0; border-right: 1px solid var(--border); line-height: 1; }
+  .search-input { flex: 1; background: transparent; border: none; border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; padding: 10px 10px 10px 12px; outline: none; }
+  .search-input::placeholder { color: var(--muted); }
+  .search-results { margin-top: 10px; display: none; flex-direction: column; gap: 4px; max-height: 340px; overflow-y: auto; }
+  .search-results.open { display: flex; }
+  .search-status { margin-top: 8px; font-size: 12px; color: var(--muted); display: none; }
+  .search-status.show { display: block; }
+
+  /* Result item */
+  .result-item { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); cursor: pointer; transition: all 0.15s; }
+  .result-item:hover { border-color: rgba(200,240,96,0.35); background: rgba(200,240,96,0.05); }
+  .result-title { font-size: 13px; color: var(--text); }
+  .result-meta  { font-size: 11px; color: var(--muted); }
+
+  /* Cover source badge */
+  .cover-src-badge {
+    display: inline-block; font-size: 9px; text-transform: uppercase;
+    letter-spacing: 0.08em; padding: 1px 5px; border-radius: 3px;
+    margin-left: 5px; vertical-align: middle;
+    font-family: 'DM Mono', monospace;
+  }
+  .cover-src-badge.lastfm  { background: rgba(212,0,0,0.15); color: #e05050; border: 1px solid rgba(212,0,0,0.2); }
+  .cover-src-badge.itunes  { background: rgba(96,212,240,0.1); color: var(--accent2); border: 1px solid rgba(96,212,240,0.2); }
+
+  /* Edition group */
+  .edition-group { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .edition-group-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; cursor: pointer; background: var(--surface2);
+    transition: background 0.15s; user-select: none;
+  }
+  .edition-group-header:hover { background: rgba(200,240,96,0.05); }
+  .edition-group-title { font-size: 13px; color: var(--text); flex: 1; }
+  .edition-group-meta  { font-size: 11px; color: var(--muted); }
+  .edition-chevron { font-size: 9px; color: var(--muted); transition: transform 0.2s; }
+  .edition-chevron.open { transform: rotate(180deg); }
+  .edition-list { display: none; border-top: 1px solid var(--border); }
+  .edition-list.open { display: block; }
+  .edition-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px 8px 20px; border-bottom: 1px solid rgba(255,255,255,0.04);
+    cursor: pointer; transition: background 0.15s; font-size: 12px;
+  }
+  .edition-item:last-child { border-bottom: none; }
+  .edition-item:hover { background: rgba(200,240,96,0.04); }
+  .edition-item-label { color: var(--muted); flex: 1; }
+  .edition-item-tracks { color: var(--muted); font-size: 11px; }
+
+  /* Preview modal */
+  .preview-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .preview-overlay.show { opacity: 1; pointer-events: all; }
+  .preview-modal {
+    background: rgba(21,21,26,0.55); border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(28px) saturate(1.6);
+    -webkit-backdrop-filter: blur(28px) saturate(1.6);
+    border-radius: 16px; width: 100%; max-width: 420px;
+    max-height: 85vh; overflow-y: auto; position: relative;
+    transform: translateY(16px); transition: transform 0.25s;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .preview-overlay.show .preview-modal { transform: translateY(0); }
+  .preview-header {
+    display: flex; gap: 16px; padding: 20px; align-items: flex-end;
+    border-bottom: 1px solid rgba(255,255,255,0.07); position: relative;
+  }
+  .preview-cover {
+    width: 100px; height: 100px; border-radius: 10px; object-fit: cover;
+    border: 1px solid var(--border); flex-shrink: 0;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+  .preview-cover-ph {
+    width: 100px; height: 100px; border-radius: 10px;
+    background: var(--surface2); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; flex-shrink: 0;
+  }
+  .preview-meta { flex: 1; }
+  .preview-title  { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 800; color: var(--text); line-height: 1.1; word-break: break-word; }
+  .preview-artist { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .preview-tags   { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .preview-tag    { font-size: 10px; padding: 2px 7px; border-radius: 3px; border: 1px solid var(--border); color: var(--muted); }
+  .preview-close  { position: absolute; top: 12px; right: 12px; width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .preview-close:hover { color: var(--text); border-color: var(--muted); }
+  .preview-tracks { padding: 12px 20px; }
+  .preview-tracks-header { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .preview-track-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; }
+  .preview-track-item:last-child { border-bottom: none; }
+  .preview-track-num  { font-size: 11px; color: var(--muted); min-width: 20px; text-align: right; }
+  .preview-track-name { flex: 1; color: var(--text); }
+  .preview-track-dur  { font-size: 11px; color: var(--muted); }
+  .preview-footer { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.07); display: flex; gap: 10px; }
+  .preview-load-btn { flex: 1; padding: 12px; border-radius: 8px; border: none; background: var(--accent); color: #0d0d0f; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 14px; cursor: pointer; transition: background 0.2s; }
+  .preview-load-btn:hover { background: #d8ff70; }
+  .preview-loading { padding: 30px; text-align: center; color: var(--muted); font-size: 13px; }
+
+  /* ALBUM ART BANNER */
+  .album-art-wrap { display: none; align-items: center; gap: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin-bottom: 24px; animation: slideIn 0.3s ease; }
+  .album-art-wrap.show { display: flex; }
+
+  /* Editable cover image */
+  .album-cover-btn {
+    position: relative; width: 80px; height: 80px; flex-shrink: 0; cursor: pointer;
+  }
+  .album-art-img {
+    width: 80px; height: 80px; border-radius: 8px; object-fit: cover;
+    border: 1px solid var(--border); background: var(--surface2);
+    display: block;
+  }
+  .album-cover-placeholder {
+    width: 80px; height: 80px; border-radius: 8px;
+    border: 1px dashed var(--border); background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; color: var(--muted);
+  }
+  .album-cover-overlay {
+    position: absolute; inset: 0; border-radius: 8px;
+    background: rgba(0,0,0,0.55);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s;
+    font-size: 18px;
+  }
+  .album-cover-btn:hover .album-cover-overlay { opacity: 1; }
+  #cover-file-input { display: none; }
+
+  /* Editable text fields */
+  .album-art-info { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+  .album-edit-input {
+    background: transparent; border: none; outline: none;
+    font-family: inherit; color: var(--text);
+    padding: 2px 6px; border-radius: 4px;
+    transition: background 0.2s;
+    width: 100%;
+  }
+  .album-edit-input:hover { background: rgba(255,255,255,0.05); }
+  .album-edit-input:focus { background: rgba(200,240,96,0.08); }
+  .album-edit-input.title  { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; }
+  .album-edit-input.artist { font-size: 12px; color: var(--muted); }
+  .album-edit-input.year   { font-size: 11px; color: #ffffff; }
+
+  /* SCORE HERO */
+  .score-hero { display: flex; align-items: center; gap: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; margin-bottom: 28px; position: relative; overflow: hidden; }
+  .score-hero::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(200,240,96,0.04) 0%, transparent 60%); pointer-events: none; }
+  .score-big { font-family: 'Syne', sans-serif; font-size: 2.4rem; font-weight: 800; color: var(--accent); line-height: 1; letter-spacing: -0.03em; transition: all 0.3s ease; min-width: 80px; }
+  .score-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+  .score-bar-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+  .score-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; width: 100%; }
+  .score-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 3px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); width: 0%; min-width: 0; }
+  .score-count { font-size: 12px; color: var(--muted); }
+  .rank-badge { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; line-height: 1; letter-spacing: -0.02em; transition: color 0.4s ease, text-shadow 0.4s ease; min-width: 80px; text-align: center; }
+  .rank-ss   { color: #ffffff; text-shadow: 0 0 18px rgba(255,255,255,0.6); }
+  .rank-s    { color: #f5c842; text-shadow: 0 0 14px rgba(245,200,66,0.5); }
+  .rank-a    { color: #7cdb6e; text-shadow: 0 0 12px rgba(124,219,110,0.4); }
+  .rank-b    { color: #f0923a; text-shadow: 0 0 12px rgba(240,146,58,0.4); }
+  .rank-c    { color: #f06070; text-shadow: 0 0 12px rgba(240,96,112,0.4); }
+  .rank-none { color: var(--muted); text-shadow: none; }
+
+  /* TABLE */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 20px; }
+  .table-header { display: grid; grid-template-columns: 36px 1fr 70px 28px 28px; padding: 12px 16px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  .table-header span { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+  #rows-body { display: flex; flex-direction: column; }
+  .row { display: grid; grid-template-columns: 36px 1fr 70px 28px 28px; align-items: center; border-bottom: 1px solid var(--border); padding: 10px 16px; transition: background 0.2s; animation: slideIn 0.2s ease; }
+  @keyframes slideIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+  .row:last-child { border-bottom: none; }
+  .row:hover { background: rgba(255,255,255,0.02); }
+  .row-num { font-size: 12px; color: var(--muted); }
+  input[type="text"], input[type="number"] { background: transparent; border: none; outline: none; color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; width: 100%; padding: 4px 8px; border-radius: 6px; transition: background 0.2s; }
+  input[type="text"]:focus, input[type="number"]:focus { background: rgba(200,240,96,0.07); }
+  input[type="number"] { text-align: center; -moz-appearance: textfield; }
+  input[type="number"]::-webkit-outer-spin-button, input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .score-input-wrap { display: flex; align-items: center; gap: 3px; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; transition: border-color 0.2s; width: 72px; justify-content: center; }
+  .score-input-wrap:focus-within { border-color: rgba(200,240,96,0.4); }
+  .btn-step { display: none; }
+  .score-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); flex-shrink: 0; transition: background 0.3s; }
+  .score-dot.high { background: var(--accent); }
+  .score-dot.mid  { background: #f0c060; }
+  .score-dot.low  { background: var(--danger); }
+  .btn-delete { width: 30px; height: 30px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s; margin: auto; }
+  .btn-delete:hover { border-color: var(--danger); color: var(--danger); background: rgba(240,96,112,0.1); }
+  .cover-row { display: grid; grid-template-columns: 40px 1fr 150px 48px; align-items: center; padding: 10px 16px; border-top: 1px solid var(--border); background: rgba(200,240,96,0.03); }
+  .cover-label { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+
+  /* Re-score column in table */
+  .row.rescore-mode { grid-template-columns: 36px 1fr 70px 80px 28px 28px; }
+  .table-header.rescore-mode { grid-template-columns: 36px 1fr 70px 80px 28px 28px; }
+  .cover-row.rescore-mode { grid-template-columns: 36px 1fr 70px 80px 28px 28px; }
+  .cover-row { display: grid; grid-template-columns: 36px 1fr 70px 28px 28px; align-items: center; padding: 10px 16px; border-top: 1px solid var(--border); background: rgba(200,240,96,0.03); }
+  .rescore-col {
+    display: none;
+  }
+  .rescore-mode .rescore-col { display: flex; }
+  .rescore-input-wrap {
+    display: flex; align-items: center;
+    background: rgba(96,212,240,0.07);
+    border: 1px solid rgba(96,212,240,0.2);
+    border-radius: 6px; padding: 2px 6px;
+    gap: 3px;
+  }
+  .rescore-prefix { font-size: 12px; color: var(--accent2); flex-shrink: 0; }
+  .rescore-input {
+    background: transparent; border: none; outline: none;
+    color: var(--accent2); font-family: 'DM Mono', monospace;
+    font-size: 13px; width: 48px; text-align: center;
+    -moz-appearance: textfield;
+  }
+  .rescore-input::-webkit-outer-spin-button,
+  .rescore-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+  /* Re-score total block */
+  .rescore-total-wrap {
+    display: none;
+    background: rgba(96,212,240,0.07);
+    border: 1px solid rgba(96,212,240,0.2);
+    border-radius: var(--radius); padding: 14px 18px;
+    margin-bottom: 20px;
+    align-items: center; gap: 10px;
+  }
+  .rescore-total-wrap.show { display: flex; }
+  .rescore-total-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent2); }
+  .rescore-total-val { font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 800; color: var(--accent2); margin-left: auto; }
+
+  /* Out rescore delta in result */
+  .out-track-delta { font-size: 12px; color: var(--accent2); min-width: 46px; text-align: right; flex-shrink: 0; }
+  .out-rescore-total {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 10px; padding: 10px 14px;
+    background: rgba(96,212,240,0.08);
+    border: 1px solid rgba(96,212,240,0.25);
+    border-radius: 8px;
+  }
+  .out-rescore-total-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent2); }
+  .out-rescore-total-val { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 800; color: var(--accent2); }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 28px; }
+  .btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; cursor: pointer; transition: all 0.2s; }
+  .btn:hover { background: var(--surface2); border-color: var(--muted); transform: translateY(-1px); }
+  .btn-primary { background: var(--accent); color: #0d0d0f; border-color: var(--accent); font-weight: 500; }
+  .btn-primary:hover { background: #d8ff70; border-color: #d8ff70; color: #0d0d0f; }
+  .btn-add { background: rgba(200,240,96,0.08); border-color: rgba(200,240,96,0.25); color: var(--accent); }
+  .btn-add:hover { background: rgba(200,240,96,0.14); }
+
+  /* OUTPUT SECTION */
+  .output-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .output-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); background: var(--surface2); gap: 8px; flex-wrap: wrap; }
+  .output-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+  .output-actions { display: flex; align-items: center; gap: 8px; }
+  .copy-feedback { font-size: 12px; color: var(--accent); opacity: 0; transition: opacity 0.3s; }
+  .copy-feedback.show { opacity: 1; }
+  .btn-export { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .btn-export:hover { border-color: var(--accent2); color: var(--accent2); background: rgba(96,212,240,0.08); }
+
+  #output-text { padding: 0; }
+  #output-text:empty { padding: 18px; }
+  #output-text:empty::before { content: 'Haz clic en "Generar" para ver el resultado...'; color: var(--muted); font-style: italic; font-size: 14px; }
+
+  /* ── BEAUTIFUL OUTPUT CARD ── */
+  .out-card { padding: 20px; }
+
+  /* Album header */
+  .out-album-header {
+    display: flex; align-items: flex-end; gap: 18px;
+    margin-bottom: 20px;
+  }
+  .out-album-cover {
+    width: 160px; height: 160px; border-radius: 12px;
+    object-fit: cover; border: 1px solid rgba(255,255,255,0.1);
+    flex-shrink: 0; box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  }
+  .out-album-cover-placeholder {
+    width: 160px; height: 160px; border-radius: 12px;
+    background: var(--surface2); border: 1px solid var(--border);
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 48px;
+  }
+  .out-album-meta { display: flex; flex-direction: column; gap: 4px; padding-bottom: 4px; }
+  .out-album-name { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--text); line-height: 1.1; word-break: break-word; overflow-wrap: break-word; white-space: normal; }
+  .out-album-artist { font-size: 13px; color: var(--muted); }
+  .out-album-year   { font-size: 11px; color: #ffffff; margin-top: 2px; }
+
+  /* Gradient separator */
+  .out-separator {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent) 30%, var(--accent2) 70%, transparent);
+    margin: 0 0 16px;
+    opacity: 0.4;
+  }
+
+  /* Track list */
+  .out-track {
+    display: flex; align-items: center; gap: 10px;
+    padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+    border-radius: 4px;
+    transition: text-shadow 0.3s;
+  }
+  .out-track:last-child { border-bottom: none; }
+  .out-track-num { font-size: 11px; color: var(--muted); min-width: 22px; text-align: right; flex-shrink: 0; }
+  .out-track-bar-wrap { width: 36px; flex-shrink: 0; }
+  .out-track-bar-bg { height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: visible; }
+  .out-track-bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+  .out-track-name { flex: 1; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .out-track-score { font-size: 13px; color: var(--muted); min-width: 32px; text-align: right; flex-shrink: 0; }
+  .out-track.best .out-track-name { color: var(--accent); font-weight: 600; }
+  .out-track.best .out-track-score { color: var(--accent); }
+  /* Score-11 row: full row gets gradient text + double glow */
+  .out-track.score-11 .out-track-num,
+  .out-track.score-11 .out-track-name,
+  .out-track.score-11 .out-track-score {
+    background: linear-gradient(90deg, #60d4f0, #b060f0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 6px #60d4f0) drop-shadow(0 0 12px #b060f0);
+    font-weight: 700;
+  }
+
+  /* Comment box */
+  .comment-section {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px 20px; margin-bottom: 20px;
+  }
+  .comment-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 10px; display: block; }
+  .comment-input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace;
+    font-size: 13px; padding: 10px 14px; outline: none; resize: vertical;
+    min-height: 72px; transition: border-color 0.2s; line-height: 1.6;
+  }
+  .comment-input:focus { border-color: rgba(200,240,96,0.4); }
+  .comment-input::placeholder { color: var(--muted); }
+
+  /* Comment in output */
+  .out-comment {
+    font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.7;
+    padding: 12px 14px; margin-bottom: 16px;
+    border-left: 2px solid rgba(200,240,96,0.3);
+    font-style: italic;
+    white-space: pre-wrap;
+  }
+
+  /* Best track callout */
+  .out-best-track {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(200,240,96,0.07);
+    border: 1px solid rgba(200,240,96,0.2);
+    border-radius: 8px; padding: 10px 14px;
+    margin-top: 14px;
+  }
+  .out-best-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent); flex-shrink: 0; }
+  .out-best-name  { font-size: 13px; color: var(--text); flex: 1; }
+  .out-best-score { font-size: 13px; color: var(--accent); font-weight: 600; flex-shrink: 0; }
+
+  /* Cover art line */
+  .out-cover-line {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 10px; padding: 8px 14px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px; font-size: 13px; color: var(--muted);
+  }
+  .out-cover-score { margin-left: auto; font-size: 13px; color: var(--text); }
+
+  /* Final score block */
+  .out-final {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 16px; padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .out-final-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: rgba(255,255,255,0.4); }
+  .out-final-right { display: flex; align-items: center; gap: 16px; }
+  .out-final-avg { font-family: 'Syne', sans-serif; font-size: 2.6rem; font-weight: 800; color: var(--accent); line-height: 1; letter-spacing: -0.03em; }
+
+  /* RANK — big and glowing */
+  .out-final-rank {
+    font-family: 'Syne', sans-serif;
+    font-size: 2.8rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    padding: 6px 16px;
+    border-radius: 10px;
+    border: 1px solid currentColor;
+    background: rgba(0,0,0,0.3);
+    transition: all 0.4s ease;
+  }
+  .out-final-rank.rank-ss { color:#fff; border-color:rgba(255,255,255,0.5); text-shadow:0 0 30px #fff, 0 0 60px #fff; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+  .out-final-rank.rank-s  { color:#f5c842; border-color:rgba(245,200,66,0.5); text-shadow:0 0 24px #f5c842; box-shadow: 0 0 16px rgba(245,200,66,0.25); }
+  .out-final-rank.rank-a  { color:#7cdb6e; border-color:rgba(124,219,110,0.5); text-shadow:0 0 20px #7cdb6e; box-shadow: 0 0 14px rgba(124,219,110,0.2); }
+  .out-final-rank.rank-b  { color:#f0923a; border-color:rgba(240,146,58,0.5); text-shadow:0 0 18px #f0923a; box-shadow: 0 0 12px rgba(240,146,58,0.2); }
+  .out-final-rank.rank-c  { color:#f06070; border-color:rgba(240,96,112,0.5); text-shadow:0 0 16px #f06070; box-shadow: 0 0 10px rgba(240,96,112,0.2); }
+  .out-final-rank.rank-none { color:var(--muted); border-color:var(--border); text-shadow:none; box-shadow:none; }
+
+  /* Dynamic album bg */
+  .out-card {
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .out-card-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background-size: cover; background-position: center;
+    filter: blur(40px) saturate(1.4);
+    opacity: 0.18;
+    transform: scale(1.1);
+    pointer-events: none;
+  }
+  .out-card > *:not(.out-card-bg) { position: relative; z-index: 1; }
+
+  .output-line-best { font-weight: 700; color: var(--accent); }
+
+  /* Re-score badge */
+  .out-rescore-badge {
+    position: absolute; top: 14px; right: 14px; z-index: 10;
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #ffffff;
+    padding: 4px 9px; border-radius: 5px;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    width: fit-content;
+    white-space: nowrap;
+  }
+
+  /* Best-track pin switch */
+  .pin-btn {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--muted); cursor: pointer; font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0; padding: 0;
+    margin-left: 2px;
+  }
+  .pin-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .pin-btn.pinned { border-color: var(--accent); background: rgba(200,240,96,0.15); color: var(--accent); }
+
+  /* Penalty line */
+  .out-penalty {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 8px; padding: 7px 14px;
+    background: rgba(240,96,112,0.08);
+    border: 1px solid rgba(240,96,112,0.25);
+    border-radius: 8px; font-size: 12px; color: var(--danger);
+  }
+  .out-penalty-val { margin-left: auto; font-weight: 600; }
+
+  /* Re-score toggle button */
+  .btn-toggle {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 10px 20px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--muted); font-family: 'DM Mono', monospace;
+    font-size: 13px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn-toggle.active {
+    border-color: var(--accent); color: var(--accent);
+    background: rgba(200,240,96,0.08);
+  }
+  .btn-toggle .toggle-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted); transition: background 0.2s;
+  }
+  .btn-toggle.active .toggle-dot { background: var(--accent); }
+
+  /* Genre tag */
+  .album-edit-input.genre {
+    font-size: 11px; color: var(--accent2);
+    background: rgba(96,212,240,0.07);
+    border: 1px solid rgba(96,212,240,0.2);
+    border-radius: 4px; padding: 2px 8px; margin-top: 2px;
+    width: fit-content; max-width: 100%;
+  }
+  .album-edit-input.genre::placeholder { color: rgba(96,212,240,0.4); }
+
+  /* History panel */
+  .history-section {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 24px; overflow: hidden;
+  }
+  .history-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; cursor: pointer;
+    border-bottom: 1px solid transparent; transition: border-color 0.2s;
+    user-select: none;
+  }
+  .history-header:hover { background: rgba(255,255,255,0.02); }
+  .history-header.open { border-bottom-color: var(--border); }
+  .history-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+  .history-chevron { font-size: 10px; color: var(--muted); transition: transform 0.2s; }
+  .history-chevron.open { transform: rotate(180deg); }
+  .history-list { display: none; max-height: 320px; overflow-y: auto; }
+  .history-list.open { display: block; }
+  .history-empty { padding: 20px 18px; font-size: 13px; color: var(--muted); font-style: italic; }
+  .history-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 18px; border-bottom: 1px solid var(--border);
+    cursor: pointer; transition: background 0.15s;
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-item:hover { background: rgba(255,255,255,0.03); }
+  .history-item-cover {
+    width: 40px; height: 40px; border-radius: 6px; object-fit: cover;
+    border: 1px solid var(--border); flex-shrink: 0; background: var(--surface2);
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    overflow: hidden;
+  }
+  .history-item-cover img { width: 100%; height: 100%; object-fit: cover; }
+  .history-item-info { flex: 1; min-width: 0; }
+  .history-item-title  { font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .history-item-meta   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .history-item-rank   { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 800; flex-shrink: 0; }
+  .history-item-del {
+    width: 24px; height: 24px; border-radius: 4px; border: none;
+    background: transparent; color: var(--muted); cursor: pointer; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.15s; flex-shrink: 0;
+  }
+  .history-item-del:hover { color: var(--danger); }
+
+  /* Out genre tag in result */
+  .out-album-genre {
+    display: inline-block; font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--accent2);
+    border: 1px solid rgba(96,212,240,0.3); border-radius: 3px;
+    padding: 2px 7px; margin-top: 4px;
+  }
+  .toast { position: fixed; bottom: 28px; right: 28px; background: var(--accent); color: #0d0d0f; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; padding: 12px 20px; border-radius: 8px; transform: translateY(20px); opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); z-index: 999; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* DATA IMPORT / EXPORT */
+  .data-io-section {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 24px; overflow: hidden;
+  }
+  .data-io-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; cursor: pointer;
+    border-bottom: 1px solid transparent; transition: border-color 0.2s;
+    user-select: none;
+  }
+  .data-io-header:hover { background: rgba(255,255,255,0.02); }
+  .data-io-header.open { border-bottom-color: var(--border); }
+  .data-io-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+  .data-io-chevron { font-size: 10px; color: var(--muted); transition: transform 0.2s; }
+  .data-io-chevron.open { transform: rotate(180deg); }
+  .data-io-body { display: none; padding: 18px; }
+  .data-io-body.open { display: block; }
+  .data-io-desc { font-size: 12px; color: var(--muted); margin-bottom: 14px; line-height: 1.6; }
+  .data-io-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn-io {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 10px 18px; border-radius: 8px; font-family: 'DM Mono', monospace;
+    font-size: 13px; cursor: pointer; transition: all 0.2s; border: 1px solid;
+  }
+  .btn-io-export {
+    background: rgba(200,240,96,0.08); border-color: rgba(200,240,96,0.3);
+    color: var(--accent);
+  }
+  .btn-io-export:hover { background: rgba(200,240,96,0.16); }
+  .btn-io-import {
+    background: rgba(96,212,240,0.08); border-color: rgba(96,212,240,0.3);
+    color: var(--accent2);
+  }
+  .btn-io-import:hover { background: rgba(96,212,240,0.16); }
+  .btn-io-import-history {
+    background: rgba(200,160,240,0.08); border-color: rgba(200,160,240,0.3);
+    color: #c8a0f0;
+  }
+  .btn-io-import-history:hover { background: rgba(200,160,240,0.15); }
+  .btn-io-vault {
+    background: rgba(240,168,48,0.08); border-color: rgba(240,168,48,0.35);
+    color: #f0a830;
+  }
+  .btn-io-vault:hover { background: rgba(240,168,48,0.18); }
+  .vault-export-notice {
+    margin-top: 14px; padding: 10px 14px;
+    background: rgba(240,168,48,0.06); border: 1px solid rgba(240,168,48,0.2);
+    border-radius: 8px; font-size: 11px; color: var(--muted); line-height: 1.7;
+  }
+  .vault-export-notice strong { color: #f0a830; }
+    margin-top: 14px; padding: 10px 14px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 11px; color: var(--muted); line-height: 1.7;
+  }
+  .data-io-info strong { color: var(--text); }
+
+  .search-results::-webkit-scrollbar { width: 4px; }
+  .search-results::-webkit-scrollbar-track { background: transparent; }
+  .search-results::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* GLOBAL STATS PANEL */
+  .stats-section {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 24px; overflow: hidden;
+  }
+  .stats-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; cursor: pointer;
+    border-bottom: 1px solid transparent; transition: border-color 0.2s;
+    user-select: none;
+  }
+  .stats-header:hover { background: rgba(255,255,255,0.02); }
+  .stats-header.open { border-bottom-color: var(--border); }
+  .stats-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+  .stats-chevron { font-size: 10px; color: var(--muted); transition: transform 0.2s; }
+  .stats-chevron.open { transform: rotate(180deg); }
+  .stats-body { display: none; padding: 20px 18px; }
+  .stats-body.open { display: block; }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .stat-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .stat-card-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+  .stat-card-value { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--accent); line-height: 1.1; }
+  .stat-card-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .stat-card.accent2 .stat-card-value { color: var(--accent2); }
+  .stat-card.full { grid-column: 1 / -1; }
+  .stats-section-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 10px; margin-top: 4px; }
+  .rank-dist { display: flex; flex-direction: column; gap: 7px; }
+  .rank-dist-row { display: flex; align-items: center; gap: 10px; }
+  .rank-dist-label { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 800; min-width: 28px; }
+  .rank-dist-bar-bg { flex: 1; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .rank-dist-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); }
+  .rank-dist-count { font-size: 11px; color: var(--muted); min-width: 18px; text-align: right; }
+  .top-artists { display: flex; flex-direction: column; gap: 7px; }
+  .top-artist-row { display: flex; align-items: center; gap: 10px; }
+  .top-artist-num { font-size: 10px; color: var(--muted); min-width: 14px; }
+  .top-artist-name { flex: 1; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .top-artist-count { font-size: 11px; color: var(--muted); }
+  .top-artist-avg { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--accent); min-width: 36px; text-align: right; }
+  .score-dist-chart { display: flex; align-items: flex-end; gap: 3px; height: 48px; margin-top: 4px; }
+  .score-dist-bar { flex: 1; border-radius: 3px 3px 0 0; background: var(--border); transition: height 0.4s ease; min-height: 3px; position: relative; cursor: default; }
+  .score-dist-bar:hover::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 3px 7px; font-size: 10px; color: var(--text); white-space: nowrap; pointer-events: none; z-index: 10; }
+  .score-dist-labels { display: flex; justify-content: space-between; font-size: 9px; color: var(--muted); margin-top: 3px; }
+  .stats-empty { font-size: 13px; color: var(--muted); font-style: italic; padding: 8px 0 4px; }
+
+  /* Expandable best-of cards */
+  .best-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; grid-column: 1 / -1;
+    cursor: pointer; transition: border-color 0.2s;
+  }
+  .best-card:hover { border-color: rgba(200,240,96,0.3); }
+  .best-card-header { padding: 14px 16px; display: flex; align-items: center; gap: 10px; }
+  .best-card-info { flex: 1; }
+  .best-card-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 3px; }
+  .best-card-title { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 800; color: var(--accent); line-height: 1.1; }
+  .best-card-title.track { color: var(--accent2); }
+  .best-card-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .best-card-chevron { font-size: 10px; color: var(--muted); transition: transform 0.25s; flex-shrink: 0; }
+  .best-card-chevron.open { transform: rotate(180deg); }
+  .best-card-list { display: none; border-top: 1px solid var(--border); }
+  .best-card-list.open { display: block; }
+  .best-card-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 16px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px;
+    transition: background 0.15s;
+  }
+  .best-card-row:last-child { border-bottom: none; }
+  .best-card-row:hover { background: rgba(255,255,255,0.03); }
+  .best-card-pos { font-size: 11px; color: var(--muted); min-width: 22px; text-align: center; flex-shrink: 0; }
+  .best-card-row-name { flex: 1; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .best-card-row-sub { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px; flex-shrink: 0; }
+  .best-card-row-score { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800; min-width: 36px; text-align: right; flex-shrink: 0; }
+  .best-card-row-rank { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 800; min-width: 28px; text-align: right; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div id="page-bg"></div>
+<div class="container">
+  <header>
+    <div class="badge">🎵 Album Rater</div>
+    <h1>Califica<br><span>tus álbumes</span></h1>
+    <p class="subtitle">Ponle nota a cada track — el promedio se calcula solo</p>
+  <button onclick="openDiscordSettings()" style="margin-top:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(88,101,242,0.4);background:rgba(88,101,242,0.08);color:#7289da;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">⚙ Configurar Discord</button>
+  </header>
+
+  <!-- DISCORD SETTINGS MODAL -->
+  <div id="discord-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:#1e1e26;border:1px solid rgba(88,101,242,0.4);border-radius:14px;padding:28px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+        <span style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:#fff;">⚙ Configuración Discord</span>
+        <button onclick="closeDiscordSettings()" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer;line-height:1;">✕</button>
+      </div>
+      <p style="font-size:12px;color:#888;margin-bottom:16px;line-height:1.5;">Configurá tu Thread ID de Discord y tu nombre de usuario para guardar el historial en la nube.</p>
+      <label style="font-size:11px;color:#aaa;font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">THREAD ID</label>
+      <input id="discord-thread-input" type="text" placeholder="ej: 1315912659295666286"
+        style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid rgba(88,101,242,0.3);background:#15151a;color:#fff;font-family:'DM Mono',monospace;font-size:13px;outline:none;margin-bottom:12px;" />
+      <label style="font-size:11px;color:#aaa;font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">TU NOMBRE (para el historial)</label>
+      <input id="discord-user-input" type="text" placeholder="ej: nico"
+        style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid rgba(88,101,242,0.3);background:#15151a;color:#fff;font-family:'DM Mono',monospace;font-size:13px;outline:none;margin-bottom:16px;" />
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button onclick="closeDiscordSettings()" style="padding:8px 16px;border-radius:6px;border:1px solid #333;background:transparent;color:#888;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;">Cancelar</button>
+        <button onclick="saveDiscordSettings()" style="padding:8px 16px;border-radius:6px;border:none;background:rgba(88,101,242,0.8);color:#fff;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;font-weight:700;">Guardar</button>
+      </div>
+      <p id="discord-settings-status" style="font-size:11px;color:#5865f2;margin-top:12px;text-align:center;min-height:16px;"></p>
+    </div>
+  </div>
+
+  <!-- SEARCH -->
+  <div class="search-section">
+    <span class="search-label">🔍 Buscar tracklist de un álbum</span>
+    <div class="search-inputs">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="search-input-wrap" style="flex:1">
+          <span class="search-input-label">Álbum</span>
+          <input class="search-input" id="search-input" type="text"
+            placeholder="ej: Ice Cream"
+            oninput="onSearchInput()" onkeydown="if(event.key==='Enter') searchAlbum()" />
+        </div>
+        <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
+      </div>
+      <div class="search-input-wrap">
+        <span class="search-input-label">Artista</span>
+        <input class="search-input" id="search-artist" type="text"
+          placeholder="ej: Yuna  (opcional)"
+          onkeydown="if(event.key==='Enter') searchAlbum()" />
+      </div>
+    </div>
+    <div class="search-row">
+      <button class="btn-search" id="search-btn" onclick="searchAlbum()">Buscar</button>
+    </div>
+    <div class="search-status" id="search-status"></div>
+    <div class="search-results" id="search-results"></div>
+  </div>
+
+  <!-- PREVIEW MODAL -->
+  <div class="preview-overlay" id="preview-overlay" onclick="closePreview(event)">
+    <div class="preview-modal" id="preview-modal">
+      <div id="preview-content"><div class="preview-loading">Cargando…</div></div>
+    </div>
+  </div>
+
+  <!-- ALBUM ART BANNER -->
+  <div class="album-art-wrap" id="album-art-wrap">
+    <!-- Clickable cover image -->
+    <div class="album-cover-btn" onclick="document.getElementById('cover-file-input').click()" title="Cambiar portada">
+      <img class="album-art-img" id="album-art-img" src="" alt="portada" style="display:none" />
+      <div class="album-cover-placeholder" id="album-cover-placeholder">🎵</div>
+      <div class="album-cover-overlay">✏️</div>
+    </div>
+    <input type="file" id="cover-file-input" accept="image/*" onchange="handleCoverUpload(event)" />
+
+    <!-- Editable text fields -->
+    <div class="album-art-info">
+      <input class="album-edit-input title"  id="album-art-title"  placeholder="Nombre del álbum" oninput="syncAlbumMeta()" />
+      <input class="album-edit-input artist" id="album-art-artist" placeholder="Artista"           oninput="syncAlbumMeta()" />
+      <input class="album-edit-input year"   id="album-art-year"   placeholder="Año"               oninput="syncAlbumMeta()" />
+      <input class="album-edit-input genre"  id="album-art-genre"  placeholder="Género (ej: R&B, Pop, Rock…)" oninput="syncAlbumMeta()" />
+    </div>
+  </div>
+
+  <!-- DATA IMPORT / EXPORT -->
+  <div class="data-io-section" id="data-io-section">
+    <div class="data-io-header" id="data-io-header" onclick="toggleDataIO()">
+      <span class="data-io-title">💾 Importar / Exportar datos</span>
+      <span class="data-io-chevron" id="data-io-chevron">▼</span>
+    </div>
+    <div class="data-io-body" id="data-io-body">
+      <p class="data-io-desc">Guardá una copia de seguridad de todo tu historial y sesión actual en un archivo <strong>.json</strong>, o restaurá datos desde un archivo exportado anteriormente.</p>
+      <div class="data-io-btns">
+        <button class="btn-io btn-io-export" onclick="exportDataJSON()">⬇ Exportar todo</button>
+        <button class="btn-io btn-io-import" onclick="document.getElementById('import-json-input').click()">⬆ Importar datos</button>
+        <input type="file" id="import-json-input" accept=".json,application/json" style="display:none" onchange="importDataJSON(event)" />
+        <button class="btn-io btn-io-vault" onclick="exportToVault()">📤 Exportar al Vault</button>
+      </div>
+      <div class="vault-export-notice" id="vault-export-notice" style="display:none">
+        <strong>✓ Vault export generado.</strong><br>
+        Importa el archivo <code>.vault-import.json</code> en Album Vault usando el botón <strong>"🎵 From Rater"</strong>.
+        El álbum se añadirá automáticamente con su score, tracklist y portada.
+      </div>
+      <p class="data-io-desc" style="margin-top:14px"><strong style="color:var(--text)">¿Qué incluye el archivo?</strong><br>
+        · Historial completo de álbumes calificados<br>
+        · Sesión activa (tracks, notas, portada, comentario)<br>
+        · Al importar, el historial existente se <strong>fusiona</strong> (sin duplicados). La sesión activa se reemplaza.
+      </p>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="history-section" id="history-section">
+    <div class="history-header" id="history-header" onclick="toggleHistory()">
+      <span class="history-title">📚 Historial de álbumes</span>
+      <span class="history-chevron" id="history-chevron">▼</span>
+    </div>
+    <div class="history-list" id="history-list">
+      <div class="history-empty" id="history-empty">Todavía no hay álbumes guardados.</div>
+    </div>
+  </div>
+
+  <!-- GLOBAL STATS -->
+  <div class="stats-section" id="stats-section">
+    <div class="stats-header" id="stats-header" onclick="toggleStats()">
+      <span class="stats-title">📊 Estadísticas globales</span>
+      <span class="stats-chevron" id="stats-chevron">▼</span>
+    </div>
+    <div class="stats-body" id="stats-body">
+      <div id="stats-content"><p class="stats-empty">Todavía no hay álbumes guardados.</p></div>
+    </div>
+  </div>
+
+  <!-- SCORE HERO -->
+  <div class="score-hero">
+    <div style="display:flex;flex-direction:column;gap:6px;align-items:center;">
+      <div class="score-label">Promedio</div>
+      <div class="score-big" id="avg-display">—</div>
+      <div class="rank-badge rank-none" id="rank-display">—</div>
+    </div>
+    <div class="score-bar-wrap">
+      <div class="score-label">Progreso hacia 11</div>
+      <div class="score-bar-bg"><div class="score-bar-fill" id="avg-bar"></div></div>
+      <div class="score-count" id="count-label">0 tracks</div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <div class="table-header" id="table-header">
+      <span>#</span><span>Track</span>
+      <span style="text-align:center">Nota</span>
+      <span class="rescore-col" style="text-align:center;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--accent2)">Δ Score</span>
+      <span></span>
+    </div>
+    <div id="rows-body"></div>
+    <div class="cover-row">
+      <span style="font-size:18px">📀</span>
+      <span class="cover-label">Portada</span>
+      <div class="score-input-wrap">
+        <button class="btn-step" onclick="stepCover(-0.5)" tabindex="-1">−</button>
+        <div class="score-dot" id="dot-cover"></div>
+        <input type="number" min="0" max="11" step="0.1" placeholder="—" id="cover-score" oninput="updateCover()" onblur="clampCover()" />
+        <button class="btn-step" onclick="stepCover(0.5)" tabindex="-1">＋</button>
+      </div>
+      <span></span>
+    </div>
+  </div>
+
+  <!-- RESCORE TOTAL -->
+  <div class="rescore-total-wrap" id="rescore-total-wrap">
+    <span class="rescore-total-label">⚡ Re-score Total</span>
+    <span class="rescore-total-val" id="rescore-total-val">+0.00</span>
+  </div>
+
+  <!-- COMMENT -->
+  <div class="comment-section">
+    <span class="comment-label">✍️ Comentario</span>
+    <textarea class="comment-input" id="comment-input" placeholder="Escribí tus impresiones sobre el álbum…" oninput="saveData()"></textarea>
+  </div>
+
+  <div class="actions">
+    <button class="btn btn-add" onclick="addRow()">＋ Añadir</button>
+    <button class="btn btn-primary" onclick="generate()">⚡ Generar</button>
+    <button class="btn" onclick="saveToHistory()" style="color:var(--accent2);border-color:rgba(96,212,240,0.3)">📚 Guardar</button>
+    <button class="btn" onclick="copyResult()">📋 Copiar</button>
+    <button class="btn btn-toggle" id="rescore-btn" onclick="toggleRescore()">
+      <span class="toggle-dot"></span> Re-score
+    </button>
+    <button class="btn" onclick="clearAll()" style="color:var(--danger);border-color:rgba(240,96,112,0.3)">🗑 Limpiar</button>
+  </div>
+
+  <div class="output-section">
+    <div class="output-header">
+      <span class="output-title">Resultado</span>
+      <div class="output-actions">
+        <span class="copy-feedback" id="copy-feedback">✓ Copiado</span>
+        <button class="btn-export" onclick="copyResult()">📋 Copiar texto</button>
+        <button class="btn-export" id="discord-btn" onclick="sendToDiscord()" style="border-color:rgba(88,101,242,0.5);color:#7289da;background:rgba(88,101,242,0.08);"><span id="discord-btn-text">Discord</span></button>
+        <div style="position:relative;display:inline-flex;">
+          <button class="btn-export" onclick="toggleExportMenu()" id="export-menu-btn" style="border-color:rgba(96,212,240,0.3);color:var(--accent2)">🖼 Exportar ▾</button>
+          <div id="export-menu" style="display:none;position:absolute;top:100%;right:0;margin-top:4px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100;min-width:160px;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+            <button onclick="exportImage(1);toggleExportMenu()" style="width:100%;padding:10px 14px;background:transparent;border:none;color:var(--muted);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;text-align:left;transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">📱 Móvil (1x)</button>
+            <button onclick="exportImage(2);toggleExportMenu()" style="width:100%;padding:10px 14px;background:transparent;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;text-align:left;border-top:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🖥 Estándar (2x)</button>
+            <button onclick="exportImage(3);toggleExportMenu()" style="width:100%;padding:10px 14px;background:transparent;border:none;color:var(--accent2);font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;text-align:left;border-top:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">✨ Alta res (3x)</button>
+            <button onclick="exportImage(2, true);toggleExportMenu()" style="width:100%;padding:10px 14px;background:transparent;border:none;color:#c8a0f0;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;text-align:left;border-top:1px solid var(--border);transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.05)'" onmouseout="this.style.background='transparent'">🖥 Tamaño PC fijo</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="output-text"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  let rowCount     = 0;
+  let currentAlbum = null;
+  let rescoreActive = false;
+
+  function toggleRescore() {
+    rescoreActive = !rescoreActive;
+    const btn = document.getElementById('rescore-btn');
+    btn.classList.toggle('active', rescoreActive);
+
+    // Toggle rescore-mode on header and rows
+    document.getElementById('table-header').classList.toggle('rescore-mode', rescoreActive);
+    document.querySelectorAll('#rows-body .row').forEach(r => r.classList.toggle('rescore-mode', rescoreActive));
+
+    // Show/hide total block
+    document.getElementById('rescore-total-val').textContent = '+0.00';
+    document.getElementById('rescore-total-wrap').classList.toggle('show', rescoreActive);
+    updateRescoreTotal();
+  }
+
+  function updateRescoreTotal() {
+    let total = 0;
+    document.querySelectorAll('.rescore-input').forEach(inp => {
+      const v = parseFloat(inp.value);
+      if (!isNaN(v)) total += v;
+    });
+    const el = document.getElementById('rescore-total-val');
+    el.textContent = `+${total.toFixed(2)}`;
+  }
+
+  /* ── RANK ── */
+  function getRank(avg) {
+    if (avg === null) return { label: '—', cls: 'rank-none' };
+    if (avg >= 10)   return { label: 'SS',  cls: 'rank-ss' };
+    if (avg >= 9.80) return { label: 'S+',  cls: 'rank-s'  };
+    if (avg >= 9.40) return { label: 'S',   cls: 'rank-s'  };
+    if (avg >= 9.00) return { label: 'S-',  cls: 'rank-s'  };
+    if (avg >= 8.90) return { label: 'A+',  cls: 'rank-a'  };
+    if (avg >= 8.80) return { label: 'A',   cls: 'rank-a'  };
+    if (avg >= 8.70) return { label: 'A-',  cls: 'rank-a'  };
+    if (avg >= 8.50) return { label: 'B+',  cls: 'rank-b'  };
+    if (avg >= 8.00) return { label: 'B-',  cls: 'rank-b'  };
+    if (avg >= 7.50) return { label: 'C+',  cls: 'rank-c'  };
+    if (avg >= 7.00) return { label: 'C-',  cls: 'rank-c'  };
+    return { label: '—', cls: 'rank-none' };
+  }
+
+  function rankColor(cls) {
+    return { 'rank-ss': '#ffffff', 'rank-s': '#f5c842', 'rank-a': '#7cdb6e', 'rank-b': '#f0923a', 'rank-c': '#f06070', 'rank-none': '#6b6b80' }[cls] || '#6b6b80';
+  }
+
+  function trackBarColor(score) {
+    // Returns { color, glow, gradient }
+    if (score > 10)  return { color: null, gradient: 'linear-gradient(90deg,#60d4f0,#b060f0)', glow: '0 0 8px #60d4f0, 0 0 16px #b060f0' };
+    if (score >= 10) return { color: '#c8f060', glow: '0 0 8px #c8f060, 0 0 18px #c8f060' };
+    if (score >= 9.80) return { color: '#00e060', glow: null };
+    if (score >= 9.40) return { color: '#3dd670', glow: null };
+    if (score >= 9.00) return { color: '#8adc88', glow: null };
+    if (score >= 8.90) return { color: '#f0e040', glow: null };
+    if (score >= 8.80) return { color: '#f0d030', glow: null };
+    if (score >= 8.70) return { color: '#e8c840', glow: null };
+    if (score >= 8.50) return { color: '#f0b040', glow: null };
+    if (score >= 8.00) return { color: '#f09840', glow: null };
+    if (score >= 7.50) return { color: '#f07830', glow: null };
+    if (score >= 7.00) return { color: '#e05820', glow: null };
+    return { color: '#c03030', glow: null };
+  }
+
+  /* ── ROWS ── */
+  function addRow(name = '', score = '') {
+    rowCount++;
+    const body = document.getElementById('rows-body');
+    const row  = document.createElement('div');
+    row.className  = 'row';
+    row.dataset.id = rowCount;
+    const safeName = name.replace(/"/g, '&quot;');
+    row.innerHTML = `
+      <span class="row-num">${body.children.length + 1}</span>
+      <input type="text" placeholder="Nombre del track…" value="${safeName}" oninput="saveData()" />
+      <div class="score-input-wrap">
+        <button class="btn-step" onclick="stepScore(this,-0.5)" tabindex="-1">−</button>
+        <div class="score-dot" id="dot-${rowCount}"></div>
+        <input type="number" min="0" max="11" step="0.1" placeholder="—"
+          value="${score}" oninput="updateScore(this,${rowCount})" onblur="clampScore(this,${rowCount})" id="score-${rowCount}" />
+        <button class="btn-step" onclick="stepScore(this,0.5)" tabindex="-1">＋</button>
+      </div>
+      <div class="rescore-col">
+        <div class="rescore-input-wrap">
+          <span class="rescore-prefix">+</span>
+          <input type="number" class="rescore-input" min="0" max="5" step="0.25" placeholder="0"
+            id="rscore-${rowCount}" oninput="updateRescoreTotal()" />
+        </div>
+      </div>
+      <button class="btn-delete" onclick="deleteRow(this)" title="Eliminar">×</button>
+    `;
+    // Pin button: insert before delete
+    const pinBtn = document.createElement('button');
+    pinBtn.className = 'pin-btn';
+    pinBtn.title = 'Fijar como Best Track';
+    pinBtn.textContent = '★';
+    pinBtn.dataset.pinned = 'false';
+    pinBtn.onclick = function() {
+      const wasPinned = this.dataset.pinned === 'true';
+      // Always unpin all first
+      document.querySelectorAll('.pin-btn').forEach(b => { b.dataset.pinned = 'false'; b.classList.remove('pinned'); });
+      // If it wasn't pinned before, pin it now; if it was, leave it unpinned (toggle off)
+      if (!wasPinned) { this.dataset.pinned = 'true'; this.classList.add('pinned'); }
+    };
+    row.insertBefore(pinBtn, row.querySelector('.btn-delete'));
+    if (rescoreActive) row.classList.add('rescore-mode');
+    body.appendChild(row);
+    if (score !== '') updateScore(document.getElementById(`score-${rowCount}`), rowCount);
+    updateAverage(); renumber(); saveData();
+  }
+
+  function deleteRow(btn) { btn.closest('.row').remove(); updateAverage(); renumber(); saveData(); }
+
+  function renumber() {
+    document.querySelectorAll('#rows-body .row').forEach((r, i) => {
+      r.querySelector('.row-num').textContent = i + 1;
+    });
+  }
+
+  function updateScore(input, id) {
+    const dot = document.getElementById(`dot-${id}`);
+    const v   = parseFloat(input.value);
+    if (isNaN(v) || input.value === '') {
+      dot.className = 'score-dot';
+    } else {
+      dot.className = v >= 9.0 ? 'score-dot high' : v >= 7 ? 'score-dot mid' : 'score-dot low';
+    }
+    updateAverage(); saveData();
+  }
+
+  function clampScore(input, id) {
+    let v = parseFloat(input.value);
+    if (!isNaN(v)) {
+      v = Math.min(11, Math.max(0, Math.round(v * 10) / 10));
+      input.value = v;
+      updateScore(input, id);
+    }
+  }
+
+  function stepScore(btn, delta) {
+    const input = btn.closest('.score-input-wrap').querySelector('input[type="number"]');
+    const id    = input.id.replace('score-', '');
+    let v = parseFloat(input.value);
+    if (isNaN(v)) v = delta > 0 ? 0 : 11;
+    v = Math.round((v + delta) * 10) / 10;
+    v = Math.min(11, Math.max(0, v));
+    input.value = v;
+    updateScore(input, id);
+  }
+
+  function updateCover() {
+    const input = document.getElementById('cover-score');
+    const dot   = document.getElementById('dot-cover');
+    const v     = parseFloat(input.value);
+    if (isNaN(v) || input.value === '') {
+      dot.className = 'score-dot';
+    } else {
+      dot.className = v >= 9.0 ? 'score-dot high' : v >= 7 ? 'score-dot mid' : 'score-dot low';
+    }
+    saveData();
+  }
+
+  function clampCover() {
+    const input = document.getElementById('cover-score');
+    let v = parseFloat(input.value);
+    if (!isNaN(v)) {
+      v = Math.min(11, Math.max(0, Math.round(v * 10) / 10));
+      input.value = v;
+      updateCover();
+    }
+  }
+
+  function stepCover(delta) {
+    const input = document.getElementById('cover-score');
+    let v = parseFloat(input.value);
+    if (isNaN(v)) v = delta > 0 ? 0 : 11;
+    v = Math.round((v + delta) * 10) / 10;
+    v = Math.min(11, Math.max(0, v));
+    input.value = v;
+    updateCover();
+  }
+
+  function updateAverage() {
+    const inputs = document.querySelectorAll('#rows-body input[type="number"]');
+    let sum = 0, count = 0;
+    inputs.forEach(i => { const v = parseFloat(i.value); if (!isNaN(v)) { sum += v; count++; } });
+    const avgEl   = document.getElementById('avg-display');
+    const bar     = document.getElementById('avg-bar');
+    const countEl = document.getElementById('count-label');
+    const rankEl  = document.getElementById('rank-display');
+    if (count === 0) {
+      avgEl.textContent = '—'; bar.style.width = '0%';
+      countEl.textContent = '0 tracks'; rankEl.textContent = '—'; rankEl.className = 'rank-badge rank-none'; return;
+    }
+    const avg  = sum / count;
+    const rank = getRank(avg);
+    avgEl.textContent   = avg.toFixed(2);
+    bar.style.width     = `${Math.min(100, (avg / 11) * 100)}%`;
+    countEl.textContent = `${count} track${count !== 1 ? 's' : ''}`;
+    rankEl.textContent  = rank.label;
+    rankEl.className    = `rank-badge ${rank.cls}`;
+  }
+
+  /* ── GENERATE ── */
+  function generate() {
+    syncAlbumMeta(); // pick up any manual edits to title/artist/year
+    const rows = document.querySelectorAll('#rows-body .row');
+    if (!rows.length) { showToast('⚠ No hay datos'); return; }
+
+    let entries = [], sum = 0, count = 0;
+    rows.forEach((r, i) => {
+      const name  = r.querySelector('input[type="text"]').value.trim() || `Track ${i + 1}`;
+      const score = parseFloat(r.querySelector('input[type="number"]').value);
+      if (!isNaN(score)) { sum += score; count++; }
+      entries.push({ index: i + 1, name, score });
+    });
+
+    const coverVal  = parseFloat(document.getElementById('cover-score').value);
+    const maxScore  = count > 0 ? Math.max(...entries.filter(e => !isNaN(e.score)).map(e => e.score)) : null;
+
+    // Check for manually pinned best track
+    let pinnedIndex = -1;
+    document.querySelectorAll('.pin-btn').forEach((btn, i) => {
+      if (btn.dataset.pinned === 'true') pinnedIndex = i;
+    });
+    const bestEntry = pinnedIndex >= 0 ? entries[pinnedIndex] : entries.find(e => e.score === maxScore);
+    const rawAvg    = count > 0 ? sum / count : null;
+
+    // Penalty: -0.25 if fewer than 5 scored tracks
+    const penaltyApplied = count > 0 && count < 5;
+    const penalty        = penaltyApplied ? 0.25 : 0;
+    const finalAvg       = rawAvg !== null ? Math.max(0, rawAvg - penalty) : null;
+    const rank           = getRank(finalAvg);
+
+    const outputEl = document.getElementById('output-text');
+    outputEl.innerHTML = '';
+
+    const card = document.createElement('div');
+    card.className = 'out-card';
+
+    // ── Dynamic blurred background from album cover ──
+    if (currentAlbum?.coverUrl) {
+      const bg = document.createElement('div');
+      bg.className = 'out-card-bg';
+      bg.style.backgroundImage = `url(${currentAlbum.coverUrl})`;
+      card.appendChild(bg);
+    }
+
+    // ── Album header ──
+    if (currentAlbum) {
+      const hdr = document.createElement('div');
+      hdr.className = 'out-album-header';
+      if (currentAlbum.coverUrl) {
+        const img = document.createElement('img');
+        img.className = 'out-album-cover';
+        img.src = currentAlbum.coverUrl;
+        img.alt = currentAlbum.title;
+        hdr.appendChild(img);
+      } else {
+        const ph = document.createElement('div');
+        ph.className = 'out-album-cover-placeholder';
+        ph.textContent = '🎵';
+        hdr.appendChild(ph);
+      }
+      const meta = document.createElement('div');
+      meta.className = 'out-album-meta';
+      meta.innerHTML = `
+        <div class="out-album-name">${currentAlbum.title}</div>
+        <div class="out-album-artist">${currentAlbum.artist}</div>
+        ${currentAlbum.year ? `<div class="out-album-year">${currentAlbum.year}</div>` : ''}
+        ${currentAlbum.genre ? `<div class="out-album-genre">${currentAlbum.genre}</div>` : ''}
+      `;
+      hdr.appendChild(meta);
+      card.appendChild(hdr);
+    }
+
+    // ── Gradient separator ──
+    const sep1 = document.createElement('div');
+    sep1.className = 'out-separator';
+    card.appendChild(sep1);
+
+    // ── Track list with bars ──
+    let rescoreSum = 0;
+    entries.forEach(e => {
+      const is11   = !isNaN(e.score) && e.score >= 11;
+      const isBest = e.score === maxScore && maxScore !== null;
+      const row    = document.createElement('div');
+      row.className = 'out-track' + (isBest ? ' best' : '') + (is11 ? ' score-11' : '');
+
+      const scoreText  = isNaN(e.score) ? '—' : e.score.toFixed(1);
+      const barPct     = isNaN(e.score) ? 0 : Math.min(100, (e.score / 11) * 100);
+      const colorData  = isNaN(e.score) ? { color: '#2a2a38', glow: null } : trackBarColor(e.score);
+      const bgStyle    = colorData.gradient ? colorData.gradient : colorData.color;
+      const shadowStyle = colorData.glow ? `box-shadow:${colorData.glow};` : '';
+
+      // Re-score delta
+      let deltaHTML = '';
+      if (rescoreActive) {
+        const deltaInput = document.getElementById(`rscore-${e.index}`);
+        const deltaVal   = deltaInput ? parseFloat(deltaInput.value) : NaN;
+        if (!isNaN(deltaVal) && deltaVal > 0) {
+          rescoreSum += deltaVal;
+          deltaHTML = `<span class="out-track-delta">+${deltaVal.toFixed(2)}</span>`;
+        } else {
+          deltaHTML = `<span class="out-track-delta" style="opacity:0.3">—</span>`;
+        }
+      }
+
+      row.innerHTML = `
+        <span class="out-track-num">${e.index}</span>
+        <div class="out-track-bar-wrap">
+          <div class="out-track-bar-bg">
+            <div class="out-track-bar-fill" style="width:${barPct}%;background:${bgStyle};${shadowStyle}"></div>
+          </div>
+        </div>
+        <span class="out-track-name">${e.name}</span>
+        <span class="out-track-score">${scoreText}</span>
+        ${deltaHTML}
+      `;
+      card.appendChild(row);
+    });
+
+    // ── Cover art score ──
+    if (!isNaN(coverVal)) {
+      const cl = document.createElement('div');
+      cl.className = 'out-cover-line';
+      cl.innerHTML = `<span>📀 Portada</span><span class="out-cover-score">${coverVal.toFixed(1)}</span>`;
+      card.appendChild(cl);
+    }
+
+    // ── Best track callout ──
+    if (bestEntry && !isNaN(bestEntry.score)) {
+      const bt = document.createElement('div');
+      bt.className = 'out-best-track';
+      bt.innerHTML = `
+        <span class="out-best-label">★ Best Track</span>
+        <span class="out-best-name">${bestEntry.name}</span>
+        <span class="out-best-score">${bestEntry.score.toFixed(1)}</span>
+      `;
+      card.appendChild(bt);
+    }
+
+    // ── Re-score total in output ──
+    if (rescoreActive && rescoreSum > 0) {
+      const rt = document.createElement('div');
+      rt.className = 'out-rescore-total';
+      rt.innerHTML = `
+        <span class="out-rescore-total-label">⚡ Re-score Total</span>
+        <span class="out-rescore-total-val">+${rescoreSum.toFixed(2)}</span>
+      `;
+      card.appendChild(rt);
+    }
+
+    // ── Comment ──
+    const commentText = document.getElementById('comment-input').value.trim();
+    if (commentText) {
+      const cm = document.createElement('div');
+      cm.className = 'out-comment';
+      cm.textContent = commentText;
+      card.appendChild(cm);
+    }
+
+    // ── Penalty notice ──
+    if (penaltyApplied) {
+      const pen = document.createElement('div');
+      pen.className = 'out-penalty';
+      pen.innerHTML = `<span>−0.25 &lt;5 tracks Reduction</span><span class="out-penalty-val">−0.25</span>`;
+      card.appendChild(pen);
+    }
+
+    // ── Final score + rank ──
+    const finalDiv = document.createElement('div');
+    finalDiv.className = 'out-final';
+    finalDiv.innerHTML = `
+      <div>
+        <span class="out-final-label">Average</span>
+        ${penaltyApplied ? `<div style="font-size:11px;color:var(--muted);margin-top:3px">${rawAvg.toFixed(2)} − 0.25</div>` : ''}
+      </div>
+      <div class="out-final-right">
+        <span class="out-final-avg">${finalAvg !== null ? finalAvg.toFixed(2) : '—'}</span>
+        <span class="out-final-rank ${rank.cls}">${rank.label}</span>
+      </div>
+    `;
+    card.appendChild(finalDiv);
+
+    // ── Re-score badge (top-right, added last so it layers above all content) ──
+    if (rescoreActive) {
+      const badge = document.createElement('div');
+      badge.className = 'out-rescore-badge';
+      badge.textContent = 'Re-score';
+      card.appendChild(badge);
+    }
+
+    outputEl.appendChild(card);
+    outputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    showToast('✓ Resultado generado');
+  }
+
+  /* ── COPY (plain text) ── */
+  function copyResult() {
+    const card = document.querySelector('.out-card');
+    if (!card) { showToast('⚠ Genera primero'); return; }
+
+    const lines = [];
+    if (rescoreActive) lines.push('[Re-score]', '');
+    if (currentAlbum) lines.push(`${currentAlbum.title} — ${currentAlbum.artist}${currentAlbum.year ? ' (' + currentAlbum.year + ')' : ''}`, '');
+    document.querySelectorAll('.out-track').forEach(t => {
+      const num   = t.querySelector('.out-track-num').textContent;
+      const name  = t.querySelector('.out-track-name').textContent;
+      const score = t.querySelector('.out-track-score').textContent;
+      lines.push(`${num}. ${name}: ${score}`);
+    });
+    const coverLine = document.querySelector('.out-cover-line');
+    if (coverLine) lines.push(`📀 Portada: ${coverLine.querySelector('.out-cover-score').textContent}`);
+    const best = document.querySelector('.out-best-name');
+    if (best) lines.push('', `★ Best Track: ${best.textContent} — ${document.querySelector('.out-best-score').textContent}`);
+    const commentEl = document.querySelector('.out-comment');
+    if (commentEl) lines.push('', commentEl.textContent);
+    const penaltyEl = document.querySelector('.out-penalty');
+    if (penaltyEl) lines.push('', '−0.25 <5 tracks Reduction');
+    const avg  = document.querySelector('.out-final-avg')?.textContent;
+    const rank = document.querySelector('.out-final-rank')?.textContent;
+    if (avg) lines.push('', `Average: ${avg}  [${rank}]`);
+
+    const text = lines.join('\n');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(showCopySuccess).catch(() => fallbackCopy(text));
+    } else { fallbackCopy(text); }
+  }
+
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    const range = document.createRange(); range.selectNodeContents(ta);
+    const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+    ta.setSelectionRange(0, 999999);
+    try { document.execCommand('copy'); showCopySuccess(); }
+    catch (e) { showToast('⚠ No se pudo copiar'); }
+    document.body.removeChild(ta);
+  }
+
+  function showCopySuccess() {
+    const fb = document.getElementById('copy-feedback');
+    fb.classList.add('show'); setTimeout(() => fb.classList.remove('show'), 2000);
+    showToast('📋 Copiado al portapapeles');
+  }
+
+  function toggleExportMenu() {
+    const menu = document.getElementById('export-menu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    if (menu.style.display === 'block') {
+      const close = e => { if (!menu.contains(e.target) && e.target.id !== 'export-menu-btn') { menu.style.display = 'none'; document.removeEventListener('click', close); } };
+      setTimeout(() => document.addEventListener('click', close), 0);
+    }
+  }
+
+  /* ── EXPORT AS IMAGE ── */
+  async function exportImage(scale = 3, pcMode = false) {
+    const card = document.querySelector('.out-card');
+    if (!card) { showToast('⚠ Genera primero'); return; }
+    showToast('📸 Generando imagen…');
+
+    // PC mode: temporarily set card to fixed 680px width
+    let savedWidth = null;
+    let savedMaxWidth = null;
+    if (pcMode) {
+      savedWidth    = card.style.width;
+      savedMaxWidth = card.style.maxWidth;
+      card.style.width    = '640px';
+      card.style.maxWidth = '640px';
+      // Force reflow
+      card.getBoundingClientRect();
+    }
+    try {
+
+      // Temporarily convert score-11 gradient text to solid color for canvas rendering
+      const score11Els = card.querySelectorAll('.score-11 .out-track-num, .score-11 .out-track-name, .score-11 .out-track-score');
+      const savedStyles = [];
+      score11Els.forEach(el => {
+        savedStyles.push({ el, style: el.getAttribute('style') || '' });
+        el.style.cssText = 'color:#60d4f0; -webkit-text-fill-color:#60d4f0; background:none; -webkit-background-clip:unset; background-clip:unset; filter:none; font-weight:700; text-shadow: 0 0 8px #60d4f0, 0 0 20px #b060f0;';
+      });
+
+      const cardCanvas = await html2canvas(card, {
+        backgroundColor: null,
+        scale,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        ignoreElements: el => el.classList.contains('out-card-bg')
+      });
+
+      // Restore original styles
+      savedStyles.forEach(({ el, style }) => el.setAttribute('style', style));
+
+      // Final canvas with blurred bg
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width  = cardCanvas.width;
+      finalCanvas.height = cardCanvas.height;
+      const ctx = finalCanvas.getContext('2d');
+
+      ctx.fillStyle = '#15151a';
+      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+
+      if (currentAlbum?.coverUrl) {
+        await new Promise(resolve => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            ctx.save();
+            const size = Math.max(finalCanvas.width, finalCanvas.height) * 1.2;
+            const x = (finalCanvas.width  - size) / 2;
+            const y = (finalCanvas.height - size) / 2;
+            ctx.filter = 'blur(40px) saturate(1.4)';
+            ctx.globalAlpha = 0.38;
+            ctx.drawImage(img, x, y, size, size);
+            ctx.restore();
+            resolve();
+          };
+          img.onerror = resolve;
+          img.src = currentAlbum.coverUrl;
+        });
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.drawImage(cardCanvas, 0, 0);
+
+      // Restore PC mode styles
+      if (pcMode) {
+        card.style.width    = savedWidth;
+        card.style.maxWidth = savedMaxWidth;
+      }
+
+      const link = document.createElement('a');
+      const albumName = currentAlbum ? currentAlbum.title.replace(/[^a-z0-9]/gi, '_') : 'resultado';
+      link.download = `${albumName}_rating.png`;
+      link.href = finalCanvas.toDataURL('image/png');
+      link.click();
+      showToast('✓ Imagen guardada');
+    } catch(e) {
+      if (pcMode) { card.style.width = savedWidth; card.style.maxWidth = savedMaxWidth; }
+      console.error(e);
+      showToast('⚠ Error al exportar');
+    }
+  }
+
+  /* ── CLEAR ── */
+  function clearAll() {
+    if (!confirm('¿Limpiar todo?')) return;
+    document.getElementById('rows-body').innerHTML = '';
+    document.getElementById('output-text').innerHTML = '';
+    document.getElementById('cover-score').value = '';
+    document.getElementById('dot-cover').className = 'score-dot';
+    document.getElementById('comment-input').value = '';
+    document.getElementById('album-art-title').value  = '';
+    document.getElementById('album-art-artist').value = '';
+    document.getElementById('album-art-year').value   = '';
+    document.getElementById('album-art-genre').value  = '';
+    const img = document.getElementById('album-art-img');
+    img.src = ''; img.style.display = 'none';
+    document.getElementById('album-cover-placeholder').style.display = 'flex';
+    currentAlbum = null; rowCount = 0;
+    updatePageBg(null);
+    document.getElementById('rescore-total-val').textContent = '+0.00';
+    updateAverage(); saveData(); addRow();
+  }
+
+  /* ── STORAGE ── */
+  function saveData() {
+    const rows = [];
+    document.querySelectorAll('#rows-body .row').forEach(r => {
+      const ri = r.querySelector('.rescore-input');
+      rows.push({
+        name:   r.querySelector('input[type="text"]').value,
+        score:  r.querySelector('input[type="number"]').value,
+        rscore: ri ? ri.value : ''
+      });
+    });
+    const cover   = document.getElementById('cover-score').value;
+    const comment = document.getElementById('comment-input').value;
+    const album   = currentAlbum ? {
+      title:    document.getElementById('album-art-title').value,
+      artist:   document.getElementById('album-art-artist').value,
+      year:     document.getElementById('album-art-year').value,
+      genre:    document.getElementById('album-art-genre').value,
+      coverUrl: currentAlbum.coverUrl || null
+    } : null;
+    try { localStorage.setItem('albumRater', JSON.stringify({ rows, cover, comment, album })); } catch(e) {}
+  }
+
+  function loadData() {
+    try {
+      const raw = localStorage.getItem('albumRater');
+      if (raw) {
+        const saved = JSON.parse(raw);
+        const rows    = Array.isArray(saved) ? saved : (saved.rows || []);
+        const cover   = Array.isArray(saved) ? '' : (saved.cover || '');
+        const comment = Array.isArray(saved) ? '' : (saved.comment || '');
+        const album   = Array.isArray(saved) ? null : (saved.album || null);
+        if (rows.length) {
+          rows.forEach(r => addRow(r.name, r.score));
+          // Restore rescore deltas after rows are added
+          document.querySelectorAll('#rows-body .row').forEach((rowEl, i) => {
+            const ri = rowEl.querySelector('.rescore-input');
+            if (ri && rows[i]?.rscore) { ri.value = rows[i].rscore; }
+          });
+          updateRescoreTotal();
+          if (cover)   { document.getElementById('cover-score').value   = cover;   updateCover(); }
+          if (comment) { document.getElementById('comment-input').value = comment; }
+          if (album) {
+            currentAlbum = album;
+            showAlbumBanner(album); // also calls updatePageBg
+          } else {
+            document.getElementById('album-art-wrap').classList.add('show');
+          }
+          return;
+        }
+      }
+    } catch(e) {}
+    addRow();
+    // Always show banner for manual entry
+    document.getElementById('album-art-wrap').classList.add('show');
+  }
+
+  /* ── TOAST ── */
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  /* ── SEARCH ── */
+  function onSearchInput() {
+    const val = document.getElementById('search-input').value;
+    document.getElementById('search-clear').classList.toggle('show', val.length > 0);
+  }
+
+  function clearSearch() {
+    document.getElementById('search-input').value = '';
+    document.getElementById('search-artist').value = '';
+    document.getElementById('search-clear').classList.remove('show');
+    document.getElementById('search-results').classList.remove('open');
+    document.getElementById('search-status').classList.remove('show');
+  }
+
+  function formatDuration(ms) {
+    if (!ms) return null;
+    const totalSec = Math.round(ms / 1000);
+    const m = Math.floor(totalSec / 60), s = totalSec % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  function formatTrackDur(ms) {
+    if (!ms) return '';
+    const s = Math.round(ms / 1000);
+    return `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
+  }
+
+  async function searchAlbum() {
+    const albumVal  = document.getElementById('search-input').value.trim();
+    const artistVal = document.getElementById('search-artist').value.trim();
+    if (!albumVal) return;
+
+    // Build structured MusicBrainz query for precision
+    let mbQuery;
+    if (artistVal) {
+      mbQuery = `release:"${albumVal}" AND artist:"${artistVal}"`;
+    } else {
+      mbQuery = albumVal;
+    }
+    // iTunes search: combine both fields for best results
+    const itunesQuery = artistVal ? `${albumVal} ${artistVal}` : albumVal;
+
+    const btn    = document.getElementById('search-btn');
+    const status = document.getElementById('search-status');
+    const results = document.getElementById('search-results');
+    btn.disabled = true; btn.textContent = '…';
+    results.classList.remove('open'); results.innerHTML = '';
+    status.textContent = 'Buscando…'; status.classList.add('show');
+    try {
+      const [mbRes, itunesRes] = await Promise.all([
+        fetch(`https://musicbrainz.org/ws/2/release/?query=${encodeURIComponent(mbQuery)}&limit=20&fmt=json`, { headers: { 'User-Agent': 'AlbumRater/1.0' } }),
+        fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(itunesQuery)}&entity=album&limit=25`)
+      ]);
+      const mbData       = await mbRes.json();
+      const itunesData   = await itunesRes.json();
+      const releases     = mbData.releases || [];
+      const itunesAlbums = itunesData.results || [];
+
+      // ── iTunes-only fallback (for under/indie artists not on MusicBrainz) ──
+      if (!releases.length) {
+        if (!itunesAlbums.length) {
+          // ── Last.fm fallback: deepest under/indie coverage ──
+          status.textContent = 'Buscando en Last.fm…';
+          const lfResults = await searchLastfmAlbums(albumVal, artistVal);
+          if (!lfResults.length) {
+            status.textContent = 'No se encontraron resultados en ninguna fuente.';
+            btn.disabled = false; btn.textContent = 'Buscar'; return;
+          }
+          status.classList.remove('show');
+          results.classList.add('open');
+          renderLastfmResults(lfResults, results);
+          btn.disabled = false; btn.textContent = 'Buscar'; return;
+        }
+        status.classList.remove('show');
+        results.classList.add('open');
+        // Show iTunes results directly
+        itunesAlbums.forEach(al => {
+          const title  = al.collectionName || 'Sin título';
+          const artist = al.artistName || 'Artista desconocido';
+          const year   = al.releaseDate ? al.releaseDate.slice(0, 4) : '—';
+          const tracks = al.trackCount || 0;
+          const thumbUrl = al.artworkUrl100 ? al.artworkUrl100.replace('100x100bb', '300x300bb') : null;
+          const item = document.createElement('div');
+          item.className = 'result-item';
+          item.innerHTML = thumbUrl
+            ? `<div style="display:flex;align-items:center;gap:10px">
+                <img src="${thumbUrl}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/>
+                <div style="flex:1;min-width:0">
+                  <div class="result-title">${title} <span class="cover-src-badge itunes">iTunes</span></div>
+                  <div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>
+                </div>
+               </div>`
+            : `<div class="result-title">${title} <span class="cover-src-badge itunes">iTunes</span></div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>`;
+          const coverPayload = { lf: null, itunes: al.artworkUrl100 ? al.artworkUrl100.replace('100x100bb', '600x600bb') : null };
+          item.onclick = () => openPreviewItunes(al, title, artist, coverPayload);
+          results.appendChild(item);
+        });
+
+        // Also try Last.fm in parallel for extra under results
+        const lfExtra = await searchLastfmAlbums(albumVal, artistVal);
+        if (lfExtra.length) {
+          const sep = document.createElement('div');
+          sep.style.cssText = 'font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);padding:8px 4px 4px;';
+          sep.textContent = '── También en Last.fm ──';
+          results.appendChild(sep);
+          renderLastfmResults(lfExtra, results);
+        }
+
+        btn.disabled = false; btn.textContent = 'Buscar'; return;
+      }
+
+      // ── Normal path: MusicBrainz results ──
+      // Fetch Last.fm covers in parallel
+      const lfCovers = await Promise.all(releases.map(r => {
+        const artist = r['artist-credit']?.[0]?.artist?.name || '';
+        return fetchLastfmCover(artist, r.title || '');
+      }));
+
+      status.classList.remove('show');
+      results.classList.add('open');
+
+      releases.forEach((r, idx) => {
+        const artist = r['artist-credit']?.[0]?.artist?.name || 'Artista desconocido';
+        const title  = r.title || 'Sin título';
+        const year   = r.date ? r.date.slice(0, 4) : '—';
+        const tracks = r['track-count'] || 0;
+        const lfCover     = lfCovers[idx];
+        const itunesCover = findItunesCover(itunesAlbums, title, artist);
+        const coverPayload = { lf: lfCover, itunes: itunesCover };
+        const thumbUrl     = lfCover || itunesCover;
+
+        const item = document.createElement('div');
+        item.className = 'result-item';
+        item.innerHTML = thumbUrl
+          ? `<div style="display:flex;align-items:center;gap:10px">
+              <img src="${thumbUrl}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/>
+              <div style="flex:1;min-width:0">
+                <div class="result-title">${title}</div>
+                <div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>
+              </div>
+             </div>`
+          : `<div class="result-title">${title}</div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>`;
+        item.onclick = () => openPreview(r.id, title, artist, coverPayload);
+        results.appendChild(item);
+      });
+
+      // ── Append extra iTunes results not already covered by MusicBrainz ──
+      const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const mbTitles = new Set(releases.map(r => norm(r.title || '')));
+      const extraItunes = itunesAlbums.filter(al => !mbTitles.has(norm(al.collectionName || '')));
+      if (extraItunes.length) {
+        const sep = document.createElement('div');
+        sep.style.cssText = 'font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);padding:8px 4px 4px;';
+        sep.textContent = '── También en iTunes ──';
+        results.appendChild(sep);
+        extraItunes.forEach(al => {
+          const title  = al.collectionName || 'Sin título';
+          const artist = al.artistName || 'Artista desconocido';
+          const year   = al.releaseDate ? al.releaseDate.slice(0, 4) : '—';
+          const tracks = al.trackCount || 0;
+          const thumbUrl = al.artworkUrl100 ? al.artworkUrl100.replace('100x100bb', '300x300bb') : null;
+          const item = document.createElement('div');
+          item.className = 'result-item';
+          item.innerHTML = thumbUrl
+            ? `<div style="display:flex;align-items:center;gap:10px">
+                <img src="${thumbUrl}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/>
+                <div style="flex:1;min-width:0">
+                  <div class="result-title">${title} <span class="cover-src-badge itunes">iTunes</span></div>
+                  <div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>
+                </div>
+               </div>`
+            : `<div class="result-title">${title} <span class="cover-src-badge itunes">iTunes</span></div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>`;
+          const coverPayload = { lf: null, itunes: al.artworkUrl100 ? al.artworkUrl100.replace('100x100bb', '600x600bb') : null };
+          item.onclick = () => openPreviewItunes(al, title, artist, coverPayload);
+          results.appendChild(item);
+        });
+      }
+
+    } catch(err) { status.textContent = 'Error al buscar. Revisá tu conexión.'; }
+    btn.disabled = false; btn.textContent = 'Buscar';
+  }
+
+  /* ── PREVIEW MODAL (iTunes source) ── */
+  async function openPreviewItunes(itunesAlbum, title, artist, coverPayload) {
+    previewReleaseId    = null; // no MusicBrainz ID
+    previewTitle        = title;
+    previewArtist       = artist;
+    previewCoverPayload = coverPayload;
+    previewItunesAlbum  = itunesAlbum;
+
+    document.getElementById('preview-overlay').classList.add('show');
+    document.getElementById('preview-content').innerHTML = '<div class="preview-loading">Cargando…</div>';
+
+    try {
+      // Fetch tracks from iTunes lookup by collectionId
+      const lookupRes  = await fetch(`https://itunes.apple.com/lookup?id=${itunesAlbum.collectionId}&entity=song`);
+      const lookupData = await lookupRes.json();
+      const tracks = (lookupData.results || []).filter(r => r.wrapperType === 'track' && r.kind === 'song');
+      const thumbUrl = coverPayload?.itunes || coverPayload?.lf || null;
+      const year = itunesAlbum.releaseDate ? itunesAlbum.releaseDate.slice(0, 4) : '';
+      const genre = itunesAlbum.primaryGenreName || '';
+
+      document.getElementById('preview-content').innerHTML = `
+        <div class="preview-header">
+          <button class="preview-close" onclick="closePreview()">✕</button>
+          ${thumbUrl
+            ? `<img class="preview-cover" src="${thumbUrl}" crossorigin="anonymous"/>`
+            : `<div class="preview-cover-ph">🎵</div>`}
+          <div class="preview-meta">
+            <div class="preview-title">${title}</div>
+            <div class="preview-artist">${artist}${year ? ' · ' + year : ''}</div>
+            <div class="preview-tags">
+              ${genre ? `<span class="preview-tag">${genre}</span>` : ''}
+              <span class="preview-tag">${tracks.length} tracks</span>
+              <span class="cover-src-badge itunes" style="margin-left:0">iTunes</span>
+            </div>
+          </div>
+        </div>
+        <div class="preview-tracks">
+          <div class="preview-tracks-header"><span>Tracklist</span></div>
+          ${tracks.map((t, i) => `
+            <div class="preview-track-item">
+              <span class="preview-track-num">${t.trackNumber || i + 1}</span>
+              <span class="preview-track-name">${t.trackName || '—'}</span>
+              <span class="preview-track-dur">${formatTrackDur(t.trackTimeMillis)}</span>
+            </div>`).join('')}
+        </div>
+        <div class="preview-footer">
+          <button class="preview-load-btn" onclick="confirmLoadFromPreviewItunes()">⚡ Cargar este álbum</button>
+        </div>
+      `;
+      // Store tracks for loading
+      previewItunesTracks = tracks;
+    } catch {
+      document.getElementById('preview-content').innerHTML = `<div class="preview-loading">Error al cargar. Intentá de nuevo.</div>`;
+    }
+  }
+
+  let previewItunesAlbum  = null;
+  let previewItunesTracks = [];
+
+  function confirmLoadFromPreviewItunes() {
+    document.getElementById('preview-overlay').classList.remove('show');
+    loadTracklistFromItunes(previewItunesAlbum, previewItunesTracks, previewTitle, previewArtist, previewCoverPayload);
+  }
+
+  async function loadTracklistFromItunes(itunesAlbum, tracks, albumTitle, artist, coverPayload) {
+    const status  = document.getElementById('search-status');
+    const results = document.getElementById('search-results');
+    results.classList.remove('open');
+    status.textContent = `Cargando tracks de "${albumTitle}"…`;
+    status.classList.add('show');
+
+    try {
+      // If tracks not passed (direct load), fetch them
+      if (!tracks || !tracks.length) {
+        const lookupRes  = await fetch(`https://itunes.apple.com/lookup?id=${itunesAlbum.collectionId}&entity=song`);
+        const lookupData = await lookupRes.json();
+        tracks = (lookupData.results || []).filter(r => r.wrapperType === 'track' && r.kind === 'song');
+      }
+      if (!tracks.length) { status.textContent = 'No se encontraron tracks.'; return; }
+
+      const year  = itunesAlbum.releaseDate ? itunesAlbum.releaseDate.slice(0, 4) : '';
+      const genre = itunesAlbum.primaryGenreName || '';
+      const highResCover = coverPayload?.itunes || coverPayload?.lf || null;
+
+      const existingRows = document.querySelectorAll('#rows-body .row');
+      const existingScores = {};
+      existingRows.forEach(r => {
+        const name  = r.querySelector('input[type="text"]').value.trim().toLowerCase();
+        const score = r.querySelector('input[type="number"]').value;
+        if (name) existingScores[name] = score;
+      });
+      const hasSameAlbum = currentAlbum &&
+        currentAlbum.title.trim().toLowerCase() === albumTitle.trim().toLowerCase() &&
+        currentAlbum.artist.trim().toLowerCase() === artist.trim().toLowerCase();
+
+      document.getElementById('rows-body').innerHTML = '';
+      document.getElementById('output-text').innerHTML = '';
+      if (!hasSameAlbum) {
+        document.getElementById('cover-score').value = '';
+        document.getElementById('dot-cover').className = 'score-dot';
+      }
+      rowCount = 0; updateAverage();
+
+      tracks.forEach(t => {
+        const trackName  = t.trackName || 'Track';
+        const savedScore = hasSameAlbum ? (existingScores[trackName.trim().toLowerCase()] || '') : '';
+        addRow(trackName, savedScore);
+      });
+
+      currentAlbum = { title: albumTitle, artist, year, genre, coverUrl: highResCover };
+      showAlbumBanner(currentAlbum);
+      status.textContent = `✓ ${tracks.length} tracks de ${artist} — ${albumTitle} cargados`;
+      document.getElementById('search-input').value = '';
+      document.getElementById('search-artist').value = '';
+      saveData();
+    } catch(err) { status.textContent = 'Error al cargar el tracklist.'; }
+  }
+
+  /* ── PREVIEW MODAL ── */
+  let previewCoverPayload = null;
+  let previewReleaseId   = null;
+  let previewTitle       = null;
+  let previewArtist      = null;
+
+  async function openPreview(releaseId, title, artist, coverPayload) {
+    previewReleaseId   = releaseId;
+    previewTitle       = title;
+    previewArtist      = artist;
+    previewCoverPayload = coverPayload;
+
+    document.getElementById('preview-overlay').classList.add('show');
+    document.getElementById('preview-content').innerHTML = '<div class="preview-loading">Cargando…</div>';
+
+    try {
+      // Fetch full release data + covers in parallel
+      const [releaseRes, covers] = await Promise.all([
+        fetch(`https://musicbrainz.org/ws/2/release/${releaseId}?inc=recordings+genres+tags+release-groups&fmt=json`, { headers: { 'User-Agent': 'AlbumRater/1.0' } }),
+        coverPayload ? Promise.resolve(coverPayload) : (async () => {
+          const lf = await fetchLastfmCover(artist, title);
+          return { lf, itunes: null };
+        })()
+      ]);
+      const data   = await releaseRes.json();
+      const tracks = (data.media || []).flatMap(m => m.tracks || []);
+      const totalMs = tracks.reduce((sum, t) => sum + (t.length || 0), 0);
+      const totalDur = formatDuration(totalMs);
+
+      // Resolve cover
+      const cp = typeof covers === 'object' && 'lf' in covers ? covers : { lf: null, itunes: null };
+      const thumbUrl = cp.lf || cp.itunes || null;
+      if (!previewCoverPayload) previewCoverPayload = cp;
+
+      const genreList = (data.genres || data['release-group']?.genres || data.tags || [])
+        .sort((a,b) => (b.count||0)-(a.count||0)).slice(0,3).map(g => g.name);
+
+      document.getElementById('preview-content').innerHTML = `
+        <div class="preview-header">
+          <button class="preview-close" onclick="closePreview()">✕</button>
+          ${thumbUrl
+            ? `<img class="preview-cover" src="${thumbUrl}" crossorigin="anonymous"/>`
+            : `<div class="preview-cover-ph">🎵</div>`}
+          <div class="preview-meta">
+            <div class="preview-title">${data.title || title}</div>
+            <div class="preview-artist">${artist}${data.date ? ' · ' + data.date.slice(0,4) : ''}</div>
+            <div class="preview-tags">
+              ${genreList.map(g => `<span class="preview-tag">${g}</span>`).join('')}
+              <span class="preview-tag">${tracks.length} tracks${totalDur ? ' · ' + totalDur : ''}</span>
+            </div>
+          </div>
+        </div>
+        <div class="preview-tracks">
+          <div class="preview-tracks-header">
+            <span>Tracklist</span>
+            ${totalDur ? `<span>${totalDur} total</span>` : ''}
+          </div>
+          ${tracks.map((t, i) => `
+            <div class="preview-track-item">
+              <span class="preview-track-num">${i+1}</span>
+              <span class="preview-track-name">${t.title || '—'}</span>
+              <span class="preview-track-dur">${formatTrackDur(t.length)}</span>
+            </div>`).join('')}
+        </div>
+        <div class="preview-footer">
+          <button class="preview-load-btn" onclick="confirmLoadFromPreview()">⚡ Cargar este álbum</button>
+        </div>
+      `;
+    } catch {
+      document.getElementById('preview-content').innerHTML = `<div class="preview-loading">Error al cargar. Intentá de nuevo.</div>`;
+    }
+  }
+
+  function closePreview(e) {
+    if (e && e.target !== document.getElementById('preview-overlay')) return;
+    document.getElementById('preview-overlay').classList.remove('show');
+  }
+
+  function confirmLoadFromPreview() {
+    document.getElementById('preview-overlay').classList.remove('show');
+    loadTracklist(previewReleaseId, previewTitle, previewArtist, '', previewCoverPayload);
+  }
+
+  const LASTFM_KEY = '194ec400973f470ddaccd3248100186f';
+
+  async function fetchLastfmCover(artist, title) {
+    // 1. Try exact match first (album.getinfo)
+    try {
+      const url  = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(title)}&api_key=${LASTFM_KEY}&format=json`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      if (!data?.error) {
+        const img = pickLastfmImage(data?.album?.image);
+        if (img) return img;
+      }
+    } catch {}
+
+    // 2. Fallback: album.search by "artist title" query
+    try {
+      const q    = `${title} ${artist}`;
+      const url  = `https://ws.audioscrobbler.com/2.0/?method=album.search&album=${encodeURIComponent(q)}&api_key=${LASTFM_KEY}&format=json&limit=5`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      const matches = data?.results?.albummatches?.album || [];
+      const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+      const t = norm(title), a = norm(artist);
+      // Try to find a close match
+      const hit = matches.find(m => norm(m.name).includes(t) && norm(m.artist).includes(a))
+               || matches.find(m => norm(m.name).includes(t))
+               || matches[0];
+      if (hit) {
+        const img = pickLastfmImage(hit.image);
+        if (img) return img;
+      }
+    } catch {}
+
+    return null;
+  }
+
+  function pickLastfmImage(images) {
+    if (!Array.isArray(images)) return null;
+    const PLACEHOLDER = '2a96cbd8b46e442fc41c2b86b821562f';
+    for (const size of ['mega', 'extralarge', 'large', 'medium']) {
+      const url = images.find(i => i.size === size)?.['#text'];
+      if (url && url.trim().length > 0 && !url.includes(PLACEHOLDER)) return url;
+    }
+    return null;
+  }
+
+  function findItunesCover(itunesAlbums, title, artist) {
+    if (!itunesAlbums.length) return null;
+    const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const t = norm(title), a = norm(artist);
+    let match = itunesAlbums.find(al => norm(al.collectionName) === t && norm(al.artistName) === a);
+    if (!match) match = itunesAlbums.find(al => norm(al.collectionName).includes(t) || t.includes(norm(al.collectionName)));
+    if (!match) match = itunesAlbums[0];
+    // Return highest res iTunes URL
+    return match ? match.artworkUrl100.replace('100x100bb', '600x600bb') : null;
+  }
+
+  async function loadTracklist(releaseId, albumTitle, artist, year = '', coverPayload = null) {
+    const status  = document.getElementById('search-status');
+    const results = document.getElementById('search-results');
+    results.classList.remove('open');
+    status.textContent = `Cargando tracks de "${albumTitle}"…`;
+    status.classList.add('show');
+    try {
+      const res  = await fetch(`https://musicbrainz.org/ws/2/release/${releaseId}?inc=recordings+genres+tags+release-groups+artist-credits&fmt=json`, { headers: { 'User-Agent': 'AlbumRater/1.0' } });
+      const data = await res.json();
+      const tracks = (data.media || []).flatMap(m => m.tracks || []);
+      const resolvedYear = year || (data.date ? data.date.slice(0, 4) : '');
+
+      // Extract genre with multiple fallbacks
+      const pickGenres = (list) => list?.length
+        ? list.sort((a, b) => (b.count||0) - (a.count||0)).slice(0, 2).map(g => {
+            const n = g.name || '';
+            return n.charAt(0).toUpperCase() + n.slice(1);
+          }).join(' / ')
+        : null;
+
+      let resolvedGenre =
+        pickGenres(data.genres) ||
+        pickGenres(data['release-group']?.genres) ||
+        pickGenres(data.tags) ||
+        pickGenres(data['release-group']?.tags) ||
+        '';
+
+      // Last resort: fetch from Last.fm tags if still empty
+      if (!resolvedGenre) {
+        try {
+          const lfUrl  = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(albumTitle)}&api_key=${LASTFM_KEY}&format=json`;
+          const lfRes  = await fetch(lfUrl);
+          const lfData = await lfRes.json();
+          const lfTags = lfData?.album?.tags?.tag || [];
+          const filtered = lfTags
+            .filter(t => !['seen live','albums i own','favourite albums'].includes(t.name.toLowerCase()))
+            .slice(0, 2)
+            .map(t => t.name.charAt(0).toUpperCase() + t.name.slice(1));
+          resolvedGenre = filtered.join(' / ');
+        } catch {}
+      }
+      if (!tracks.length) { status.textContent = 'No se encontraron tracks.'; return; }
+
+      const existingRows = document.querySelectorAll('#rows-body .row');
+      const existingScores = {};
+      existingRows.forEach(r => {
+        const name  = r.querySelector('input[type="text"]').value.trim().toLowerCase();
+        const score = r.querySelector('input[type="number"]').value;
+        if (name) existingScores[name] = score;
+      });
+      const hasSameAlbum = currentAlbum &&
+        currentAlbum.title.trim().toLowerCase() === albumTitle.trim().toLowerCase() &&
+        currentAlbum.artist.trim().toLowerCase() === artist.trim().toLowerCase();
+      document.getElementById('rows-body').innerHTML = '';
+      document.getElementById('output-text').innerHTML = '';
+      if (!hasSameAlbum) {
+        document.getElementById('cover-score').value = '';
+        document.getElementById('dot-cover').className = 'score-dot';
+      }
+      rowCount = 0; updateAverage();
+      tracks.forEach(t => {
+        const trackName  = t.title || 'Track';
+        const savedScore = hasSameAlbum ? (existingScores[trackName.trim().toLowerCase()] || '') : '';
+        addRow(trackName, savedScore);
+      });
+
+      // Resolve cover: Last.fm → iTunes fallback
+      let highResCover = null;
+      if (coverPayload && typeof coverPayload === 'object' && ('lf' in coverPayload)) {
+        highResCover = coverPayload.lf || coverPayload.itunes || null;
+      } else if (typeof coverPayload === 'string' && coverPayload) {
+        // Legacy string passed directly
+        highResCover = coverPayload.replace('100x100bb', '600x600bb').replace('100x100', '600x600');
+      }
+
+      currentAlbum = { title: albumTitle, artist, year: resolvedYear, genre: resolvedGenre, coverUrl: highResCover };
+      showAlbumBanner(currentAlbum);
+      status.textContent = `✓ ${tracks.length} tracks de ${artist} — ${albumTitle} cargados`;
+      document.getElementById('search-input').value = ''; document.getElementById('search-artist').value = '';
+      saveData();
+    } catch(err) { status.textContent = 'Error al cargar el tracklist.'; }
+  }
+
+  function showAlbumBanner({ title, artist, year, genre, coverUrl }) {
+    const wrap = document.getElementById('album-art-wrap');
+    const img  = document.getElementById('album-art-img');
+    const ph   = document.getElementById('album-cover-placeholder');
+    document.getElementById('album-art-title').value  = title  || '';
+    document.getElementById('album-art-artist').value = artist || '';
+    document.getElementById('album-art-year').value   = year   || '';
+    document.getElementById('album-art-genre').value  = genre  || '';
+    if (coverUrl) {
+      img.src = coverUrl; img.style.display = 'block'; ph.style.display = 'none';
+    } else {
+      img.style.display = 'none'; ph.style.display = 'flex';
+    }
+    wrap.classList.add('show');
+    updatePageBg(coverUrl);
+  }
+
+  /* ── HISTORY ── */
+  function getHistory() {
+    try { return JSON.parse(localStorage.getItem('albumRaterHistory') || '[]'); } catch { return []; }
+  }
+  function setHistory(h) {
+    try { localStorage.setItem('albumRaterHistory', JSON.stringify(h)); } catch {}
+  }
+
+  function saveToHistory() {
+    syncAlbumMeta();
+    const rows = [];
+    document.querySelectorAll('#rows-body .row').forEach(r => {
+      const ri = r.querySelector('.rescore-input');
+      rows.push({ name: r.querySelector('input[type="text"]').value, score: r.querySelector('input[type="number"]').value, rscore: ri ? ri.value : '' });
+    });
+    const cover   = document.getElementById('cover-score').value;
+    const comment = document.getElementById('comment-input').value;
+    const inputs  = document.querySelectorAll('#rows-body input[type="number"]');
+    let sum = 0, count = 0;
+    inputs.forEach(i => { const v = parseFloat(i.value); if (!isNaN(v)) { sum += v; count++; } });
+    const avg  = count > 0 ? sum / count : null;
+    const rank = getRank(avg);
+    const entry = {
+      id:       Date.now(),
+      album:    { ...currentAlbum },
+      rows, cover, comment,
+      avg:      avg !== null ? avg.toFixed(2) : null,
+      rank:     rank.label,
+      rankCls:  rank.cls,
+      savedAt:  new Date().toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' })
+    };
+    const h = getHistory();
+    // Avoid exact duplicates by id
+    h.unshift(entry);
+    if (h.length > 50) h.pop();
+    setHistory(h);
+    renderHistory();
+    showToast('📚 Guardado en historial');
+  }
+
+  /* ── SYNC FROM SUPABASE ── */
+  async function syncFromSupabase() {
+    const userId = localStorage.getItem('discord_user_id');
+    if (!userId) return;
+    try {
+      const res  = await fetch(`${BOT_SERVER}/history?user_id=${encodeURIComponent(userId)}`);
+      if (!res.ok) return;
+      const rows = await res.json();
+      if (!Array.isArray(rows) || !rows.length) return;
+
+      const existing = getHistory();
+      const existingIds = new Set(existing.map(e => e.supabase_id).filter(Boolean));
+
+      let added = 0;
+      rows.forEach(row => {
+        if (existingIds.has(row.id)) return; // already synced
+        const rank = getRank(parseFloat(row.final_score));
+        const entry = {
+          id:         row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+          supabase_id: row.id,
+          album: {
+            title:    row.album_title,
+            artist:   row.artist   || '',
+            coverUrl: row.cover_url || '',
+            genre:    ''
+          },
+          rows:     Array.isArray(row.tracks) ? row.tracks.map(t => ({ name: t.name, score: t.score, rscore: '' })) : [],
+          cover:    '',
+          comment:  row.notes || '',
+          avg:      row.final_score ? parseFloat(row.final_score).toFixed(2) : null,
+          rank:     row.final_rank || rank.label,
+          rankCls:  rank.cls,
+          savedAt:  row.created_at ? new Date(row.created_at).toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' }) : ''
+        };
+        existing.push(entry);
+        added++;
+      });
+
+      if (added > 0) {
+        // Sort by date descending
+        existing.sort((a, b) => b.id - a.id);
+        setHistory(existing);
+        showToast(`☁ ${added} rating${added > 1 ? 's' : ''} sincronizado${added > 1 ? 's' : ''} desde la nube`);
+      }
+    } catch(e) {
+      console.error('Supabase sync error:', e);
+    }
+  }
+
+  function toggleHistory() {
+    const list     = document.getElementById('history-list');
+    const chevron  = document.getElementById('history-chevron');
+    const header   = document.getElementById('history-header');
+    const isOpen   = list.classList.contains('open');
+    list.classList.toggle('open', !isOpen);
+    chevron.classList.toggle('open', !isOpen);
+    header.classList.toggle('open', !isOpen);
+    if (!isOpen) { syncFromSupabase().then(() => renderHistory()); }
+  }
+
+  function renderHistory() {
+    const h       = getHistory();
+    const list    = document.getElementById('history-list');
+    const empty   = document.getElementById('history-empty');
+    // Remove old items (keep empty placeholder)
+    list.querySelectorAll('.history-item').forEach(el => el.remove());
+    if (!h.length) { empty.style.display = 'block'; return; }
+    empty.style.display = 'none';
+    if (document.getElementById('stats-body').classList.contains('open')) renderStats();
+    h.forEach(entry => {
+      const item = document.createElement('div');
+      item.className = 'history-item';
+
+      const coverHtml = entry.album?.coverUrl
+        ? `<img src="${entry.album.coverUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:5px" />`
+        : '🎵';
+
+      item.innerHTML = `
+        <div class="history-item-cover">${coverHtml}</div>
+        <div class="history-item-info">
+          <div class="history-item-title">${entry.album?.title || 'Sin título'}</div>
+          <div class="history-item-meta">${entry.album?.artist || '—'}${entry.album?.genre ? ' · ' + entry.album.genre : ''} · ${entry.savedAt}</div>
+        </div>
+        <span class="history-item-rank ${entry.rankCls}" style="color:${rankColor(entry.rankCls)}">${entry.rank || '—'}</span>
+        <button class="history-item-del" title="Eliminar" onclick="deleteHistory(${entry.id}, event)">×</button>
+      `;
+      item.onclick = () => loadFromHistory(entry);
+      list.appendChild(item);
+    });
+  }
+
+  function deleteHistory(id, event) {
+    event.stopPropagation();
+    const h = getHistory().filter(e => e.id !== id);
+    setHistory(h);
+    renderHistory();
+  }
+
+  function loadFromHistory(entry) {
+    if (!confirm(`¿Cargar "${entry.album?.title || 'este álbum'}"? Se reemplazará la sesión actual.`)) return;
+    document.getElementById('rows-body').innerHTML = '';
+    document.getElementById('output-text').innerHTML = '';
+    rowCount = 0;
+    entry.rows.forEach(r => addRow(r.name, r.score));
+    // Restore rescores
+    document.querySelectorAll('#rows-body .row').forEach((rowEl, i) => {
+      const ri = rowEl.querySelector('.rescore-input');
+      if (ri && entry.rows[i]?.rscore) ri.value = entry.rows[i].rscore;
+    });
+    document.getElementById('cover-score').value = entry.cover || '';
+    document.getElementById('comment-input').value = entry.comment || '';
+    if (entry.cover) updateCover();
+    updateRescoreTotal();
+    currentAlbum = { ...entry.album };
+    showAlbumBanner(currentAlbum);
+    saveData();
+    toggleHistory(); // close panel
+    showToast(`✓ Cargado: ${entry.album?.title || 'álbum'}`);
+  }
+
+  function updatePageBg(coverUrl) {
+    const bg = document.getElementById('page-bg');
+    if (!coverUrl) { bg.classList.remove('loaded'); return; }
+    bg.style.backgroundImage = `url(${coverUrl})`;
+    setTimeout(() => bg.classList.add('loaded'), 80);
+  }
+
+  function syncAlbumMeta() {
+    if (!currentAlbum) currentAlbum = { title: '', artist: '', year: '', genre: '', coverUrl: null };
+    currentAlbum.title  = document.getElementById('album-art-title').value;
+    currentAlbum.artist = document.getElementById('album-art-artist').value;
+    currentAlbum.year   = document.getElementById('album-art-year').value;
+    currentAlbum.genre  = document.getElementById('album-art-genre').value;
+    saveData();
+  }
+
+  function handleCoverUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const dataUrl = e.target.result;
+      const img = document.getElementById('album-art-img');
+      const ph  = document.getElementById('album-cover-placeholder');
+      img.src = dataUrl;
+      img.style.display = 'block';
+      ph.style.display  = 'none';
+      if (!currentAlbum) currentAlbum = { title: '', artist: '', year: '', coverUrl: null };
+      currentAlbum.coverUrl = dataUrl;
+      document.getElementById('album-art-wrap').classList.add('show');
+      updatePageBg(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* ── GLOBAL STATS ── */
+  function toggleStats() {
+    const body    = document.getElementById('stats-body');
+    const chevron = document.getElementById('stats-chevron');
+    const header  = document.getElementById('stats-header');
+    const isOpen  = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    chevron.classList.toggle('open', !isOpen);
+    header.classList.toggle('open', !isOpen);
+    if (!isOpen) renderStats();
+  }
+
+  function renderStats() {
+    const h = getHistory();
+    const el = document.getElementById('stats-content');
+    if (!h.length) {
+      el.innerHTML = '<p class="stats-empty">Todavía no hay álbumes guardados.</p>';
+      return;
+    }
+
+    // Compute stats
+    const withAvg = h.filter(e => e.avg !== null);
+    const globalAvg = withAvg.length
+      ? (withAvg.reduce((s, e) => s + parseFloat(e.avg), 0) / withAvg.length).toFixed(2)
+      : '—';
+    const totalAlbums = h.length;
+
+    // Sorted albums ranking
+    const sortedAlbums = [...withAvg].sort((a, b) => parseFloat(b.avg) - parseFloat(a.avg));
+
+    // Best tracks across all history
+    const allTracks = [];
+    h.forEach(entry => {
+      if (!entry.rows) return;
+      entry.rows.forEach(row => {
+        const s = parseFloat(row.score);
+        if (!isNaN(s) && row.name && row.name.trim()) {
+          allTracks.push({ name: row.name.trim(), score: s, album: entry.album?.title || '—', artist: entry.album?.artist || '—' });
+        }
+      });
+    });
+    const sortedTracks = allTracks.sort((a, b) => b.score - a.score).slice(0, 20);
+
+    // Rank distribution
+    const rankOrder = ['SS','S+','S','S-','A+','A','A-','B+','B-','C+','C-','—'];
+    const rankColors = { SS:'#ffffff', 'S+':'#f5c842', S:'#f5c842', 'S-':'#f5c842', 'A+':'#7cdb6e', A:'#7cdb6e', 'A-':'#7cdb6e', 'B+':'#f0923a', 'B-':'#f0923a', 'C+':'#f06070', 'C-':'#f06070', '—':'#6b6b80' };
+    const rankDist = {};
+    h.forEach(e => { const r = e.rank || '—'; rankDist[r] = (rankDist[r] || 0) + 1; });
+    const maxRankCount = Math.max(...Object.values(rankDist), 1);
+
+    // Top artists
+    const artistMap = {};
+    h.forEach(e => {
+      const artist = e.album?.artist || 'Desconocido';
+      if (!artistMap[artist]) artistMap[artist] = { count: 0, sum: 0, rated: 0 };
+      artistMap[artist].count++;
+      if (e.avg !== null) { artistMap[artist].sum += parseFloat(e.avg); artistMap[artist].rated++; }
+    });
+    const topArtists = Object.entries(artistMap)
+      .map(([name, v]) => ({ name, count: v.count, avg: v.rated ? (v.sum / v.rated).toFixed(2) : null }))
+      .sort((a, b) => b.count - a.count || (parseFloat(b.avg) || 0) - (parseFloat(a.avg) || 0))
+      .slice(0, 5);
+
+    // Score distribution (buckets: 0-1, 1-2, ..., 10-11)
+    const buckets = Array(11).fill(0);
+    withAvg.forEach(e => {
+      const v = parseFloat(e.avg);
+      const idx = Math.min(10, Math.floor(v));
+      buckets[idx]++;
+    });
+    const maxBucket = Math.max(...buckets, 1);
+
+    // Pos medals
+    function posMedal(i) {
+      return i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}`;
+    }
+
+    // Build expandable album ranking list rows
+    const albumListRows = sortedAlbums.map((e, i) => {
+      const rankCls = e.rankCls || 'rank-none';
+      const color = { 'rank-ss': '#ffffff', 'rank-s': '#f5c842', 'rank-a': '#7cdb6e', 'rank-b': '#f0923a', 'rank-c': '#f06070', 'rank-none': '#6b6b80' }[rankCls] || '#6b6b80';
+      return `<div class="best-card-row">
+        <span class="best-card-pos">${posMedal(i)}</span>
+        <span class="best-card-row-name">${e.album?.title || 'Sin título'}</span>
+        <span class="best-card-row-sub">${e.album?.artist || '—'}</span>
+        <span class="best-card-row-rank" style="color:${color}">${e.rank || '—'}</span>
+        <span class="best-card-row-score" style="color:var(--accent)">${e.avg}</span>
+      </div>`;
+    }).join('');
+
+    // Build expandable track ranking list rows
+    const trackListRows = sortedTracks.map((t, i) => {
+      const trackColor = t.score >= 10 ? '#c8f060' : t.score >= 9 ? '#7cdb6e' : t.score >= 8 ? '#f5c842' : t.score >= 7 ? '#f0923a' : '#f06070';
+      return `<div class="best-card-row">
+        <span class="best-card-pos">${posMedal(i)}</span>
+        <span class="best-card-row-name">${t.name}</span>
+        <span class="best-card-row-sub">${t.album}</span>
+        <span class="best-card-row-score" style="color:${trackColor}">${t.score}</span>
+      </div>`;
+    }).join('');
+
+    const best = sortedAlbums[0] || null;
+    const bestTrack = sortedTracks[0] || null;
+
+    // Build HTML
+    const rankRows = rankOrder
+      .filter(r => rankDist[r])
+      .map(r => `
+        <div class="rank-dist-row">
+          <span class="rank-dist-label" style="color:${rankColors[r]}">${r}</span>
+          <div class="rank-dist-bar-bg">
+            <div class="rank-dist-bar-fill" style="width:${(rankDist[r]/maxRankCount)*100}%;background:${rankColors[r]};opacity:0.8"></div>
+          </div>
+          <span class="rank-dist-count">${rankDist[r]}</span>
+        </div>`).join('');
+
+    const artistRows = topArtists.map((a, i) => `
+      <div class="top-artist-row">
+        <span class="top-artist-num">${i+1}</span>
+        <span class="top-artist-name">${a.name}</span>
+        <span class="top-artist-count">${a.count} álbum${a.count !== 1 ? 'es' : ''}</span>
+        <span class="top-artist-avg">${a.avg || '—'}</span>
+      </div>`).join('');
+
+    const distBars = buckets.map((c, i) => {
+      const pct = (c / maxBucket) * 100;
+      const label = i === 10 ? '11' : `${i}-${i+1}`;
+      return `<div class="score-dist-bar" style="height:${Math.max(pct,6)}%;background:${c>0?'var(--accent2)':'var(--border)'};opacity:${c>0?0.7+0.3*(c/maxBucket):1}" data-tip="${label}: ${c}"></div>`;
+    }).join('');
+
+    el.innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="stat-card-label">Promedio global</span>
+          <span class="stat-card-value">${globalAvg}</span>
+          <span class="stat-card-sub">sobre ${withAvg.length} calificado${withAvg.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="stat-card accent2">
+          <span class="stat-card-label">Álbumes guardados</span>
+          <span class="stat-card-value">${totalAlbums}</span>
+          <span class="stat-card-sub">${Object.keys(artistMap).length} artista${Object.keys(artistMap).length !== 1 ? 's' : ''} distintos</span>
+        </div>
+        ${best ? `
+        <div class="best-card" onclick="this.querySelector('.best-card-list').classList.toggle('open');this.querySelector('.best-card-chevron').classList.toggle('open')">
+          <div class="best-card-header">
+            <div class="best-card-info">
+              <div class="best-card-label">🏆 Ranking de álbumes</div>
+              <div class="best-card-title">${best.album?.title || 'Sin título'}</div>
+              <div class="best-card-sub">${best.album?.artist || '—'} · ${best.rank || '—'} · ${best.avg} — toca para ver todos</div>
+            </div>
+            <span class="best-card-chevron">▼</span>
+          </div>
+          <div class="best-card-list">${albumListRows}</div>
+        </div>` : ''}
+        ${bestTrack ? `
+        <div class="best-card" onclick="this.querySelector('.best-card-list').classList.toggle('open');this.querySelector('.best-card-chevron').classList.toggle('open')">
+          <div class="best-card-header">
+            <div class="best-card-info">
+              <div class="best-card-label">🎵 Mejor canción puntuada</div>
+              <div class="best-card-title track" style="color:var(--accent2)">${bestTrack.name}</div>
+              <div class="best-card-sub">${bestTrack.album} · ${bestTrack.score} — toca para ver top ${Math.min(sortedTracks.length,20)}</div>
+            </div>
+            <span class="best-card-chevron">▼</span>
+          </div>
+          <div class="best-card-list">${trackListRows}</div>
+        </div>` : ''}
+      </div>
+      <div class="stats-section-label">Distribución de ranks</div>
+      ${rankRows ? `<div class="rank-dist">${rankRows}</div>` : '<p class="stats-empty" style="margin-bottom:12px">Sin ranks aún</p>'}
+      <div class="stats-section-label" style="margin-top:16px">Top artistas calificados</div>
+      ${artistRows ? `<div class="top-artists">${artistRows}</div>` : '<p class="stats-empty">Sin artistas aún</p>'}
+      <div class="stats-section-label" style="margin-top:16px">Distribución de promedios</div>
+      <div class="score-dist-chart">${distBars}</div>
+      <div class="score-dist-labels"><span>0</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10</span><span>11</span></div>
+    `;
+  }
+
+  /* ── DATA IMPORT / EXPORT ── */
+  function toggleDataIO() {
+    const body    = document.getElementById('data-io-body');
+    const chevron = document.getElementById('data-io-chevron');
+    const header  = document.getElementById('data-io-header');
+    const isOpen  = body.classList.contains('open');
+    body.classList.toggle('open', !isOpen);
+    chevron.classList.toggle('open', !isOpen);
+    header.classList.toggle('open', !isOpen);
+  }
+
+  function exportDataJSON() {
+    // Collect current session state (same structure as saveData)
+    const rows = [];
+    document.querySelectorAll('#rows-body .row').forEach(r => {
+      const ri = r.querySelector('.rescore-input');
+      rows.push({
+        name:   r.querySelector('input[type="text"]').value,
+        score:  r.querySelector('input[type="number"]').value,
+        rscore: ri ? ri.value : ''
+      });
+    });
+    const session = {
+      rows,
+      cover:   document.getElementById('cover-score').value,
+      comment: document.getElementById('comment-input').value,
+      album:   currentAlbum ? {
+        title:    document.getElementById('album-art-title').value,
+        artist:   document.getElementById('album-art-artist').value,
+        year:     document.getElementById('album-art-year').value,
+        genre:    document.getElementById('album-art-genre').value,
+        coverUrl: currentAlbum.coverUrl || null
+      } : null
+    };
+
+    const payload = {
+      _version:  1,
+      exportedAt: new Date().toISOString(),
+      session,
+      history:   getHistory()
+    };
+
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const date = new Date().toISOString().slice(0, 10);
+    a.href     = url;
+    a.download = `album-rater-backup-${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('⬇ Backup exportado correctamente');
+  }
+
+  function importDataJSON(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const payload = JSON.parse(e.target.result);
+
+        // Validate basic structure
+        if (!payload || typeof payload !== 'object') throw new Error('Formato inválido');
+
+        // ── Merge history ──
+        const existingHistory = getHistory();
+        const existingIds = new Set(existingHistory.map(h => h.id));
+        let importedHistory = [];
+
+        if (Array.isArray(payload.history)) {
+          importedHistory = payload.history;
+        } else if (Array.isArray(payload)) {
+          // Support raw history arrays (old format)
+          importedHistory = payload;
+        }
+
+        const newEntries = importedHistory.filter(entry => entry && entry.id && !existingIds.has(entry.id));
+        const mergedHistory = [...existingHistory, ...newEntries]
+          .sort((a, b) => b.id - a.id)
+          .slice(0, 50);
+        setHistory(mergedHistory);
+        renderHistory();
+
+        // ── Restore session ──
+        const session = payload.session || (payload.rows ? payload : null);
+        if (session) {
+          const sessionRows = Array.isArray(session.rows) ? session.rows : [];
+          if (sessionRows.length || session.album) {
+            if (!confirm(`¿También restaurar la sesión activa guardada en este archivo?\n\n${session.album?.title ? '"' + session.album.title + '" de ' + session.album.artist : 'Sesión sin álbum'}\n\nSe reemplazará tu sesión actual.`)) {
+              // Only history was merged — skip session restore
+              const merged = newEntries.length;
+              showToast(`✓ ${merged} álbum${merged !== 1 ? 'es' : ''} importado${merged !== 1 ? 's' : ''} al historial`);
+              event.target.value = '';
+              return;
+            }
+
+            // Clear and restore session
+            document.getElementById('rows-body').innerHTML = '';
+            document.getElementById('output-text').innerHTML = '';
+            document.getElementById('cover-score').value    = '';
+            document.getElementById('comment-input').value  = '';
+            document.getElementById('dot-cover').className  = 'score-dot';
+            rowCount = 0;
+
+            sessionRows.forEach(r => addRow(r.name || '', r.score || ''));
+            // Restore rescores
+            document.querySelectorAll('#rows-body .row').forEach((rowEl, i) => {
+              const ri = rowEl.querySelector('.rescore-input');
+              if (ri && sessionRows[i]?.rscore) ri.value = sessionRows[i].rscore;
+            });
+            if (session.cover) { document.getElementById('cover-score').value = session.cover; updateCover(); }
+            if (session.comment) document.getElementById('comment-input').value = session.comment;
+            if (session.album) {
+              currentAlbum = { ...session.album };
+              showAlbumBanner(currentAlbum);
+            }
+            updateRescoreTotal();
+            updateAverage();
+            saveData();
+          }
+        }
+
+        const merged = newEntries.length;
+        const sessionMsg = session?.album?.title ? ` · sesión "${session.album.title}" restaurada` : '';
+        showToast(`✓ ${merged} álbum${merged !== 1 ? 'es' : ''} importado${merged !== 1 ? 's' : ''}${sessionMsg}`);
+
+      } catch (err) {
+        showToast('⚠ Error al leer el archivo JSON');
+        console.error(err);
+      }
+      event.target.value = ''; // reset so same file can be re-imported
+    };
+    reader.readAsText(file);
+  }
+
+  /* ── LAST.FM SEARCH & LOAD ── */
+
+  async function searchLastfmAlbums(album, artist) {
+    try {
+      if (artist) {
+        const infoUrl = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}&api_key=${LASTFM_KEY}&format=json`;
+        const infoRes  = await fetch(infoUrl);
+        const infoData = await infoRes.json();
+        if (!infoData.error && infoData.album?.tracks?.track) {
+          return [{ _source: 'lastfm_direct', album: infoData.album }];
+        }
+      }
+      const q = artist ? `${album} ${artist}` : album;
+      const url  = `https://ws.audioscrobbler.com/2.0/?method=album.search&album=${encodeURIComponent(q)}&api_key=${LASTFM_KEY}&format=json&limit=10`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      const matches = data?.results?.albummatches?.album || [];
+      return matches.filter(m => m.name && m.artist).map(m => ({ _source: 'lastfm_search', match: m }));
+    } catch { return []; }
+  }
+
+  function renderLastfmResults(lfResults, container) {
+    lfResults.forEach(entry => {
+      let title, artist, thumbUrl, onClickFn;
+      if (entry._source === 'lastfm_direct') {
+        const al = entry.album;
+        title   = al.name;
+        artist  = al.artist;
+        thumbUrl = pickLastfmImage(al.image) || null;
+        const tracks = Array.isArray(al.tracks?.track) ? al.tracks.track : al.tracks?.track ? [al.tracks.track] : [];
+        onClickFn = () => openPreviewLastfm(title, artist, thumbUrl, tracks, al.tags?.tag || []);
+      } else {
+        const m = entry.match;
+        title   = m.name;
+        artist  = m.artist;
+        thumbUrl = pickLastfmImage(m.image) || null;
+        onClickFn = () => openPreviewLastfmSearch(title, artist, thumbUrl);
+      }
+      const item = document.createElement('div');
+      item.className = 'result-item';
+      item.innerHTML = thumbUrl
+        ? `<div style="display:flex;align-items:center;gap:10px">
+            <img src="${thumbUrl}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/>
+            <div style="flex:1;min-width:0">
+              <div class="result-title">${title} <span class="cover-src-badge lastfm">Last.fm</span></div>
+              <div class="result-meta">${artist}</div>
+            </div>
+           </div>`
+        : `<div class="result-title">${title} <span class="cover-src-badge lastfm">Last.fm</span></div><div class="result-meta">${artist}</div>`;
+      item.onclick = onClickFn;
+      container.appendChild(item);
+    });
+  }
+
+  function openPreviewLastfm(title, artist, thumbUrl, tracks, tags) {
+    previewReleaseId    = null;
+    previewTitle        = title;
+    previewArtist       = artist;
+    previewCoverPayload = { lf: thumbUrl, itunes: null };
+    previewItunesAlbum  = null;
+    previewLastfmTracks = tracks;
+    previewLastfmCover  = thumbUrl;
+
+    document.getElementById('preview-overlay').classList.add('show');
+    const genreList = Array.isArray(tags)
+      ? tags.filter(t => !['seen live','albums i own','favourite albums'].includes((t.name||'').toLowerCase())).slice(0,3).map(t => t.name)
+      : [];
+
+    document.getElementById('preview-content').innerHTML = `
+      <div class="preview-header">
+        <button class="preview-close" onclick="closePreview()">✕</button>
+        ${thumbUrl ? `<img class="preview-cover" src="${thumbUrl}" crossorigin="anonymous"/>` : `<div class="preview-cover-ph">🎵</div>`}
+        <div class="preview-meta">
+          <div class="preview-title">${title}</div>
+          <div class="preview-artist">${artist}</div>
+          <div class="preview-tags">
+            ${genreList.map(g => `<span class="preview-tag">${g}</span>`).join('')}
+            <span class="preview-tag">${tracks.length} tracks</span>
+            <span class="cover-src-badge lastfm" style="margin-left:0">Last.fm</span>
+          </div>
+        </div>
+      </div>
+      <div class="preview-tracks">
+        <div class="preview-tracks-header"><span>Tracklist</span></div>
+        ${tracks.map((t, i) => `
+          <div class="preview-track-item">
+            <span class="preview-track-num">${t['@attr']?.rank || i + 1}</span>
+            <span class="preview-track-name">${t.name || '—'}</span>
+            <span class="preview-track-dur">${t.duration && t.duration > 0 ? Math.floor(t.duration / 60) + ':' + (t.duration % 60).toString().padStart(2, '0') : ''}</span>
+          </div>`).join('')}
+      </div>
+      <div class="preview-footer">
+        <button class="preview-load-btn" onclick="confirmLoadFromPreviewLastfm()">⚡ Cargar este álbum</button>
+      </div>
+    `;
+  }
+
+  async function openPreviewLastfmSearch(title, artist, thumbUrl) {
+    previewReleaseId    = null;
+    previewTitle        = title;
+    previewArtist       = artist;
+    previewCoverPayload = { lf: thumbUrl, itunes: null };
+    previewItunesAlbum  = null;
+
+    document.getElementById('preview-overlay').classList.add('show');
+    document.getElementById('preview-content').innerHTML = '<div class="preview-loading">Cargando desde Last.fm…</div>';
+
+    try {
+      const url  = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(title)}&api_key=${LASTFM_KEY}&format=json`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      if (data.error || !data.album) throw new Error('not found');
+      const al     = data.album;
+      const cover  = pickLastfmImage(al.image) || thumbUrl;
+      const tracks = Array.isArray(al.tracks?.track) ? al.tracks.track : al.tracks?.track ? [al.tracks.track] : [];
+      const tags   = al.tags?.tag || [];
+      previewLastfmCover  = cover;
+      previewCoverPayload = { lf: cover, itunes: null };
+      openPreviewLastfm(al.name || title, al.artist || artist, cover, tracks, tags);
+    } catch {
+      document.getElementById('preview-content').innerHTML = `<div class="preview-loading">No se pudo cargar el tracklist desde Last.fm.</div>`;
+    }
+  }
+
+  let previewLastfmTracks = [];
+  let previewLastfmCover  = null;
+
+  function confirmLoadFromPreviewLastfm() {
+    document.getElementById('preview-overlay').classList.remove('show');
+    loadTracklistFromLastfm(previewTitle, previewArtist, previewLastfmTracks, previewLastfmCover);
+  }
+
+  async function loadTracklistFromLastfm(albumTitle, artist, tracks, coverUrl) {
+    const status  = document.getElementById('search-status');
+    const results = document.getElementById('search-results');
+    results.classList.remove('open');
+    status.textContent = `Cargando tracks de "${albumTitle}"…`;
+    status.classList.add('show');
+
+    try {
+      if (!tracks || !tracks.length) {
+        const url  = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(albumTitle)}&api_key=${LASTFM_KEY}&format=json`;
+        const res  = await fetch(url);
+        const data = await res.json();
+        if (!data.error && data.album?.tracks?.track) {
+          const t = data.album.tracks.track;
+          tracks = Array.isArray(t) ? t : [t];
+          if (!coverUrl) coverUrl = pickLastfmImage(data.album.image);
+        }
+      }
+      if (!tracks || !tracks.length) { status.textContent = 'No se encontraron tracks en Last.fm.'; return; }
+
+      const existingRows = document.querySelectorAll('#rows-body .row');
+      const existingScores = {};
+      existingRows.forEach(r => {
+        const name  = r.querySelector('input[type="text"]').value.trim().toLowerCase();
+        const score = r.querySelector('input[type="number"]').value;
+        if (name) existingScores[name] = score;
+      });
+      const hasSameAlbum = currentAlbum &&
+        currentAlbum.title.trim().toLowerCase() === albumTitle.trim().toLowerCase() &&
+        currentAlbum.artist.trim().toLowerCase() === artist.trim().toLowerCase();
+
+      document.getElementById('rows-body').innerHTML = '';
+      document.getElementById('output-text').innerHTML = '';
+      if (!hasSameAlbum) {
+        document.getElementById('cover-score').value = '';
+        document.getElementById('dot-cover').className = 'score-dot';
+      }
+      rowCount = 0; updateAverage();
+
+      tracks.forEach(t => {
+        const trackName  = t.name || 'Track';
+        const savedScore = hasSameAlbum ? (existingScores[trackName.trim().toLowerCase()] || '') : '';
+        addRow(trackName, savedScore);
+      });
+
+      currentAlbum = { title: albumTitle, artist, year: '', genre: '', coverUrl: coverUrl || null };
+      showAlbumBanner(currentAlbum);
+      status.textContent = `✓ ${tracks.length} tracks de ${artist} — ${albumTitle} cargados`;
+      document.getElementById('search-input').value  = '';
+      document.getElementById('search-artist').value = '';
+      saveData();
+    } catch(err) { status.textContent = 'Error al cargar el tracklist desde Last.fm.'; }
+  }
+
+  loadData();
+
+  /* ── DISCORD SETTINGS ── */
+  const BOT_SERVER = 'https://album-rater-bot-production.up.railway.app';
+
+  function openDiscordSettings() {
+    document.getElementById('discord-thread-input').value = localStorage.getItem('discord_thread_id') || '';
+    document.getElementById('discord-user-input').value   = localStorage.getItem('discord_user_id')   || '';
+    const saved = localStorage.getItem('discord_thread_id');
+    document.getElementById('discord-settings-status').textContent = saved ? '✓ Configuración guardada' : '';
+    document.getElementById('discord-modal').style.display = 'flex';
+  }
+
+  function closeDiscordSettings() {
+    document.getElementById('discord-modal').style.display = 'none';
+  }
+
+  function saveDiscordSettings() {
+    const threadVal = document.getElementById('discord-thread-input').value.trim();
+    const userVal   = document.getElementById('discord-user-input').value.trim();
+    if (!threadVal) {
+      document.getElementById('discord-settings-status').textContent = '⚠ Ingresá un Thread ID';
+      return;
+    }
+    if (!userVal) {
+      document.getElementById('discord-settings-status').textContent = '⚠ Ingresá tu nombre de usuario';
+      return;
+    }
+    localStorage.setItem('discord_thread_id', threadVal);
+    localStorage.setItem('discord_user_id',   userVal);
+    document.getElementById('discord-settings-status').textContent = '✓ Guardado correctamente';
+    setTimeout(closeDiscordSettings, 1200);
+  }
+
+  // Close modal clicking outside
+  document.getElementById('discord-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeDiscordSettings();
+  });
+
+  /* ── SEND TO DISCORD FORUM ── */
+
+  async function sendToDiscord() {
+    const threadId = localStorage.getItem('discord_thread_id');
+    if (!threadId) {
+      openDiscordSettings();
+      showToast('⚠ Configurá tu Thread ID primero');
+      return;
+    }
+
+    const card = document.querySelector('.out-card');
+    if (!card) { showToast('⚠ Genera el resultado primero'); return; }
+
+    const btn = document.getElementById('discord-btn');
+    const btnText = document.getElementById('discord-btn-text');
+    btn.disabled = true;
+    btnText.textContent = 'Enviando…';
+
+    try {
+      // PC fixed mode (640px, scale 2x) — same as "Tamaño PC fijo"
+      const savedWidth    = card.style.width;
+      const savedMaxWidth = card.style.maxWidth;
+      card.style.width    = '640px';
+      card.style.maxWidth = '640px';
+      card.getBoundingClientRect();
+
+      // Convert score-11 gradient text to solid for canvas
+      const score11Els = card.querySelectorAll('.score-11 .out-track-num, .score-11 .out-track-name, .score-11 .out-track-score');
+      const savedStyles = [];
+      score11Els.forEach(el => {
+        savedStyles.push({ el, style: el.getAttribute('style') || '' });
+        el.style.cssText = 'color:#60d4f0; -webkit-text-fill-color:#60d4f0; background:none; -webkit-background-clip:unset; background-clip:unset; filter:none; font-weight:700; text-shadow: 0 0 8px #60d4f0, 0 0 20px #b060f0;';
+      });
+
+      const cardCanvas = await html2canvas(card, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        ignoreElements: el => el.classList.contains('out-card-bg')
+      });
+
+      savedStyles.forEach(({ el, style }) => el.setAttribute('style', style));
+      card.style.width    = savedWidth;
+      card.style.maxWidth = savedMaxWidth;
+
+      // Compose final canvas with blurred album bg
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width  = cardCanvas.width;
+      finalCanvas.height = cardCanvas.height;
+      const ctx = finalCanvas.getContext('2d');
+      ctx.fillStyle = '#15151a';
+      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+
+      if (currentAlbum?.coverUrl) {
+        await new Promise(resolve => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            ctx.save();
+            const size = Math.max(finalCanvas.width, finalCanvas.height) * 1.2;
+            const x = (finalCanvas.width  - size) / 2;
+            const y = (finalCanvas.height - size) / 2;
+            ctx.filter = 'blur(40px) saturate(1.4)';
+            ctx.globalAlpha = 0.22;
+            ctx.drawImage(img, x, y, size, size);
+            ctx.restore();
+            resolve();
+          };
+          img.onerror = resolve;
+          img.src = currentAlbum.coverUrl;
+        });
+      }
+      ctx.globalAlpha = 1;
+      ctx.drawImage(cardCanvas, 0, 0);
+
+      const blob = await new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
+
+      // Build title: - BLONDE [FRANK OCEAN]
+      const albumTitle  = (currentAlbum?.title  || 'Álbum').toUpperCase();
+      const albumArtist = (currentAlbum?.artist || '').toUpperCase();
+      const title = albumArtist ? `- ${albumTitle} [${albumArtist}]` : `- ${albumTitle}`;
+
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('file', blob, 'rating.png');
+
+      formData.append('thread_id', threadId);
+
+      // Add user identity and rating data for Supabase
+      const userId = localStorage.getItem('discord_user_id') || '';
+      if (userId) formData.append('user_id', userId);
+      formData.append('artist', currentAlbum?.artist || '');
+      formData.append('cover_url', currentAlbum?.coverUrl || '');
+      formData.append('final_score', document.querySelector('.out-final-avg')?.textContent || '');
+      formData.append('final_rank', document.querySelector('.out-final-rank')?.textContent || '');
+
+      // Collect track scores
+      const trackRows = document.querySelectorAll('.out-track-row');
+      const tracks = [];
+      trackRows.forEach(row => {
+        const name  = row.querySelector('.out-track-name')?.textContent || '';
+        const score = row.querySelector('.out-track-score')?.textContent || '';
+        if (name) tracks.push({ name, score });
+      });
+      formData.append('tracks', JSON.stringify(tracks));
+
+      const res = await fetch(`${BOT_SERVER}/post`, { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (res.ok) {
+        showToast('✅ Enviado al foro de Discord');
+        btnText.textContent = '✓ Enviado';
+        setTimeout(() => { btnText.textContent = 'Discord'; btn.disabled = false; }, 3000);
+      } else {
+        console.error('Error:', data);
+        showToast('⚠ Error al enviar a Discord');
+        btnText.textContent = 'Discord';
+        btn.disabled = false;
+      }
+    } catch(e) {
+      console.error(e);
+      showToast('⚠ Error al conectar con el servidor');
+      btnText.textContent = 'Discord';
+      btn.disabled = false;
+    }
+  }
+
+  /* ── EXPORT TO VAULT ── */
+  function exportToVault() {
+    // Collect tracks & scores
+    const rows = document.querySelectorAll('#rows-body .row');
+    if (!rows.length) { showToast('⚠ No hay datos para exportar'); return; }
+
+    let entries = [], sum = 0, count = 0;
+    rows.forEach((r, i) => {
+      const name  = r.querySelector('input[type="text"]').value.trim() || `Track ${i + 1}`;
+      const score = parseFloat(r.querySelector('input[type="number"]').value);
+      if (!isNaN(score)) { sum += score; count++; }
+      entries.push({ name, score });
+    });
+
+    if (count === 0) { showToast('⚠ No hay tracks con puntuación'); return; }
+
+    // Penalty -0.25 if < 5 scored tracks
+    const rawAvg = sum / count;
+    const penalty = (count < 5) ? 0.25 : 0;
+    const finalScore = parseFloat(Math.max(0, rawAvg - penalty).toFixed(2));
+
+    // Max score = "legendary" (11 in rater = !! in vault)
+    const maxScore = Math.max(...entries.filter(e => !isNaN(e.score)).map(e => e.score));
+
+    // Build vault-format tracklist
+    // Rater score 11 → !! prefix (legendary in vault)
+    // Highest score (best track, not 11) → * prefix (favorite in vault)
+    const bestNonLegendary = entries
+      .filter(e => !isNaN(e.score) && e.score < 11)
+      .sort((a, b) => b.score - a.score)[0];
+
+    const vaultTracks = entries.map(e => {
+      const isLegendary = !isNaN(e.score) && e.score >= 11;
+      const isBest = !isLegendary && bestNonLegendary && e.name === bestNonLegendary.name;
+      if (isLegendary) return '!!' + e.name;
+      if (isBest)      return '*' + e.name;
+      return e.name;
+    });
+
+    // Genres from rater (single genre field → array)
+    const genreRaw = (currentAlbum?.genre || document.getElementById('album-art-genre')?.value || '').trim();
+    const genres = genreRaw ? genreRaw.split(/[,/]/).map(g => g.trim()).filter(Boolean) : [];
+
+    // Build vault album object
+    const vaultAlbum = {
+      _vaultImport: true,
+      title:     currentAlbum?.title   || document.getElementById('album-art-title')?.value  || '',
+      artist:    currentAlbum?.artist  || document.getElementById('album-art-artist')?.value || '',
+      year:      currentAlbum?.year    || document.getElementById('album-art-year')?.value   || '',
+      score:     finalScore,
+      coverUrl:  currentAlbum?.coverUrl || '',
+      tracks:    vaultTracks,
+      genres,
+      status:    'listened',
+      listenDate: new Date().toISOString().slice(0, 10),
+      notes:     (document.getElementById('comment-input')?.value || '').trim(),
+      // Extra rater metadata (informational)
+      _raterMeta: {
+        rawAvg:    parseFloat(rawAvg.toFixed(3)),
+        penalty,
+        tracksRated: count,
+        exportedAt: new Date().toISOString()
+      }
+    };
+
+    if (!vaultAlbum.title) { showToast('⚠ Añade el nombre del álbum primero'); return; }
+
+    // Download as JSON
+    const blob = new Blob([JSON.stringify(vaultAlbum, null, 2)], { type: 'application/json' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const safeName = (vaultAlbum.title + '-' + vaultAlbum.artist).replace(/[^a-z0-9]/gi, '-').toLowerCase();
+    a.href = url;
+    a.download = safeName + '.vault-import.json';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    document.getElementById('vault-export-notice').style.display = 'block';
+    showToast('📤 Vault export descargado');
+  }
+</script>
+</body>
+</html>
