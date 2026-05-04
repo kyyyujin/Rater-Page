@@ -834,6 +834,96 @@
     transition: background 0.2s;
   }
   .welcome-modal-btn:hover { background: #80e4ff; }
+
+  /* ── CUSTOM CONFIRM MODAL ── */
+  #confirm-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    z-index: 2000; display: none; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  #confirm-backdrop.open { display: flex; }
+  #confirm-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    width: 100%; max-width: 360px;
+    padding: 28px 24px 22px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+    animation: confirmPop 0.28s cubic-bezier(.34,1.4,.64,1);
+    text-align: center;
+    position: relative;
+  }
+  @keyframes confirmPop {
+    from { opacity: 0; transform: scale(0.88) translateY(12px); }
+    to   { opacity: 1; transform: scale(1)    translateY(0);    }
+  }
+  #confirm-cover-wrap {
+    width: 72px; height: 72px; border-radius: 12px; overflow: hidden;
+    margin: 0 auto 16px; border: 1px solid var(--border); background: var(--surface2);
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+  }
+  #confirm-cover-img { width: 100%; height: 100%; object-fit: cover; display: none; }
+  #confirm-title {
+    font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 800;
+    color: var(--text); margin-bottom: 4px; line-height: 1.2;
+  }
+  #confirm-artist {
+    font-size: 11px; color: var(--muted); margin-bottom: 4px; letter-spacing: 0.05em;
+  }
+  #confirm-body {
+    font-size: 12px; color: var(--muted); margin-bottom: 22px; line-height: 1.6;
+    margin-top: 10px;
+  }
+  .confirm-btns { display: flex; gap: 10px; }
+  #confirm-cancel {
+    flex: 1; padding: 12px; border-radius: 10px;
+    border: 1px solid var(--border); background: transparent;
+    color: var(--muted); font-family: 'DM Mono', monospace;
+    font-size: 12px; cursor: pointer; transition: all 0.2s;
+  }
+  #confirm-cancel:hover { border-color: #444; color: var(--text); }
+  #confirm-ok {
+    flex: 2; padding: 12px; border-radius: 10px;
+    border: none; background: var(--accent);
+    color: #0d0d0f; font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 13px; cursor: pointer;
+    transition: background 0.2s; letter-spacing: 0.02em;
+  }
+  #confirm-ok:hover { background: #d8ff70; }
+
+  /* ── HISTORY SEARCH ── */
+  .history-search-wrap {
+    padding: 12px 14px 8px;
+    border-bottom: 1px solid var(--border);
+    display: none;
+  }
+  .history-list.open .history-search-wrap { display: block; }
+  .history-search-inner {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px;
+    transition: border-color 0.2s;
+  }
+  .history-search-inner:focus-within { border-color: rgba(200,240,96,0.4); }
+  .history-search-icon { font-size: 13px; color: var(--muted); flex-shrink: 0; }
+  #history-search-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    font-family: 'DM Mono', monospace; font-size: 13px;
+    color: var(--text); min-width: 0;
+  }
+  #history-search-input::placeholder { color: var(--muted); }
+  #history-search-clear {
+    background: none; border: none; color: var(--muted);
+    font-size: 15px; cursor: pointer; padding: 0; line-height: 1;
+    display: none; flex-shrink: 0;
+  }
+  #history-search-clear.show { display: block; }
+  #history-search-clear:hover { color: var(--text); }
+  #history-no-results {
+    display: none; padding: 18px 14px;
+    font-size: 12px; color: var(--muted); text-align: center;
+  }
 </style>
 </head>
 <body>
@@ -973,6 +1063,16 @@
       <span class="history-chevron" id="history-chevron">▼</span>
     </div>
     <div class="history-list" id="history-list">
+      <!-- History search bar -->
+      <div class="history-search-wrap">
+        <div class="history-search-inner">
+          <span class="history-search-icon">🔍</span>
+          <input id="history-search-input" type="text" placeholder="Buscar en historial…"
+            oninput="filterHistory()" autocomplete="off" />
+          <button id="history-search-clear" onclick="clearHistorySearch()">✕</button>
+        </div>
+      </div>
+      <div id="history-no-results">No se encontraron resultados.</div>
       <div class="history-empty" id="history-empty">Todavía no hay álbumes guardados.</div>
     </div>
   </div>
@@ -1103,6 +1203,23 @@
       <em>Solo se puede usar después de generar el resultado.</em>
     </p>
     <button class="welcome-modal-btn" onclick="closeWelcomeModal()">Entendido ✓</button>
+  </div>
+</div>
+
+<!-- CUSTOM CONFIRM MODAL -->
+<div id="confirm-backdrop">
+  <div id="confirm-box">
+    <div id="confirm-cover-wrap">
+      <img id="confirm-cover-img" src="" alt="" />
+      <span id="confirm-cover-emoji">🎵</span>
+    </div>
+    <div id="confirm-title"></div>
+    <div id="confirm-artist"></div>
+    <div id="confirm-body">Se reemplazará la sesión actual.</div>
+    <div class="confirm-btns">
+      <button id="confirm-cancel" onclick="closeConfirm()">Cancelar</button>
+      <button id="confirm-ok">⬆ Cargar</button>
+    </div>
   </div>
 </div>
 
@@ -1671,8 +1788,8 @@
 
   /* ── CLEAR ── */
   function clearAll() {
-    if (!confirm('¿Limpiar todo?')) return;
-    document.getElementById('rows-body').innerHTML = '';
+    showConfirm({ album: { title: '¿Limpiar todo?', artist: 'Se perderá la sesión actual', coverUrl: null } }, () => {
+      document.getElementById('rows-body').innerHTML = '';
     document.getElementById('output-text').innerHTML = '';
     document.getElementById('cover-score').value = '';
     document.getElementById('dot-cover').className = 'score-dot';
@@ -1691,6 +1808,7 @@
     // Disable Guardar button again
     const btnSaveDb = document.getElementById('btn-save-db');
     if (btnSaveDb) { btnSaveDb.disabled = true; btnSaveDb.style.opacity = '0.4'; btnSaveDb.style.cursor = 'not-allowed'; btnSaveDb.title = 'Genera primero el resultado para guardar'; }
+    });
   }
 
   /* ── STORAGE ── */
@@ -2444,25 +2562,85 @@
   }
 
   function loadFromHistory(entry) {
-    if (!confirm(`¿Cargar "${entry.album?.title || 'este álbum'}"? Se reemplazará la sesión actual.`)) return;
-    document.getElementById('rows-body').innerHTML = '';
-    document.getElementById('output-text').innerHTML = '';
-    rowCount = 0;
-    entry.rows.forEach(r => addRow(r.name, r.score));
-    // Restore rescores
-    document.querySelectorAll('#rows-body .row').forEach((rowEl, i) => {
-      const ri = rowEl.querySelector('.rescore-input');
-      if (ri && entry.rows[i]?.rscore) ri.value = entry.rows[i].rscore;
+    showConfirm(entry, () => {
+      document.getElementById('rows-body').innerHTML = '';
+      document.getElementById('output-text').innerHTML = '';
+      rowCount = 0;
+      entry.rows.forEach(r => addRow(r.name, r.score));
+      // Restore rescores
+      document.querySelectorAll('#rows-body .row').forEach((rowEl, i) => {
+        const ri = rowEl.querySelector('.rescore-input');
+        if (ri && entry.rows[i]?.rscore) ri.value = entry.rows[i].rscore;
+      });
+      document.getElementById('cover-score').value = entry.cover || '';
+      document.getElementById('comment-input').value = entry.comment || '';
+      if (entry.cover) updateCover();
+      updateRescoreTotal();
+      currentAlbum = { ...entry.album };
+      showAlbumBanner(currentAlbum);
+      saveData();
+      toggleHistory(); // close panel
+      showToast(`✓ Cargado: ${entry.album?.title || 'álbum'}`);
     });
-    document.getElementById('cover-score').value = entry.cover || '';
-    document.getElementById('comment-input').value = entry.comment || '';
-    if (entry.cover) updateCover();
-    updateRescoreTotal();
-    currentAlbum = { ...entry.album };
-    showAlbumBanner(currentAlbum);
-    saveData();
-    toggleHistory(); // close panel
-    showToast(`✓ Cargado: ${entry.album?.title || 'álbum'}`);
+  }
+
+  /* ── CUSTOM CONFIRM ── */
+  let _confirmCallback = null;
+  function showConfirm(entry, onOk) {
+    _confirmCallback = onOk;
+    const title  = entry.album?.title  || 'este álbum';
+    const artist = entry.album?.artist || '';
+    const cover  = entry.album?.coverUrl || '';
+    document.getElementById('confirm-title').textContent  = title;
+    document.getElementById('confirm-artist').textContent = artist;
+    const img   = document.getElementById('confirm-cover-img');
+    const emoji = document.getElementById('confirm-cover-emoji');
+    if (cover) {
+      img.src = cover; img.style.display = 'block'; emoji.style.display = 'none';
+    } else {
+      img.style.display = 'none'; emoji.style.display = 'block';
+    }
+    document.getElementById('confirm-backdrop').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeConfirm() {
+    document.getElementById('confirm-backdrop').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('confirm-ok').addEventListener('click', () => {
+    closeConfirm();
+    if (_confirmCallback) { const cb = _confirmCallback; _confirmCallback = null; cb(); }
+  });
+  document.getElementById('confirm-cancel').addEventListener('click', () => {
+    _confirmCallback = null;
+    closeConfirm();
+  });
+  document.getElementById('confirm-backdrop').addEventListener('click', e => {
+    if (e.target === document.getElementById('confirm-backdrop')) {
+      _confirmCallback = null;
+      closeConfirm();
+    }
+  });
+
+  /* ── HISTORY SEARCH ── */
+  function filterHistory() {
+    const q = document.getElementById('history-search-input').value.trim().toLowerCase();
+    document.getElementById('history-search-clear').classList.toggle('show', q.length > 0);
+    const items = document.querySelectorAll('#history-list .history-item');
+    let visible = 0;
+    items.forEach(item => {
+      const text = item.textContent.toLowerCase();
+      const match = !q || text.includes(q);
+      item.style.display = match ? '' : 'none';
+      if (match) visible++;
+    });
+    document.getElementById('history-no-results').style.display =
+      (q && visible === 0) ? 'block' : 'none';
+  }
+  function clearHistorySearch() {
+    document.getElementById('history-search-input').value = '';
+    document.getElementById('history-search-clear').classList.remove('show');
+    filterHistory();
   }
 
   function updatePageBg(coverUrl) {
