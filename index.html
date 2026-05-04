@@ -3015,8 +3015,8 @@
     btn.innerHTML = '⏳ Guardando…';
 
     try {
-      // Build image canvas (same as Discord)
-      const savedWidth = card.style.width;
+      // Generar imagen igual que Discord
+      const savedWidth    = card.style.width;
       const savedMaxWidth = card.style.maxWidth;
       card.style.width    = '640px';
       card.style.maxWidth = '640px';
@@ -3073,22 +3073,6 @@
       const albumArtist = (currentAlbum?.artist || '').toUpperCase();
       const title = albumArtist ? `- ${albumTitle} [${albumArtist}]` : `- ${albumTitle}`;
 
-      const threadId = localStorage.getItem('discord_thread_id') || '';
-      const formData = new FormData();
-      formData.append('title', title);
-      formData.append('album_title', currentAlbum?.title || '');
-      formData.append('file', blob, 'rating.png');
-      formData.append('thread_id', threadId);
-
-      const userId = localStorage.getItem('discord_user_id') || '';
-      if (userId) formData.append('user_id', userId);
-      formData.append('artist',    currentAlbum?.artist   || '');
-      formData.append('year',      currentAlbum?.year     || '');
-      formData.append('genre',     currentAlbum?.genre    || '');
-      formData.append('cover_url', currentAlbum?.coverUrl || '');
-      formData.append('final_score', document.querySelector('.out-final-avg')?.textContent || '');
-      formData.append('final_rank',  document.querySelector('.out-final-rank')?.textContent || '');
-
       const trackInputRows = document.querySelectorAll('#rows-body .row');
       const tracks = [];
       trackInputRows.forEach(row => {
@@ -3098,10 +3082,25 @@
         const score = scoreEl ? scoreEl.value.trim() : '';
         if (name) tracks.push({ name, score });
       });
-      formData.append('tracks', JSON.stringify(tracks));
-      formData.append('db_only', '1'); // flag: skip Discord post, DB only
 
-      const res = await fetch(`${BOT_SERVER}/post`, { method: 'POST', body: formData });
+      const userId = localStorage.getItem('discord_user_id') || '';
+
+      const formData = new FormData();
+      formData.append('title',       title);
+      formData.append('album_title', currentAlbum?.title    || '');
+      formData.append('file',        blob, 'rating.png');
+      formData.append('user_id',     userId);
+      formData.append('artist',      currentAlbum?.artist   || '');
+      formData.append('year',        currentAlbum?.year     || '');
+      formData.append('genre',       currentAlbum?.genre    || '');
+      formData.append('cover_url',   currentAlbum?.coverUrl || '');
+      formData.append('final_score', document.querySelector('.out-final-avg')?.textContent || '');
+      formData.append('final_rank',  document.querySelector('.out-final-rank')?.textContent || '');
+      formData.append('tracks',      JSON.stringify(tracks));
+      formData.append('db_only',     '1');
+      // Sin thread_id → el servidor guarda en DB pero no postea en Discord
+
+      const res = await fetch(`${BOT_SERVER}/save`, { method: 'POST', body: formData });
       const data = await res.json();
 
       if (res.ok) {
@@ -3275,6 +3274,9 @@
         showToast('✅ Enviado al foro de Discord');
         btnText.textContent = '✓ Enviado';
         setTimeout(() => { btnText.textContent = 'Discord'; btn.disabled = false; }, 3000);
+        // Deshabilitar Guardar para evitar duplicado en la DB
+        const btnSaveDb = document.getElementById('btn-save-db');
+        if (btnSaveDb) { btnSaveDb.disabled = true; btnSaveDb.style.opacity = '0.4'; btnSaveDb.style.cursor = 'not-allowed'; btnSaveDb.title = 'Ya guardado vía Discord'; }
       } else {
         console.error('Error:', data);
         showToast('⚠ Error al enviar a Discord');
