@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Album Rater</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
@@ -906,7 +906,19 @@
   }
   .spotify-reload-btn:hover { background: rgba(30,215,96,0.1); }
 
-  /* ── Overview hero cards ── */
+  .spotify-section, .spotify-section * {
+    font-family: 'Inter', sans-serif;
+  }
+  .spotify-section .sp-artist-name,
+  .spotify-section .sp-track-name,
+  .spotify-section .sp-label,
+  .spotify-section .sp-evo-artist-name {
+    font-family: 'Syne', sans-serif;
+  }
+  .spotify-section .spotify-tab {
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.06em;
+  }
   .sp-overview-grid {
     display: grid; grid-template-columns: repeat(6, 1fr);
     gap: 1px; background: var(--border);
@@ -926,7 +938,7 @@
   .sp-overview-card:hover::before { opacity:1; }
   .sp-overview-card:hover { background: rgba(30,215,96,0.03); }
   .sp-overview-val {
-    font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800;
+    font-family: 'Inter', sans-serif; font-size: 1.4rem; font-weight: 800;
     color: #1ed760; line-height: 1; margin-bottom: 5px;
     animation: spCountUp 0.6s ease;
   }
@@ -1011,7 +1023,7 @@
   }
   .sp-artist-rank.top3 { color: #1ed760; }
   .sp-artist-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .sp-artist-hours { font-family:'Syne',sans-serif; font-size:15px; font-weight:800; color:#1ed760; line-height:1; margin-bottom:3px; }
+  .sp-artist-hours { font-family:'Inter',sans-serif; font-size:15px; font-weight:800; color:#1ed760; line-height:1; margin-bottom:3px; }
   .sp-artist-meta { font-size:10px; color:var(--muted); letter-spacing:0.04em; }
 
   /* ── Track rows ── */
@@ -1030,7 +1042,7 @@
   .sp-track-bar-wrap { display:flex; align-items:center; gap:8px; min-width:90px; }
   .sp-bar-bg { flex:1; height:3px; background:var(--border); border-radius:2px; min-width:40px; }
   .sp-bar-fill { height:100%; border-radius:2px; background: linear-gradient(90deg,#1ed760,#5aff9f); width:0%; transition:width 0.7s cubic-bezier(0.4,0,0.2,1); }
-  .sp-track-plays { font-family:'Syne',sans-serif; font-size:13px; font-weight:800; color:#1ed760; white-space:nowrap; min-width:32px; text-align:right; }
+  .sp-track-plays { font-family:'Inter',sans-serif; font-size:13px; font-weight:800; color:#1ed760; white-space:nowrap; min-width:32px; text-align:right; }
 
   /* ── Bar chart (months/weekday) ── */
   .sp-bar-chart { display:flex; align-items:flex-end; gap:4px; padding:0 2px; }
@@ -1070,9 +1082,9 @@
     transition:all 0.2s; margin-bottom:8px; animation: spCardIn 0.35s ease both;
   }
   .sp-cross-card:hover { border-color:rgba(30,215,96,0.3); transform:translateX(4px); }
-  .sp-cross-score { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; min-width:48px; text-align:center; }
+  .sp-cross-score { font-family:'Inter',sans-serif; font-size:22px; font-weight:800; min-width:48px; text-align:center; }
   .sp-cross-info { flex:1; min-width:0; }
-  .sp-cross-hours { font-family:'Syne',sans-serif; font-size:14px; font-weight:800; color:#1ed760; white-space:nowrap; }
+  .sp-cross-hours { font-family:'Inter',sans-serif; font-size:14px; font-weight:800; color:#1ed760; white-space:nowrap; }
 
   /* ── Show more ── */
   .sp-show-more { text-align:center; margin-top:14px; }
@@ -1083,6 +1095,41 @@
     border-radius:20px; transition:all 0.2s;
   }
   .sp-show-more button:hover { border-color:#1ed760; color:#1ed760; }
+
+  /* ── Custom Evo Dropdown ── */
+  .sp-evo-dropdown { position:relative; flex:1; min-width:180px; user-select:none; }
+  .sp-evo-dropdown-btn {
+    width:100%; background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:13px;
+    padding:9px 36px 9px 14px; cursor:pointer; transition:border-color 0.2s;
+    text-align:left; display:flex; align-items:center; justify-content:space-between;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .sp-evo-dropdown-btn:hover, .sp-evo-dropdown-btn.open { border-color:rgba(30,215,96,0.4); }
+  .sp-evo-dropdown-btn::after {
+    content:''; width:8px; height:8px; flex-shrink:0; margin-left:8px;
+    border-right:2px solid var(--muted); border-bottom:2px solid var(--muted);
+    transform:rotate(45deg) translateY(-2px); transition:transform 0.2s;
+  }
+  .sp-evo-dropdown-btn.open::after { transform:rotate(-135deg) translateY(-2px); }
+  .sp-evo-dropdown-list {
+    position:absolute; top:calc(100% + 6px); left:0; right:0; z-index:200;
+    background:var(--surface2); border:1px solid rgba(30,215,96,0.25);
+    border-radius:10px; max-height:260px; overflow-y:auto;
+    box-shadow:0 12px 32px rgba(0,0,0,0.5); scrollbar-width:thin;
+    scrollbar-color:var(--border) transparent;
+    animation: spPanelIn 0.15s ease;
+  }
+  .sp-evo-dropdown-list::-webkit-scrollbar { width:4px; }
+  .sp-evo-dropdown-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+  .sp-evo-dropdown-item {
+    padding:10px 14px; font-size:13px; color:var(--muted); cursor:pointer;
+    transition:all 0.12s; border-bottom:1px solid rgba(255,255,255,0.03);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .sp-evo-dropdown-item:last-child { border-bottom:none; }
+  .sp-evo-dropdown-item:hover { background:rgba(30,215,96,0.08); color:var(--text); }
+  .sp-evo-dropdown-item.selected { color:#1ed760; background:rgba(30,215,96,0.05); }
 
   /* ── Artist Evolution ── */
   .sp-evo-select-wrap {
@@ -4670,17 +4717,17 @@
     const skipped = spData.filter(s=>s.skipped || s.ms < 30000).length;
     const skipPct = spData.length ? Math.round(skipped/spData.length*100) : 0;
     const stats = [
-      { val: fmtHours(totalMs), lbl: 'Tiempo total' },
-      { val: real.length.toLocaleString(), lbl: 'Plays reales' },
-      { val: artists.toLocaleString(), lbl: 'Artistas' },
-      { val: tracks.toLocaleString(), lbl: 'Canciones únicas' },
-      { val: days, lbl: 'Días activos' },
-      { val: skipPct+'%', lbl: 'Skip rate' },
+      { val: fmtHours(totalMs),              lbl: 'Tiempo total',      color: '#1ed760' },
+      { val: real.length.toLocaleString(),   lbl: 'Plays reales',      color: '#60d4f0' },
+      { val: artists.toLocaleString(),       lbl: 'Artistas',          color: '#c8f060' },
+      { val: tracks.toLocaleString(),        lbl: 'Canciones únicas',  color: '#f0a060' },
+      { val: days,                           lbl: 'Días activos',      color: '#c084fc' },
+      { val: skipPct+'%',                    lbl: 'Skip rate',         color: skipPct>40?'#f06070':skipPct>20?'#f0c060':'#1ed760' },
     ];
     document.getElementById('spotify-overview').innerHTML = `
       <div class="sp-overview-grid">
         ${stats.map(s=>`<div class="sp-overview-card">
-          <div class="sp-overview-val">${s.val}</div>
+          <div class="sp-overview-val" style="font-family:'Inter',sans-serif;font-weight:800;color:${s.color}">${s.val}</div>
           <div class="sp-overview-lbl">${s.lbl}</div>
         </div>`).join('')}
       </div>`;
@@ -4933,16 +4980,66 @@
     panel.innerHTML = `
       <div class="sp-label">Evolución de artista</div>
       <div class="sp-evo-select-wrap">
-        <select class="sp-evo-select" id="sp-evo-select" onchange="onEvoSelectChange(this.value)">
-          ${sortedArtists.slice(0,80).map(([a]) =>
-            `<option value="${escHtml(a)}" ${a===_evoSelectedArtist?'selected':''}>${escHtml(a)}</option>`
-          ).join('')}
-        </select>
+        <div class="sp-evo-dropdown" id="sp-evo-dropdown">
+          <button class="sp-evo-dropdown-btn" id="sp-evo-dropdown-btn" onclick="toggleEvoDropdown()">
+            <span id="sp-evo-dropdown-label">${escHtml(_evoSelectedArtist)}</span>
+          </button>
+          <div class="sp-evo-dropdown-list" id="sp-evo-dropdown-list" style="display:none">
+            ${sortedArtists.slice(0,80).map(([a]) => `
+              <div class="sp-evo-dropdown-item${a===_evoSelectedArtist?' selected':''}" data-artist="${escHtml(a)}">
+                ${escHtml(a)}
+              </div>`).join('')}
+          </div>
+        </div>
       </div>
       <div id="sp-evo-content"></div>
     `;
 
+    // Attach click listeners after rendering
+    panel.querySelectorAll('.sp-evo-dropdown-item').forEach(el => {
+      el.addEventListener('click', () => pickEvoArtist(el.dataset.artist));
+    });
+
     renderEvoChartFor(_evoSelectedArtist, artistMap[_evoSelectedArtist]);
+  }
+
+  function toggleEvoDropdown() {
+    const list = document.getElementById('sp-evo-dropdown-list');
+    const btn  = document.getElementById('sp-evo-dropdown-btn');
+    const open = list.style.display === 'none';
+    list.style.display = open ? 'block' : 'none';
+    btn.classList.toggle('open', open);
+    if (open) {
+      // Close when clicking outside
+      setTimeout(() => {
+        document.addEventListener('click', function closeEvo(e) {
+          if (!document.getElementById('sp-evo-dropdown')?.contains(e.target)) {
+            list.style.display = 'none';
+            btn.classList.remove('open');
+            document.removeEventListener('click', closeEvo);
+          }
+        });
+      }, 0);
+    }
+  }
+
+  function pickEvoArtist(artist) {
+    _evoSelectedArtist = artist;
+    document.getElementById('sp-evo-dropdown-label').textContent = artist;
+    document.getElementById('sp-evo-dropdown-list').style.display = 'none';
+    document.getElementById('sp-evo-dropdown-btn').classList.remove('open');
+    // Update selected state
+    document.querySelectorAll('.sp-evo-dropdown-item').forEach(el => {
+      el.classList.toggle('selected', el.textContent.trim() === artist);
+    });
+    const artistMap = {};
+    spData.forEach(s => {
+      if (!s.artist) return;
+      if (!artistMap[s.artist]) artistMap[s.artist] = { plays:0, ms:0 };
+      artistMap[s.artist].plays++;
+      artistMap[s.artist].ms += s.ms;
+    });
+    renderEvoChartFor(artist, artistMap[artist]);
   }
 
   function onEvoSelectChange(artist) {
@@ -5155,14 +5252,18 @@
       monthStreams.forEach(s => { artistMs[s.artist] = (artistMs[s.artist]||0) + s.ms; });
       const top = Object.entries(artistMs).sort((a,b)=>b[1]-a[1])[0];
       if (!top) return;
-      const lbl = new Date(m+'-01').toLocaleDateString('es',{month:'long',year:'numeric'});
+      const lbl = new Date(m+'-01').toLocaleDateString('es',{month:'short',year:'2-digit'}).toUpperCase();
       const row = document.createElement('div');
       row.className = 'sp-track-row';
+      row.style.cssText = 'grid-template-columns:42px 1fr auto;gap:10px';
       row.innerHTML = `
-        <div class="sp-track-num" style="font-size:9px;color:var(--muted);min-width:44px">${lbl}</div>
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.04);border-radius:6px;padding:4px;min-height:40px">
+          <span style="font-size:8px;font-weight:700;color:var(--muted);letter-spacing:0.08em;line-height:1">${lbl.split(' ')[0]}</span>
+          <span style="font-size:10px;font-weight:800;color:var(--text);line-height:1.2">${lbl.split(' ')[1]||''}</span>
+        </div>
         <div class="sp-track-info">
           <div class="sp-track-name">${escHtml(top[0])}</div>
-          <div class="sp-track-artist">${monthStreams.length.toLocaleString()} streams ese mes</div>
+          <div class="sp-track-artist">${monthStreams.length.toLocaleString()} streams</div>
         </div>
         <div class="sp-track-plays">${fmtHours(top[1])}</div>`;
       list.appendChild(row);
@@ -5171,11 +5272,239 @@
   }
 
   /* ── HABITS ── */
+  function buildWrappedContent(wd, yr) {
+    const div = document.createElement('div');
+    div.id = 'sp-wrapped-content';
+    if (!wd) { div.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:16px 0">Sin datos para ${yr}.</div>`; return div; }
+
+    const peakMonthLabel = wd.peakMonth ? new Date(wd.peakMonth[0]+'-01').toLocaleDateString('es',{month:'long',year:'numeric'}) : '—';
+
+    div.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px">
+        <div class="sp-overview-card" style="border-radius:12px;border:1px solid var(--border)">
+          <div class="sp-overview-val">${fmtHours(wd.totalMs)}</div>
+          <div class="sp-overview-lbl">Tiempo total</div>
+        </div>
+        <div class="sp-overview-card" style="border-radius:12px;border:1px solid var(--border)">
+          <div class="sp-overview-val">${wd.count.toLocaleString()}</div>
+          <div class="sp-overview-lbl">Canciones</div>
+        </div>
+        <div class="sp-overview-card" style="border-radius:12px;border:1px solid var(--border)">
+          <div class="sp-overview-val">${wd.days}</div>
+          <div class="sp-overview-lbl">Días activos</div>
+        </div>
+        <div class="sp-overview-card" style="border-radius:12px;border:1px solid var(--border)">
+          <div class="sp-overview-val" style="font-size:0.95rem">${peakMonthLabel}</div>
+          <div class="sp-overview-lbl">Mes más activo</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div class="sp-label" style="margin-top:0;margin-bottom:10px">Top Artistas</div>
+          ${wd.topArtists.map(([ar,ms],i)=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+              <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:${i===0?'#1ed760':'var(--muted)'};min-width:16px">${i+1}</span>
+              <span style="flex:1;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(ar)}</span>
+              <span style="font-size:11px;color:var(--muted);white-space:nowrap">${fmtHours(ms)}</span>
+            </div>`).join('')}
+        </div>
+        <div>
+          <div class="sp-label" style="margin-top:0;margin-bottom:10px">Top Canciones</div>
+          ${wd.topTracks.map((t,i)=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)">
+              <span style="font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:${i===0?'#1ed760':'var(--muted)'};min-width:16px">${i+1}</span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(t.track)}</div>
+                <div style="font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(t.artist)}</div>
+              </div>
+              <span style="font-size:11px;color:var(--muted);white-space:nowrap">${t.plays}x</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    return div;
+  }
+
+  function reRenderWrapped(yr) {
+    const artistMs = {}, trackPlays = {}, albumPlays = {}, monthMs = {};
+    const d = spData.filter(s => s.ts?.startsWith(yr));
+    if (!d.length) return;
+    const totalMs = d.reduce((a,s)=>a+s.ms,0);
+    d.forEach(s => {
+      artistMs[s.artist] = (artistMs[s.artist]||0)+s.ms;
+      const tk = s.track+'|'+s.artist;
+      trackPlays[tk] = trackPlays[tk]||{track:s.track,artist:s.artist,plays:0};
+      trackPlays[tk].plays++;
+      if(s.album){albumPlays[s.album]=albumPlays[s.album]||{album:s.album,artist:s.artist,plays:0};albumPlays[s.album].plays++;}
+      const m=s.ts?.slice(0,7); if(m) monthMs[m]=(monthMs[m]||0)+s.ms;
+    });
+    const wd = {
+      totalMs, count: d.length,
+      days: new Set(d.map(s=>s.ts?.slice(0,10))).size,
+      topArtists: Object.entries(artistMs).sort((a,b)=>b[1]-a[1]).slice(0,5),
+      topTracks:  Object.values(trackPlays).sort((a,b)=>b.plays-a.plays).slice(0,5),
+      topAlbums:  Object.values(albumPlays).sort((a,b)=>b.plays-a.plays).slice(0,5),
+      peakMonth:  Object.entries(monthMs).sort((a,b)=>b[1]-a[1])[0],
+    };
+    const old = document.getElementById('sp-wrapped-content');
+    if (old) old.replaceWith(buildWrappedContent(wd, yr));
+  }
+
   function renderSpHabits() {
     const panel = document.getElementById('sp-panel-habits');
     panel.innerHTML = '';
 
-    // Hour heatmap
+    /* ── WRAPPED ── */
+    const years = [...new Set(spData.map(s => s.ts?.slice(0,4)).filter(Boolean))].sort().reverse();
+    const selectedYear = years[0] || new Date().getFullYear().toString();
+
+    const wrappedData = (yr) => {
+      const d = spData.filter(s => s.ts?.startsWith(yr));
+      if (!d.length) return null;
+      const totalMs = d.reduce((a,s) => a+s.ms, 0);
+      const artistMs = {}, trackPlays = {}, albumPlays = {}, monthMs = {};
+      d.forEach(s => {
+        artistMs[s.artist] = (artistMs[s.artist]||0) + s.ms;
+        const tk = s.track+'|'+s.artist;
+        trackPlays[tk] = (trackPlays[tk]||{track:s.track,artist:s.artist,plays:0});
+        trackPlays[tk].plays++;
+        if (s.album) { albumPlays[s.album] = (albumPlays[s.album]||{album:s.album,artist:s.artist,plays:0}); albumPlays[s.album].plays++; }
+        const m = s.ts?.slice(0,7);
+        if (m) monthMs[m] = (monthMs[m]||0) + s.ms;
+      });
+      const topArtists = Object.entries(artistMs).sort((a,b)=>b[1]-a[1]).slice(0,5);
+      const topTracks  = Object.values(trackPlays).sort((a,b)=>b.plays-a.plays).slice(0,5);
+      const topAlbums  = Object.values(albumPlays).sort((a,b)=>b.plays-a.plays).slice(0,5);
+      const peakMonth  = Object.entries(monthMs).sort((a,b)=>b[1]-a[1])[0];
+      const days       = new Set(d.map(s=>s.ts?.slice(0,10))).size;
+      return { totalMs, topArtists, topTracks, topAlbums, peakMonth, days, count: d.length };
+    };
+
+    const wd = wrappedData(selectedYear);
+
+    const wrappedSection = document.createElement('div');
+    wrappedSection.id = 'sp-wrapped-section';
+
+    const yearSelector = `<div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap">
+      <div class="sp-label" style="margin:0">🎁 Wrapped</div>
+      <select id="sp-wrapped-year" onchange="reRenderWrapped(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Inter',sans-serif;font-size:13px;padding:6px 12px;outline:none;cursor:pointer">
+        ${years.map(y => `<option value="${y}" ${y===selectedYear?'selected':''}>${y}</option>`).join('')}
+      </select>
+    </div>`;
+
+    wrappedSection.innerHTML = yearSelector;
+    wrappedSection.appendChild(buildWrappedContent(wd, selectedYear));
+    panel.appendChild(wrappedSection);
+
+    /* ── RACHAS ── */
+    const streakSection = document.createElement('div');
+    streakSection.style.marginTop = '32px';
+
+    const allDays = [...new Set(spData.map(s=>s.ts?.slice(0,10)).filter(Boolean))].sort();
+    let curStreak = 1, maxStreak = 1, maxStart = allDays[0], curStart = allDays[0];
+    for (let i = 1; i < allDays.length; i++) {
+      const diff = (new Date(allDays[i]) - new Date(allDays[i-1])) / 86400000;
+      if (diff === 1) {
+        curStreak++;
+        if (curStreak > maxStreak) { maxStreak = curStreak; maxStart = curStart; }
+      } else {
+        curStreak = 1; curStart = allDays[i];
+      }
+    }
+    // Current streak
+    const today = new Date(); today.setHours(0,0,0,0);
+    let activeCur = 0;
+    for (let i = allDays.length-1; i >= 0; i--) {
+      const d = new Date(allDays[i]); d.setHours(0,0,0,0);
+      const diff = Math.round((today - d) / 86400000);
+      if (diff === activeCur) activeCur++;
+      else break;
+    }
+    const maxEnd = new Date(maxStart);
+    maxEnd.setDate(maxEnd.getDate() + maxStreak - 1);
+    const maxEndLabel = maxEnd.toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'});
+    const maxStartLabel = new Date(maxStart).toLocaleDateString('es',{day:'numeric',month:'short',year:'numeric'});
+
+    streakSection.innerHTML = `
+      <div class="sp-label">🔥 Rachas</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px">
+        <div class="sp-overview-card" style="border-radius:12px;border:1px solid var(--border)">
+          <div class="sp-overview-val" style="color:#f0c060">${activeCur}</div>
+          <div class="sp-overview-lbl">Días seguidos ahora</div>
+        </div>
+        <div class="sp-overview-card" style="border-radius:12px;border:1px solid var(--border)">
+          <div class="sp-overview-val" style="color:#ff6b6b">${maxStreak}</div>
+          <div class="sp-overview-lbl">Racha más larga</div>
+        </div>
+        <div class="sp-overview-card" style="border-radius:12px;border:1px solid var(--border)">
+          <div class="sp-overview-val">${allDays.length}</div>
+          <div class="sp-overview-lbl">Días activos total</div>
+        </div>
+      </div>
+      <div style="padding:12px 16px;background:rgba(255,107,107,0.05);border:1px solid rgba(255,107,107,0.15);border-radius:10px;font-size:12px;color:var(--muted);line-height:1.7">
+        🏆 Racha más larga: <strong style="color:#ff6b6b">${maxStreak} días</strong> — del <strong style="color:var(--text)">${maxStartLabel}</strong> al <strong style="color:var(--text)">${maxEndLabel}</strong>
+      </div>`;
+    panel.appendChild(streakSection);
+
+    /* ── SESIONES ── */
+    const sessionSection = document.createElement('div');
+    sessionSection.style.marginTop = '32px';
+
+    // Detect sessions: gap > 30min = new session
+    const sorted = [...spData].filter(s=>s.ts).sort((a,b)=>a.ts<b.ts?-1:1);
+    const sessions = [];
+    let sess = null;
+    sorted.forEach(s => {
+      const t = new Date(s.ts.replace(' ','T')).getTime();
+      if (!sess || (t - sess.lastT) > 30 * 60 * 1000) {
+        if (sess) sessions.push(sess);
+        sess = { start: t, lastT: t, ms: s.ms, tracks: 1, artists: new Set([s.artist]) };
+      } else {
+        sess.lastT = t; sess.ms += s.ms; sess.tracks++;
+        sess.artists.add(s.artist);
+      }
+    });
+    if (sess) sessions.push(sess);
+
+    const avgSessionMs = sessions.reduce((a,s)=>a+s.ms,0) / (sessions.length||1);
+    const topSessions  = [...sessions].sort((a,b)=>b.ms-a.ms).slice(0,5);
+
+    sessionSection.innerHTML = `<div class="sp-label">🎧 Sesiones de escucha</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:16px">
+        <div class="sp-overview-card" style="border-radius:12px;border:1px solid var(--border)">
+          <div class="sp-overview-val">${sessions.length.toLocaleString()}</div>
+          <div class="sp-overview-lbl">Sesiones totales</div>
+        </div>
+        <div class="sp-overview-card" style="border-radius:12px;border:1px solid var(--border)">
+          <div class="sp-overview-val">${fmtHours(avgSessionMs)}</div>
+          <div class="sp-overview-lbl">Duración promedio</div>
+        </div>
+        <div class="sp-overview-card" style="border-radius:12px;border:1px solid var(--border)">
+          <div class="sp-overview-val">${fmtHours(topSessions[0]?.ms||0)}</div>
+          <div class="sp-overview-lbl">Sesión más larga</div>
+        </div>
+      </div>`;
+
+    const sessList = document.createElement('div');
+    sessList.className = 'sp-track-list';
+    const medals = ['🥇','🥈','🥉','4.','5.'];
+    topSessions.forEach((s, i) => {
+      const date = new Date(s.start).toLocaleDateString('es',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+      const time = new Date(s.start).toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+      const row = document.createElement('div');
+      row.className = 'sp-track-row';
+      row.innerHTML = `
+        <div class="sp-track-num">${medals[i]}</div>
+        <div class="sp-track-info">
+          <div class="sp-track-name">${date} · ${time}</div>
+          <div class="sp-track-artist">${s.tracks} canciones · ${s.artists.size} artistas</div>
+        </div>
+        <div class="sp-track-plays">${fmtHours(s.ms)}</div>`;
+      sessList.appendChild(row);
+    });
+    sessionSection.appendChild(sessList);
+    panel.appendChild(sessionSection);
+
+    /* ── HEATMAP HORA ── */
     const byHour = new Array(24).fill(0);
     spData.forEach(s => {
       if (!s.ts) return;
