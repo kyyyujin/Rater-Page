@@ -4026,6 +4026,8 @@
       : '✓ Guardado correctamente';
     // Refresh sync bar if Spotify data is loaded
     if (spData.length) updateLfmSyncBar();
+    // Restart Now Playing polling with new username
+    setTimeout(startNowPlayingPolling, 1500);
     setTimeout(closeDiscordSettings, 1400);
   }
 
@@ -5446,12 +5448,7 @@
     startNowPlayingPolling();
   });
 
-  // Also restart polling after saving Discord settings (which saves lastfm username)
-  const _origSaveDiscord = saveDiscordSettings;
-  function saveDiscordSettings() {
-    _origSaveDiscord();
-    setTimeout(startNowPlayingPolling, 1500);
-  }
+  // Restart Now Playing polling after saving settings (handled inside saveDiscordSettings directly)
 
   function escHtml(str) {
     if (!str) return '';
