@@ -840,7 +840,10 @@
   .spotify-section {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius); overflow: hidden; margin-bottom: 24px;
+    max-width: 100%;
   }
+  .spotify-panel { display: none; padding: 20px 24px; }
+  .spotify-panel.active { display: block; animation: spPanelIn 0.25s ease; }
   .spotify-header {
     display: flex; align-items: center; gap: 12px;
     padding: 16px 20px; cursor: pointer; user-select: none;
@@ -905,13 +908,14 @@
 
   /* ── Overview hero cards ── */
   .sp-overview-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr);
+    display: grid; grid-template-columns: repeat(6, 1fr);
     gap: 1px; background: var(--border);
     border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
   }
-  @media(max-width:480px) { .sp-overview-grid { grid-template-columns: repeat(2,1fr); } }
+  @media(max-width:700px) { .sp-overview-grid { grid-template-columns: repeat(3,1fr); } }
+  @media(max-width:420px) { .sp-overview-grid { grid-template-columns: repeat(2,1fr); } }
   .sp-overview-card {
-    background: var(--surface); padding: 18px 14px; text-align: center;
+    background: var(--surface); padding: 20px 14px; text-align: center;
     position: relative; overflow: hidden; transition: background 0.2s;
   }
   .sp-overview-card::before {
@@ -922,9 +926,9 @@
   .sp-overview-card:hover::before { opacity:1; }
   .sp-overview-card:hover { background: rgba(30,215,96,0.03); }
   .sp-overview-val {
-    font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800;
+    font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800;
     color: #1ed760; line-height: 1; margin-bottom: 5px;
-    animation: spCountUp 0.6s ease; 
+    animation: spCountUp 0.6s ease;
   }
   @keyframes spCountUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
   .sp-overview-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
@@ -936,7 +940,7 @@
   }
   .spotify-tabs::-webkit-scrollbar { display: none; }
   .spotify-tab {
-    padding: 12px 18px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
+    padding: 13px 20px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
     color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
     transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
     background: none; border-top: none; border-left: none; border-right: none;
@@ -945,8 +949,6 @@
   .spotify-tab:hover { color: var(--text); background: rgba(255,255,255,0.02); }
   .spotify-tab.active { color: #1ed760; border-bottom-color: #1ed760; }
 
-  .spotify-panel { display: none; padding: 20px 18px; }
-  .spotify-panel.active { display: block; animation: spPanelIn 0.25s ease; }
   @keyframes spPanelIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 
   /* ── Section label ── */
@@ -960,22 +962,24 @@
 
   /* ── Artist cards grid ── */
   .sp-artist-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 10px; margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px; margin-bottom: 16px;
   }
+  @media(min-width:900px) { .sp-artist-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); } }
   .sp-artist-card {
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 12px;
-    padding: 14px 12px; text-align: center; cursor: default;
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 14px; text-align: center; cursor: default;
     transition: all 0.25s cubic-bezier(.34,1.2,.64,1);
     position: relative; overflow: hidden;
     animation: spCardIn 0.4s ease both;
   }
   .sp-artist-card:hover {
-    border-color: rgba(30,215,96,0.4); transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(30,215,96,0.1);
+    border-color: rgba(30,215,96,0.4); transform: translateY(-4px);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.35), 0 0 0 1px rgba(30,215,96,0.1);
   }
   .sp-artist-card-bg {
-    position:absolute; inset:0; border-radius:12px;
+    position:absolute; inset:0; border-radius:14px;
     background-size:cover; background-position:center;
     filter:blur(30px) saturate(1.4) brightness(0.18);
     transform:scale(1.15); pointer-events:none; z-index:0; opacity:0;
@@ -988,8 +992,8 @@
     to   { opacity:1; transform:scale(1)   translateY(0);    }
   }
   .sp-artist-img {
-    width: 64px; height: 64px; border-radius: 50%; object-fit: cover;
-    margin: 0 auto 10px; display: block;
+    width: 72px; height: 72px; border-radius: 50%; object-fit: cover;
+    margin: 0 auto 12px; display: block;
     border: 2px solid rgba(30,215,96,0.2);
     background: var(--border);
     box-shadow: 0 4px 14px rgba(0,0,0,0.4);
@@ -997,39 +1001,39 @@
   }
   .sp-artist-card:hover .sp-artist-img { border-color: rgba(30,215,96,0.6); }
   .sp-artist-img-placeholder {
-    width: 64px; height: 64px; border-radius: 50%; margin: 0 auto 10px;
+    width: 72px; height: 72px; border-radius: 50%; margin: 0 auto 12px;
     background: var(--border); display: flex; align-items: center; justify-content: center;
-    font-size: 22px; border: 2px solid rgba(255,255,255,0.06);
+    font-size: 24px; border: 2px solid rgba(255,255,255,0.06);
   }
   .sp-artist-rank {
-    position:absolute; top:8px; left:10px; font-family:'Syne',sans-serif;
-    font-size:10px; font-weight:800; color:rgba(255,255,255,0.25);
+    position:absolute; top:9px; left:11px; font-family:'Syne',sans-serif;
+    font-size:11px; font-weight:800; color:rgba(255,255,255,0.25);
   }
   .sp-artist-rank.top3 { color: #1ed760; }
-  .sp-artist-name { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .sp-artist-hours { font-family:'Syne',sans-serif; font-size:14px; font-weight:800; color:#1ed760; line-height:1; margin-bottom:2px; }
-  .sp-artist-meta { font-size:9px; color:var(--muted); letter-spacing:0.05em; }
+  .sp-artist-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.2; margin-bottom: 6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sp-artist-hours { font-family:'Syne',sans-serif; font-size:15px; font-weight:800; color:#1ed760; line-height:1; margin-bottom:3px; }
+  .sp-artist-meta { font-size:10px; color:var(--muted); letter-spacing:0.04em; }
 
   /* ── Track rows ── */
-  .sp-track-list { display:flex; flex-direction:column; gap:4px; }
+  .sp-track-list { display:flex; flex-direction:column; gap:3px; }
   .sp-track-row {
-    display:grid; grid-template-columns: 24px 1fr auto auto;
-    align-items:center; gap:10px; padding:9px 12px; border-radius:8px;
+    display:grid; grid-template-columns: 28px 1fr auto auto;
+    align-items:center; gap:12px; padding:10px 14px; border-radius:10px;
     border: 1px solid transparent; transition: all 0.15s;
     animation: spCardIn 0.35s ease both;
   }
   .sp-track-row:hover { background: rgba(255,255,255,0.03); border-color: var(--border); }
-  .sp-track-num { font-size:10px; color:var(--muted); text-align:right; font-family:'Syne',sans-serif; font-weight:800; }
+  .sp-track-num { font-size:11px; color:var(--muted); text-align:right; font-family:'Syne',sans-serif; font-weight:800; }
   .sp-track-info { min-width:0; }
-  .sp-track-name { font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .sp-track-artist { font-size:10px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .sp-track-bar-wrap { display:flex; align-items:center; gap:6px; min-width:80px; }
-  .sp-bar-bg { flex:1; height:3px; background:var(--border); border-radius:2px; min-width:36px; }
+  .sp-track-name { font-size:14px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sp-track-artist { font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+  .sp-track-bar-wrap { display:flex; align-items:center; gap:8px; min-width:90px; }
+  .sp-bar-bg { flex:1; height:3px; background:var(--border); border-radius:2px; min-width:40px; }
   .sp-bar-fill { height:100%; border-radius:2px; background: linear-gradient(90deg,#1ed760,#5aff9f); width:0%; transition:width 0.7s cubic-bezier(0.4,0,0.2,1); }
-  .sp-track-plays { font-family:'Syne',sans-serif; font-size:12px; font-weight:800; color:#1ed760; white-space:nowrap; min-width:28px; text-align:right; }
+  .sp-track-plays { font-family:'Syne',sans-serif; font-size:13px; font-weight:800; color:#1ed760; white-space:nowrap; min-width:32px; text-align:right; }
 
   /* ── Bar chart (months/weekday) ── */
-  .sp-bar-chart { display:flex; align-items:flex-end; gap:4px; padding:0 4px 0; }
+  .sp-bar-chart { display:flex; align-items:flex-end; gap:4px; padding:0 2px; }
   .sp-bar-chart-wrap { display:flex; flex-direction:column; gap:6px; }
   .sp-bar-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; justify-content:flex-end; }
   .sp-bar-col {
@@ -1045,12 +1049,12 @@
 
   /* ── Heatmap ── */
   .sp-heatmap-wrap { display:flex; flex-direction:column; gap:4px; }
-  .sp-heatmap { display:grid; grid-template-columns:repeat(24,1fr); gap:3px; }
-  .sp-heat-cell { height:22px; border-radius:3px; background:var(--border); cursor:default; position:relative; transition:transform 0.15s; }
-  .sp-heat-cell:hover { transform:scaleY(1.15); }
+  .sp-heatmap { display:grid; grid-template-columns:repeat(24,1fr); gap:4px; }
+  .sp-heat-cell { height:28px; border-radius:4px; background:var(--border); cursor:default; position:relative; transition:transform 0.15s; }
+  .sp-heat-cell:hover { transform:scaleY(1.12); }
   .sp-heat-cell::after { content:attr(data-tip); position:absolute; bottom:calc(100%+5px); left:50%; transform:translateX(-50%); background:var(--surface2); border:1px solid var(--border); padding:4px 8px; font-size:10px; white-space:nowrap; border-radius:6px; z-index:10; pointer-events:none; opacity:0; transition:opacity 0.15s; }
   .sp-heat-cell:hover::after { opacity:1; }
-  .sp-heat-labels { display:grid; grid-template-columns:repeat(24,1fr); gap:3px; }
+  .sp-heat-labels { display:grid; grid-template-columns:repeat(24,1fr); gap:4px; }
   .sp-heat-lbl { font-size:7px; color:var(--muted); text-align:center; }
 
   /* ── Skip badge ── */
@@ -1061,14 +1065,14 @@
 
   /* ── Crossover cards ── */
   .sp-cross-card {
-    display:flex; align-items:center; gap:12px; padding:12px 14px;
-    background:var(--surface2); border:1px solid var(--border); border-radius:10px;
-    transition:all 0.2s; margin-bottom:6px; animation: spCardIn 0.35s ease both;
+    display:flex; align-items:center; gap:14px; padding:14px 16px;
+    background:var(--surface2); border:1px solid var(--border); border-radius:12px;
+    transition:all 0.2s; margin-bottom:8px; animation: spCardIn 0.35s ease both;
   }
-  .sp-cross-card:hover { border-color:rgba(30,215,96,0.3); transform:translateX(3px); }
-  .sp-cross-score { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; min-width:44px; text-align:center; }
+  .sp-cross-card:hover { border-color:rgba(30,215,96,0.3); transform:translateX(4px); }
+  .sp-cross-score { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; min-width:48px; text-align:center; }
   .sp-cross-info { flex:1; min-width:0; }
-  .sp-cross-hours { font-family:'Syne',sans-serif; font-size:13px; font-weight:800; color:#1ed760; white-space:nowrap; }
+  .sp-cross-hours { font-family:'Syne',sans-serif; font-size:14px; font-weight:800; color:#1ed760; white-space:nowrap; }
 
   /* ── Show more ── */
   .sp-show-more { text-align:center; margin-top:14px; }
@@ -1363,7 +1367,7 @@
     <div class="badge">🎵 Album Rater</div>
     <h1>Califica<br><span>tus álbumes</span></h1>
     <p class="subtitle">Ponle nota a cada track — el promedio se calcula solo</p>
-  <button onclick="openDiscordSettings()" style="margin-top:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(88,101,242,0.4);background:rgba(88,101,242,0.08);color:#7289da;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">⚙ Configurar Discord</button>
+  <button onclick="openDiscordSettings()" style="margin-top:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(88,101,242,0.4);background:rgba(88,101,242,0.08);color:#7289da;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">⚙ Configuración</button>
   <button onclick="openDedupModal()" style="margin-top:8px;padding:6px 14px;border-radius:6px;border:1px solid rgba(220,60,60,0.35);background:rgba(220,60,60,0.07);color:#e05555;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">🗑 Borrar duplicados</button>
   </header>
 
@@ -1371,7 +1375,7 @@
   <div id="discord-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;">
     <div style="background:#1e1e26;border:1px solid rgba(88,101,242,0.4);border-radius:14px;padding:28px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,0.6);">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-        <span style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:#fff;">⚙ Configuración Discord</span>
+        <span style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:#fff;">⚙ Configuración</span>
         <button onclick="closeDiscordSettings()" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer;line-height:1;">✕</button>
       </div>
       <p style="font-size:12px;color:#888;margin-bottom:16px;line-height:1.5;">Configurá tu Thread ID de Discord y tu nombre de usuario para guardar el historial en la nube.</p>
@@ -1603,8 +1607,8 @@
 </div>
 
 <!-- SPOTIFY STATS -->
-<div style="max-width:680px;margin:0 auto;padding:0 20px;">
-<div class="spotify-section" id="spotify-section">
+<div>
+<div class="spotify-section" id="spotify-section" style="border-radius:0;border-left:none;border-right:none;margin-bottom:0">
   <div class="spotify-header" id="spotify-header" onclick="toggleSpotify()">
     <span class="spotify-header-icon">🎧</span>
     <span class="spotify-header-title">Spotify Streaming History</span>
@@ -1671,11 +1675,11 @@
           <span class="footer-logo-name">Last.fm</span>
         </div>
         <div class="footer-logo-item">
-          <img src="https://cdn.discordapp.com/attachments/899414766882283600/1500688994370064475/100_sin_titulo_20260503203540.png?ex=69f95909&is=69f80789&hm=62137fe30e9fdf369e98583c98544846ac63880d13ba0bcd785c42832ad7d3de&" alt="MusicBrainz" class="footer-logo-img" onerror="this.style.display='none'" />
+          <img src="https://cdn.discordapp.com/attachments/899414766882283600/1500688994370064475/100_sin_titulo_20260503203540.png?ex=69faaa89&is=69f95909&hm=9f8a665d8c61e33d765eeddd9f8dc1ee3b444024b23dedbf2acea87b5b2141fe&" alt="MusicBrainz" class="footer-logo-img" onerror="this.style.display='none'" />
           <span class="footer-logo-name">MusicBrainz</span>
         </div>
         <div class="footer-logo-item">
-          <img src="https://cdn.discordapp.com/attachments/899414766882283600/1500689004826464298/100_sin_titulo_20260503203945.png?ex=69f9590c&is=69f8078c&hm=7bc38a83f5e7d883edcbd8a1cf0839df8db9590da00c70692f4cfa49589ce2ef&" alt="iTunes" class="footer-logo-img" onerror="this.style.display='none'" />
+          <img src="https://cdn.discordapp.com/attachments/899414766882283600/1500689004826464298/100_sin_titulo_20260503203945.png?ex=69faaa8c&is=69f9590c&hm=6e85c8512fa36176dcee3fba394a7addddf9e0bc64449762e239c63cd1944e95&" alt="iTunes" class="footer-logo-img" onerror="this.style.display='none'" />
           <span class="footer-logo-name">iTunes</span>
         </div>
       </div>
@@ -4261,6 +4265,127 @@
   let spActiveTab = 'artists';
   let spShowLimits = { artists:15, tracks:15, albums:15, skips:15 };
 
+  /* ── Persist spData to Supabase via bot ── */
+  const SP_STORAGE_KEY = 'albumrater_spdata_v1'; // kept for cache fallback
+
+  async function uploadSpDataToCloud() {
+    const userId = localStorage.getItem('discord_user_id');
+    if (!userId) { showToast('⚠ Configurá tu usuario en ⚙ Configuración primero'); return; }
+    if (!spData.length) { showToast('⚠ No hay datos cargados para subir'); return; }
+
+    const btn = document.getElementById('sp-cloud-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Subiendo…'; }
+
+    try {
+      // Slim format to reduce payload
+      const slim = spData.map(s => ({
+        ts: s.ts, ar: s.artist, tr: s.track, al: s.album,
+        ms: s.ms, sk: s.skipped ? 1 : 0, src: s._src === 'lastfm' ? 1 : 0
+      }));
+
+      const CHUNK = 5000;
+      const total = Math.ceil(slim.length / CHUNK);
+
+      for (let i = 0; i < total; i++) {
+        const chunk = slim.slice(i * CHUNK, (i + 1) * CHUNK);
+        if (btn) btn.textContent = `⏳ ${i + 1}/${total} partes…`;
+
+        const res = await fetch(`${BOT_SERVER}/spotify-save`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user_id: userId, streams: chunk, chunk: i, total_chunks: total })
+        });
+
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          console.error('chunk error:', err);
+          showToast(`⚠ Error en parte ${i + 1}`);
+          if (btn) { btn.textContent = '☁ Subir a la nube'; btn.disabled = false; }
+          return;
+        }
+      }
+
+      showToast(`✅ ${spData.length.toLocaleString()} streams guardados en la nube`);
+      try { localStorage.setItem(SP_STORAGE_KEY, JSON.stringify(spData)); } catch {}
+      if (btn) { btn.textContent = '✓ Subido'; setTimeout(() => { btn.textContent = '☁ Subir a la nube'; btn.disabled = false; }, 3000); }
+    } catch(e) {
+      console.error('upload error:', e);
+      showToast('⚠ No se pudo conectar con el servidor');
+      if (btn) { btn.textContent = '☁ Subir a la nube'; btn.disabled = false; }
+    }
+  }
+
+  async function loadSpDataFromStorage() {
+    const userId = localStorage.getItem('discord_user_id');
+    // Try Supabase first if user is configured
+    if (userId) {
+      try {
+        const res  = await fetch(`${BOT_SERVER}/spotify-load?user_id=${encodeURIComponent(userId)}`);
+        const data = await res.json();
+        if (data.streams && Array.isArray(data.streams) && data.streams.length) {
+          // Expand slim format if needed (fields: ts,ar,tr,al,ms,sk,src)
+          spData = data.streams.map(s => s.ar !== undefined ? {
+            ts: s.ts, artist: s.ar, track: s.tr, album: s.al || '',
+            ms: s.ms, skipped: !!s.sk, platform: '', country: '',
+            _src: s.src ? 'lastfm' : 'spotify'
+          } : s);
+          // Update local cache
+          try { localStorage.setItem(SP_STORAGE_KEY, JSON.stringify(spData)); } catch {}
+          return true;
+        }
+      } catch(e) {
+        console.warn('spotify-load error, trying localStorage:', e);
+      }
+    }
+    // Fallback: localStorage cache
+    try {
+      const raw = localStorage.getItem(SP_STORAGE_KEY);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed) || !parsed.length) return false;
+      spData = parsed;
+      return true;
+    } catch { return false; }
+  }
+
+  function clearSpData() {
+    spData = [];
+    localStorage.removeItem(SP_STORAGE_KEY);
+    localStorage.removeItem('sp_lastfm_cutoff');
+    localStorage.removeItem('sp_lastfm_synced_at');
+    document.getElementById('spotify-dropzone-wrap').style.display = 'block';
+    document.getElementById('spotify-data-view').style.display = 'none';
+    document.getElementById('spotify-header-badge').style.display = 'none';
+    document.getElementById('spotify-lfm-sync-bar').style.display = 'none';
+    showToast('🗑 Historial borrado');
+  }
+
+  // Restore on page load
+  document.addEventListener('DOMContentLoaded', async () => {
+    if (await loadSpDataFromStorage()) {
+      document.getElementById('spotify-dropzone-wrap').style.display = 'none';
+      document.getElementById('spotify-data-view').style.display = 'block';
+      document.getElementById('spotify-header-badge').style.display = '';
+      document.getElementById('spotify-header-badge').textContent = `${spData.length.toLocaleString()} streams`;
+      document.getElementById('spotify-file-info').innerHTML = `
+        <span>💾 Historial restaurado · <strong>${spData.length.toLocaleString()}</strong> streams</span>
+        <button class="spotify-reload-btn" onclick="document.getElementById('spotify-file-input').click()">⬆ Re-importar</button>
+        <button class="spotify-reload-btn" id="sp-cloud-btn" onclick="uploadSpDataToCloud()" style="border-color:rgba(88,101,242,0.4);color:#7289da">☁ Subir a la nube</button>
+        <button class="spotify-reload-btn" onclick="clearSpData()" style="border-color:rgba(240,96,112,0.4);color:var(--danger)">🗑 Borrar</button>`;
+      // Show the section open
+      const body    = document.getElementById('spotify-body');
+      const chevron = document.getElementById('spotify-chevron');
+      const header  = document.getElementById('spotify-header');
+      body.classList.add('open');
+      chevron.classList.add('open');
+      header.classList.add('open');
+      renderSpotifyOverview();
+      renderSpotifyTab('artists');
+      updateLfmSyncBar();
+      showToast(`✓ Historial restaurado (${spData.length.toLocaleString()} streams)`);
+    }
+  });
+
   function toggleSpotify() {
     const body    = document.getElementById('spotify-body');
     const chevron = document.getElementById('spotify-chevron');
@@ -4294,10 +4419,16 @@
         try {
           const zip = await JSZip.loadAsync(file);
           const jsonFiles = Object.values(zip.files).filter(f =>
-            !f.dir && f.name.includes('StreamingHistory') && f.name.endsWith('.json')
+            !f.dir && f.name.endsWith('.json') && (
+              f.name.includes('StreamingHistory') ||
+              f.name.includes('Streaming_History') ||
+              f.name.includes('endsong')
+            )
           );
           if (!jsonFiles.length) {
-            showToast('⚠ No se encontraron archivos StreamingHistory en el ZIP');
+            const allJson = Object.values(zip.files).filter(f => !f.dir && f.name.endsWith('.json')).map(f => f.name);
+            console.warn('JSON en el ZIP:', allJson);
+            showToast(`⚠ No se encontraron archivos de historial en el ZIP`);
             continue;
           }
           for (const zipEntry of jsonFiles) {
@@ -4341,7 +4472,9 @@
     const fileNames = files.map(f => f.name).join(', ');
     document.getElementById('spotify-file-info').innerHTML = `
       <span>📁 <strong>${files.length}</strong> archivo${files.length>1?'s':''}: ${fileNames}</span>
-      <button class="spotify-reload-btn" onclick="document.getElementById('spotify-file-input').click()">⬆ Cambiar archivos</button>`;
+      <button class="spotify-reload-btn" onclick="document.getElementById('spotify-file-input').click()">⬆ Cambiar archivos</button>
+      <button class="spotify-reload-btn" id="sp-cloud-btn" onclick="uploadSpDataToCloud()" style="border-color:rgba(88,101,242,0.4);color:#7289da">☁ Subir a la nube</button>
+      <button class="spotify-reload-btn" onclick="clearSpData()" style="border-color:rgba(240,96,112,0.4);color:var(--danger)">🗑 Borrar</button>`;
 
     // Show Last.fm sync bar if user is configured
     updateLfmSyncBar();
@@ -5112,7 +5245,7 @@
     const totalDays = new Set(spData.map(s=>s.ts.slice(0,10)).filter(Boolean)).size || 1;
     const totalMs   = spData.reduce((a,s)=>a+s.ms, 0);
     panel.innerHTML += `<div class="sp-label" style="margin-top:24px">Resumen</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">
         <div class="sp-overview-card" style="border-radius:10px;border:1px solid var(--border)">
           <div class="sp-overview-val">${fmtHours(totalMs/totalDays)}</div>
           <div class="sp-overview-lbl">Promedio / día</div>
@@ -5180,7 +5313,7 @@
     const totalSkips = spData.filter(s=>s.skipped||s.ms<30000).length;
     const skipRate   = Math.round(totalSkips/spData.length*100);
     panel.innerHTML += `<div class="sp-label">Resumen de skips</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:20px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px">
         <div class="sp-overview-card" style="border-radius:10px;border:1px solid var(--border)">
           <div class="sp-overview-val" style="color:${skipRate>40?'var(--danger)':skipRate>20?'#f0c060':'#1ed760'}">${skipRate}%</div>
           <div class="sp-overview-lbl">Skip rate global</div>
