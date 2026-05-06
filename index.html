@@ -591,8 +591,8 @@
     border: 1px solid rgba(96,212,240,0.3); border-radius: 3px;
     padding: 2px 7px; margin-top: 4px;
   }
-  .toast { position: fixed; bottom: 28px; right: 28px; background: var(--accent); color: #0d0d0f; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; padding: 12px 20px; border-radius: 8px; transform: translateY(20px); opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); z-index: 999; }
-  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-16px); background: var(--accent); color: #0d0d0f; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; padding: 12px 20px; border-radius: 8px; opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); z-index: 9999; white-space: nowrap; max-width: 90vw; text-align: center; }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
   /* DATA IMPORT / EXPORT */
   .data-io-section {
@@ -734,6 +734,43 @@
   .best-card-row-rank { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 800; min-width: 28px; text-align: right; flex-shrink: 0; }
 
   /* ── FOOTER ── */
+  /* ── Pending Albums Drawer ── */
+  .pending-drawer {
+    position:fixed; bottom:0; left:0; right:0; z-index:1200;
+    background:var(--surface); border-top:1px solid var(--border);
+    border-radius:20px 20px 0 0;
+    transform:translateY(100%); transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    max-height:75vh; display:flex; flex-direction:column;
+    box-shadow:0 -8px 40px rgba(0,0,0,0.5);
+  }
+  .pending-drawer.open { transform:translateY(0); }
+  .pending-drawer-handle { width:36px; height:4px; background:var(--border); border-radius:2px; margin:12px auto 0; flex-shrink:0; }
+  .pending-drawer-header { display:flex; align-items:center; justify-content:space-between; padding:14px 20px 10px; flex-shrink:0; border-bottom:1px solid var(--border); }
+  .pending-drawer-title { font-family:'Syne',sans-serif; font-size:15px; font-weight:800; color:var(--text); }
+  .pending-drawer-count { font-size:11px; color:var(--muted); margin-left:8px; }
+  .pending-drawer-close { background:none; border:none; color:var(--muted); font-size:18px; cursor:pointer; padding:4px; line-height:1; }
+  .pending-drawer-body { overflow-y:auto; flex:1; padding:12px 16px 24px; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+  .pending-add-bar { display:flex; gap:8px; margin-bottom:14px; }
+  .pending-add-input { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:13px; padding:9px 14px; outline:none; }
+  .pending-add-input:focus { border-color:rgba(200,240,96,0.4); }
+  .pending-add-btn { background:rgba(200,240,96,0.1); border:1px solid rgba(200,240,96,0.3); color:var(--accent); font-family:'Inter',sans-serif; font-size:12px; font-weight:600; padding:9px 16px; border-radius:8px; cursor:pointer; white-space:nowrap; transition:all 0.2s; }
+  .pending-add-btn:hover { background:rgba(200,240,96,0.18); }
+  .pending-item { display:flex; align-items:center; gap:12px; padding:10px 12px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; margin-bottom:8px; cursor:pointer; transition:all 0.2s; animation:spCardIn 0.25s ease; }
+  .pending-item:hover { border-color:rgba(200,240,96,0.4); transform:translateX(3px); }
+  .pending-item-cover { width:44px; height:44px; border-radius:6px; background:var(--border); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:18px; overflow:hidden; }
+  .pending-item-cover img { width:44px; height:44px; object-fit:cover; }
+  .pending-item-info { flex:1; min-width:0; }
+  .pending-item-title { font-size:13px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pending-item-artist { font-size:11px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+  .pending-item-delete { background:none; border:none; color:var(--muted); font-size:16px; cursor:pointer; padding:4px; flex-shrink:0; opacity:0.5; transition:opacity 0.15s; }
+  .pending-item-delete:hover { opacity:1; color:var(--danger); }
+  .pending-empty { text-align:center; padding:32px 20px; color:var(--muted); font-size:13px; }
+  .pending-overlay { position:fixed; inset:0; z-index:1199; background:rgba(0,0,0,0.5); opacity:0; pointer-events:none; transition:opacity 0.3s; }
+  .pending-overlay.visible { opacity:1; pointer-events:all; }
+  #pending-fab { position:fixed; bottom:20px; right:20px; z-index:1100; background:var(--surface2); border:1px solid rgba(200,240,96,0.35); border-radius:50px; padding:10px 18px; cursor:pointer; display:flex; align-items:center; gap:8px; box-shadow:0 4px 20px rgba(0,0,0,0.4); transition:all 0.2s; font-family:'Inter',sans-serif; font-size:12px; color:var(--accent); font-weight:600; }
+  #pending-fab:hover { border-color:rgba(200,240,96,0.7); transform:translateY(-2px); }
+  #pending-fab-count { background:var(--accent); color:#000; border-radius:10px; padding:1px 7px; font-size:11px; font-weight:800; display:none; }
+
   .site-footer {
     margin-top: 48px;
     border-top: 1px solid var(--border);
@@ -1666,12 +1703,16 @@
     <!-- Drop zone -->
     <div id="spotify-dropzone-wrap">
       <div class="spotify-dropzone" id="spotify-dropzone">
-        <input type="file" id="spotify-file-input" accept=".json,.zip" multiple onchange="handleSpotifyFiles(event)" />
+        <input type="file" id="spotify-file-input" accept=".json,.zip" multiple onchange="handleSpotifyFiles(event)" style="display:none" />
         <div class="spotify-dropzone-icon">📂</div>
         <div class="spotify-dropzone-title">Cargá tu historial de Spotify</div>
         <div class="spotify-dropzone-sub">
-          Arrastrá o seleccioná el <strong>.zip</strong> de Spotify directamente, o los archivos <strong>StreamingHistory_music_*.json</strong> sueltos<br>
-          Podés mezclar ambos · Todo se procesa localmente
+          Arrastrá el <strong>.zip</strong> o los <strong>StreamingHistory*.json</strong> aquí<br>
+          o usá los botones de abajo · Todo se procesa localmente
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap">
+          <button onclick="document.getElementById('spotify-file-input').click()" style="background:rgba(30,215,96,0.1);border:1px solid rgba(30,215,96,0.35);color:#1ed760;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:9px 20px;border-radius:8px;cursor:pointer;transition:all 0.2s">📁 Seleccionar archivos</button>
+          <button onclick="loadSpDataFromCloud()" style="background:rgba(88,101,242,0.1);border:1px solid rgba(88,101,242,0.35);color:#7289da;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:9px 20px;border-radius:8px;cursor:pointer;transition:all 0.2s">☁ Cargar desde la nube</button>
         </div>
       </div>
       <div style="padding:0 20px 16px;font-size:11px;color:var(--muted);line-height:1.7">
@@ -2646,6 +2687,7 @@
         </div>
         <div class="preview-footer">
           <button class="preview-load-btn" onclick="confirmLoadFromPreviewItunes()">⚡ Cargar este álbum</button>
+          <button class="preview-load-btn" onclick="addCurrentToPending()" style="background:rgba(200,240,96,0.08);border-color:rgba(200,240,96,0.25);color:var(--accent)">📋 Añadir a pendientes</button>
         </div>
       `;
       // Store tracks for loading
@@ -2783,6 +2825,7 @@
         </div>
         <div class="preview-footer">
           <button class="preview-load-btn" onclick="confirmLoadFromPreview()">⚡ Cargar este álbum</button>
+          <button class="preview-load-btn" onclick="addCurrentToPending()" style="background:rgba(200,240,96,0.08);border-color:rgba(200,240,96,0.25);color:var(--accent)">📋 Añadir a pendientes</button>
         </div>
       `;
     } catch {
@@ -3676,6 +3719,7 @@
       </div>
       <div class="preview-footer">
         <button class="preview-load-btn" onclick="confirmLoadFromPreviewLastfm()">⚡ Cargar este álbum</button>
+        <button class="preview-load-btn" onclick="addCurrentToPending()" style="background:rgba(200,240,96,0.08);border-color:rgba(200,240,96,0.25);color:var(--accent)">📋 Añadir a pendientes</button>
       </div>
     `;
   }
@@ -4740,37 +4784,76 @@
   async function fetchArtistImg(artist) {
     const key = artist.toLowerCase().trim();
     if (_artistImgCache[key] !== undefined) return _artistImgCache[key];
+    const set = src => { _artistImgCache[key] = src; return src; };
+
     try {
-      // iTunes: get top album artwork as artist representation
-      const url  = `https://itunes.apple.com/search?term=${encodeURIComponent(artist)}&media=music&entity=album&limit=5&attribute=artistTerm`;
-      const res  = await fetch(url);
+      // 1. Deezer — real artist photos
+      const dzRes  = await fetch(`https://api.deezer.com/search/artist?q=${encodeURIComponent(artist)}&limit=3`);
+      const dzData = await dzRes.json();
+      const dzArtists = dzData?.data || [];
+      const norm = s => (s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+      const dzHit = dzArtists.find(a => norm(a.name) === norm(artist)) || dzArtists[0];
+      const dzSrc = dzHit?.picture_xl || dzHit?.picture_big || dzHit?.picture_medium;
+      if (dzSrc && !dzSrc.includes('default')) return set(dzSrc);
+    } catch {}
+
+    try {
+      // 2. TheAudioDB — good for K-pop and niche artists
+      const adbRes  = await fetch(`https://theaudiodb.com/api/v1/json/2/search.php?s=${encodeURIComponent(artist)}`);
+      const adbData = await adbRes.json();
+      const adbArtist = adbData?.artists?.[0];
+      const adbSrc = adbArtist?.strArtistThumb || adbArtist?.strArtistFanart;
+      if (adbSrc) return set(adbSrc);
+    } catch {}
+
+    try {
+      // 3. iTunes fallback — at least album art related to the artist
+      const res  = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(artist)}&media=music&entity=album&limit=5&attribute=artistTerm`);
       const data = await res.json();
-      // Pick the result that best matches the artist name
-      const results = data?.results || [];
-      const best = results.find(r => r.artistName?.toLowerCase() === artist.toLowerCase()) || results[0];
-      const src = best?.artworkUrl100?.replace('100x100bb', '600x600bb') || '';
-      _artistImgCache[key] = src;
-      return src;
-    } catch { _artistImgCache[key] = ''; return ''; }
+      const best = (data?.results||[]).find(r=>r.artistName?.toLowerCase()===artist.toLowerCase()) || data?.results?.[0];
+      return set(best?.artworkUrl100?.replace('100x100bb','600x600bb') || '');
+    } catch { return set(''); }
   }
 
   async function fetchAlbumImg(artist, album) {
     const key = `${artist}|${album}`.toLowerCase();
     if (_albumImgCache[key] !== undefined) return _albumImgCache[key];
+    const set = src => { _albumImgCache[key] = src; return src; };
     try {
-      const q    = `${artist} ${album}`;
-      const url  = `https://itunes.apple.com/search?term=${encodeURIComponent(q)}&media=music&entity=album&limit=5`;
-      const res  = await fetch(url);
+      // 1. MusicBrainz — find release
+      const q     = `release:${encodeURIComponent(album)} AND artist:${encodeURIComponent(artist)}`;
+      const mbRes = await fetch(`https://musicbrainz.org/ws/2/release/?query=${q}&limit=1&fmt=json`, { headers:{'User-Agent':'AlbumRater/1.0'} });
+      const mbDat = await mbRes.json();
+      const rel   = mbDat?.releases?.[0];
+      if (rel?.id) {
+        // Cover Art Archive
+        const caRes = await fetch(`https://coverartarchive.org/release/${rel.id}/front-250`, { redirect:'follow' });
+        if (caRes.ok && caRes.url && !caRes.url.includes('coverartarchive.org/release//')) {
+          return set(caRes.url);
+        }
+      }
+
+      // 2. Last.fm — album.getInfo
+      const lfRes  = await fetch(`https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}&api_key=${LASTFM_KEY}&format=json`);
+      const lfDat  = await lfRes.json();
+      const imgs   = lfDat?.album?.image || [];
+      const large  = imgs.find(i=>i.size==='extralarge') || imgs.find(i=>i.size==='large') || imgs[imgs.length-1];
+      const lfSrc  = large?.['#text'];
+      if (lfSrc && !lfSrc.includes('2a96cbd8b46e442fc41c2b86b821562f')) {
+        return set(lfSrc);
+      }
+    } catch {}
+
+    try {
+      // 3. iTunes fallback
+      const res  = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(`${artist} ${album}`)}&media=music&entity=album&limit=5`);
       const data = await res.json();
-      const results = data?.results || [];
-      const best = results.find(r =>
+      const best = (data?.results||[]).find(r =>
         r.collectionName?.toLowerCase().includes(album.toLowerCase()) ||
         album.toLowerCase().includes(r.collectionName?.toLowerCase())
-      ) || results[0];
-      const src = best?.artworkUrl100?.replace('100x100bb', '300x300bb') || '';
-      _albumImgCache[key] = src;
-      return src;
-    } catch { _albumImgCache[key] = ''; return ''; }
+      ) || data?.results?.[0];
+      return set(best?.artworkUrl100?.replace('100x100bb','300x300bb') || '');
+    } catch { return set(''); }
   }
 
   /* ── ARTISTS ── */
@@ -5860,41 +5943,181 @@
   async function npClickLoad() {
     if (!_npCurrent) return;
     const [trackName, artistName] = _npCurrent.split('|');
-    // Read album name from DOM artist line
     const artistLine = document.getElementById('np-artist').textContent;
     const albumName  = artistLine.includes(' · ') ? artistLine.split(' · ').slice(1).join(' · ').trim() : '';
-    if (!albumName) {
-      showToast('⚠ No hay álbum disponible para esta canción');
-      return;
-    }
+    if (!albumName) { showToast('⚠ No hay álbum disponible para esta canción'); return; }
 
     showToast(`🔍 Buscando "${albumName}"…`);
-
-    // Pre-fill search and trigger it
     document.getElementById('search-input').value  = albumName;
     document.getElementById('search-artist').value = artistName;
+    await searchAlbum();
+  }
 
-    // Try iTunes direct load first (fastest)
+  /* ══════════════════════════════════════════
+     PENDING ALBUMS DRAWER
+  ══════════════════════════════════════════ */
+  const PENDING_KEY = 'albumrater_pending_v1';
+  let pendingAlbums = [];
+
+  function loadPending() {
+    try { pendingAlbums = JSON.parse(localStorage.getItem(PENDING_KEY) || '[]'); } catch { pendingAlbums = []; }
+  }
+  function savePending() {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(pendingAlbums));
+    updatePendingFab();
+  }
+  function updatePendingFab() {
+    const n = pendingAlbums.length;
+    const cnt = document.getElementById('pending-fab-count');
+    if (cnt) { cnt.textContent = n; cnt.style.display = n ? 'inline' : 'none'; }
+  }
+
+  function openPendingDrawer() {
+    loadPending();
+    renderPendingList();
+    document.getElementById('pending-drawer').classList.add('open');
+    document.getElementById('pending-overlay').classList.add('visible');
+  }
+  function closePendingDrawer() {
+    document.getElementById('pending-drawer').classList.remove('open');
+    document.getElementById('pending-overlay').classList.remove('visible');
+  }
+
+  function renderPendingList() {
+    const list = document.getElementById('pending-list');
+    const cnt  = document.getElementById('pending-drawer-count');
+    cnt.textContent = pendingAlbums.length ? `· ${pendingAlbums.length} álbum${pendingAlbums.length>1?'es':''}` : '';
+    if (!pendingAlbums.length) {
+      list.innerHTML = '<div class="pending-empty">📭 No hay álbumes pendientes.<br>Añadí uno arriba o desde el buscador.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    pendingAlbums.forEach((p, i) => {
+      const item = document.createElement('div');
+      item.className = 'pending-item';
+      item.innerHTML = `
+        <div class="pending-item-cover" id="pending-cover-${i}">🎵</div>
+        <div class="pending-item-info">
+          <div class="pending-item-title">${escHtml(p.title)}</div>
+          <div class="pending-item-artist">${escHtml(p.artist||'')}</div>
+        </div>
+        <button class="pending-item-delete" onclick="event.stopPropagation();removePending(${i})" title="Eliminar">×</button>`;
+      item.onclick = () => loadPendingAlbum(p);
+      list.appendChild(item);
+      // Fetch cover async
+      if (p.cover) {
+        const img = document.createElement('img');
+        img.src = p.cover;
+        img.onerror = () => {};
+        document.getElementById(`pending-cover-${i}`).innerHTML = '';
+        document.getElementById(`pending-cover-${i}`).appendChild(img);
+      } else {
+        fetchItunesCover(p.title, p.artist).then(url => {
+          if (!url) return;
+          pendingAlbums[i].cover = url;
+          savePending();
+          const el = document.getElementById(`pending-cover-${i}`);
+          if (el) { el.innerHTML = `<img src="${url}" />`; }
+        });
+      }
+    });
+  }
+
+  async function fetchItunesCover(title, artist) {
     try {
-      const q   = encodeURIComponent(`${albumName} ${artistName}`);
+      const q   = encodeURIComponent(`${title} ${artist}`);
+      const res = await fetch(`https://itunes.apple.com/search?term=${q}&entity=album&limit=3`);
+      const dat = await res.json();
+      const hit = dat.results?.[0];
+      return hit?.artworkUrl100?.replace('100x100bb','300x300bb') || null;
+    } catch { return null; }
+  }
+
+  function addPendingManual() {
+    const title  = document.getElementById('pending-add-album').value.trim();
+    const artist = document.getElementById('pending-add-artist').value.trim();
+    if (!title) { showToast('⚠ Escribí al menos el nombre del álbum'); return; }
+    loadPending();
+    pendingAlbums.unshift({ title, artist, cover: null, added: new Date().toISOString() });
+    savePending();
+    document.getElementById('pending-add-album').value  = '';
+    document.getElementById('pending-add-artist').value = '';
+    renderPendingList();
+    showToast(`✓ "${title}" añadido a pendientes`);
+  }
+
+  function removePending(i) {
+    loadPending();
+    pendingAlbums.splice(i, 1);
+    savePending();
+    renderPendingList();
+  }
+
+  async function loadPendingAlbum(p) {
+    closePendingDrawer();
+    showToast(`🔍 Buscando "${p.title}"…`);
+    document.getElementById('search-input').value  = p.title;
+    document.getElementById('search-artist').value = p.artist || '';
+    // Try iTunes first
+    try {
+      const q   = encodeURIComponent(`${p.title} ${p.artist||''}`);
       const res = await fetch(`https://itunes.apple.com/search?term=${q}&entity=album&limit=5`);
       const dat = await res.json();
-      const albums = dat.results || [];
       const norm = s => (s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
-      const hit = albums.find(a =>
-        norm(a.collectionName).includes(norm(albumName)) &&
-        norm(a.artistName).includes(norm(artistName))
-      ) || albums[0];
-
+      const hit = dat.results?.find(a =>
+        norm(a.collectionName).includes(norm(p.title)) &&
+        (!p.artist || norm(a.artistName).includes(norm(p.artist)))
+      ) || dat.results?.[0];
       if (hit) {
-        const coverPayload = { lf: null, itunes: hit.artworkUrl100 ? hit.artworkUrl100.replace('100x100bb','600x600bb') : null };
-        openPreviewItunes(hit, hit.collectionName, hit.artistName, coverPayload);
+        const cover = { lf:null, itunes: hit.artworkUrl100?.replace('100x100bb','600x600bb')||null };
+        openPreviewItunes(hit, hit.collectionName, hit.artistName, cover);
         return;
       }
     } catch {}
-
-    // Fallback: run normal MusicBrainz search
     await searchAlbum();
+  }
+
+  // Add album currently shown in preview modal to pending
+  function addCurrentToPending() {
+    const title  = previewTitle  || document.querySelector('.preview-title')?.textContent?.trim();
+    const artist = previewArtist || document.querySelector('.preview-artist')?.textContent?.split('·')[0]?.trim();
+    const cover  = previewCoverPayload?.itunes || previewCoverPayload?.lf || null;
+    if (!title) { showToast('⚠ No hay álbum en el preview'); return; }
+    loadPending();
+    if (pendingAlbums.find(p => p.title.toLowerCase() === title.toLowerCase())) {
+      showToast('Ya está en pendientes'); return;
+    }
+    pendingAlbums.unshift({ title, artist, cover, added: new Date().toISOString() });
+    savePending();
+    showToast(`📋 "${title}" añadido a pendientes`);
+  }
+
+  // Init pending on load
+  document.addEventListener('DOMContentLoaded', () => { loadPending(); updatePendingFab(); });
+
+  /* ── Load Spotify data manually from cloud ── */
+  async function loadSpDataFromCloud() {
+    const userId = localStorage.getItem('discord_user_id');
+    if (!userId) { showToast('⚠ Configurá tu usuario en ⚙ Configuración primero'); return; }
+    showToast('☁ Cargando desde la nube…');
+    const ok = await loadSpDataFromStorage();
+    if (ok) {
+      document.getElementById('spotify-dropzone-wrap').style.display = 'none';
+      document.getElementById('spotify-data-view').style.display = 'block';
+      document.getElementById('spotify-header-badge').style.display = '';
+      document.getElementById('spotify-header-badge').textContent = `${spData.length.toLocaleString()} streams`;
+      document.getElementById('spotify-file-info').innerHTML = `
+        <span>☁ Cargado desde la nube · <strong>${spData.length.toLocaleString()}</strong> streams</span>
+        <button class="spotify-reload-btn" onclick="document.getElementById('spotify-file-input').click()">⬆ Re-importar</button>
+        <button class="spotify-reload-btn" id="sp-cloud-btn" onclick="uploadSpDataToCloud()" style="border-color:rgba(88,101,242,0.4);color:#7289da">☁ Subir a la nube</button>
+        <button class="spotify-reload-btn" onclick="clearSpData()" style="border-color:rgba(240,96,112,0.4);color:var(--danger)">🗑 Borrar</button>`;
+      const body=document.getElementById('spotify-body'), chevron=document.getElementById('spotify-chevron'), header=document.getElementById('spotify-header');
+      body.classList.add('open'); chevron.classList.add('open'); header.classList.add('open');
+      renderSpotifyOverview(); renderSpotifyTab('artists'); updateLfmSyncBar();
+      showToast(`✓ ${spData.length.toLocaleString()} streams cargados`);
+    } else {
+      showToast('⚠ No hay datos en la nube para este usuario');
+    }
   }
 
   function startNowPlayingPolling() {
@@ -5917,5 +6140,26 @@
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 </script>
+<!-- Pending Albums Overlay & Drawer -->
+<div class="pending-overlay" id="pending-overlay" onclick="closePendingDrawer()"></div>
+<div class="pending-drawer" id="pending-drawer">
+  <div class="pending-drawer-handle"></div>
+  <div class="pending-drawer-header">
+    <div>
+      <span class="pending-drawer-title">📋 Pendientes</span>
+      <span class="pending-drawer-count" id="pending-drawer-count"></span>
+    </div>
+    <button class="pending-drawer-close" onclick="closePendingDrawer()">×</button>
+  </div>
+  <div class="pending-drawer-body">
+    <div id="pending-list"></div>
+  </div>
+</div>
+
+<!-- Pending FAB -->
+<button id="pending-fab" onclick="openPendingDrawer()">
+  📋 Pendientes <span id="pending-fab-count"></span>
+</button>
+
 </body>
 </html>
