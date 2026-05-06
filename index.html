@@ -3,7 +3,17 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Album Rater</title>
+<title>Rater</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0d0d0f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Rater">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/icon-152.png">
+<link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png">
 <link rel="icon" type="image/png" href="https://cdn.discordapp.com/attachments/875147002583875607/1501420653168033812/resized.force.36e010e8.png?ex=69fc0272&is=69fab0f2&hm=3510df2408ac257e0311d87ff2baffe7fb7c982934b5ba99353280af05f8a2a6&">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -771,6 +781,80 @@
   #pending-fab { position:fixed; bottom:20px; right:20px; z-index:1100; background:var(--surface2); border:1px solid rgba(200,240,96,0.35); border-radius:50px; padding:10px 18px; cursor:pointer; display:flex; align-items:center; gap:8px; box-shadow:0 4px 20px rgba(0,0,0,0.4); transition:all 0.2s; font-family:'Inter',sans-serif; font-size:12px; color:var(--accent); font-weight:600; }
   #pending-fab:hover { border-color:rgba(200,240,96,0.7); transform:translateY(-2px); }
   #pending-fab-count { background:var(--accent); color:#000; border-radius:10px; padding:1px 7px; font-size:11px; font-weight:800; display:none; }
+
+  /* ── Compare Artists ── */
+  .sp-compare-chart { display:flex; align-items:flex-end; gap:3px; height:140px; position:relative; overflow-x:auto; }
+  .sp-compare-bar-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; justify-content:flex-end; min-width:20px; }
+  .sp-compare-bar-a { width:100%; border-radius:3px 3px 0 0; min-height:3px; background:linear-gradient(180deg,#1ed760,rgba(30,215,96,0.2)); cursor:default; position:relative; }
+  .sp-compare-bar-b { width:100%; border-radius:3px 3px 0 0; min-height:3px; background:linear-gradient(180deg,#c084fc,rgba(192,132,252,0.2)); cursor:default; position:relative; }
+  .sp-compare-bar-a::after, .sp-compare-bar-b::after { content:attr(data-tip); position:absolute; bottom:calc(100%+4px); left:50%; transform:translateX(-50%); background:var(--surface2); border:1px solid var(--border); padding:4px 8px; font-size:10px; white-space:pre; border-radius:6px; z-index:10; pointer-events:none; opacity:0; transition:opacity 0.15s; }
+  .sp-compare-bar-a:hover::after, .sp-compare-bar-b:hover::after { opacity:1; }
+  .sp-compare-lbl { font-size:7px; color:var(--muted); white-space:nowrap; overflow:hidden; max-width:100%; text-align:center; }
+  .sp-compare-legend { display:flex; gap:16px; margin-top:10px; font-size:11px; }
+  .sp-compare-legend-dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
+  .sp-compare-legend-item { display:flex; align-items:center; gap:6px; }
+  .sp-compare-stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .sp-compare-stat { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; text-align:center; }
+  .sp-compare-stat-val { font-family:'Inter',sans-serif; font-size:16px; font-weight:800; line-height:1; margin-bottom:4px; }
+  .sp-compare-stat-lbl { font-size:10px; color:var(--muted); letter-spacing:0.06em; }
+
+  /* ── This Day ── */
+  .sp-thisday-year { margin-bottom:16px; }
+  .sp-thisday-year-header { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .sp-thisday-year-badge { font-family:'Syne',sans-serif; font-size:13px; font-weight:800; color:#1ed760; background:rgba(30,215,96,0.1); border:1px solid rgba(30,215,96,0.2); padding:3px 10px; border-radius:20px; }
+
+  /* ── Compare Periods ── */
+  .sp-periods-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media(max-width:500px) { .sp-periods-grid { grid-template-columns:1fr; } }
+  .sp-period-select { background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text); font-family:'Inter',sans-serif; font-size:12px; padding:7px 12px; outline:none; width:100%; cursor:pointer; margin-bottom:12px; }
+  .sp-period-col { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px; }
+  .sp-period-col-title { font-family:'Syne',sans-serif; font-size:11px; font-weight:800; color:var(--muted); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:12px; }
+  .sp-period-artist { display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .sp-period-artist:last-child { border-bottom:none; }
+  .sp-period-artist-rank { font-family:'Syne',sans-serif; font-size:11px; font-weight:800; color:var(--muted); min-width:16px; }
+  .sp-period-artist-name { flex:1; font-size:12px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sp-period-artist-hours { font-size:11px; color:#1ed760; font-weight:700; white-space:nowrap; }
+  .sp-period-diff { font-size:11px; padding:2px 7px; border-radius:20px; font-weight:600; white-space:nowrap; }
+  .sp-period-diff.up   { background:rgba(30,215,96,0.1);  color:#1ed760; }
+  .sp-period-diff.down { background:rgba(240,96,112,0.1); color:var(--danger); }
+  .sp-period-diff.same { background:rgba(255,255,255,0.05); color:var(--muted); }
+
+  /* ── Shuffle Inteligente ── */
+  .sp-shuffle-card {
+    display:flex; align-items:center; gap:12px; padding:12px 14px;
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:12px; margin-bottom:8px;
+    transition:all 0.2s; animation:spCardIn 0.3s ease both;
+  }
+  .sp-shuffle-card.done { opacity:0.35; }
+  .sp-shuffle-card.done .sp-shuffle-title { text-decoration:line-through; }
+  .sp-shuffle-num { font-family:'Syne',sans-serif; font-size:13px; font-weight:800; color:var(--muted); min-width:22px; text-align:center; }
+  .sp-shuffle-info { flex:1; min-width:0; }
+  .sp-shuffle-title { font-size:13px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sp-shuffle-meta  { font-size:11px; color:var(--muted); margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .sp-shuffle-peak  { font-size:10px; color:rgba(200,240,96,0.7); margin-top:2px; }
+  .sp-shuffle-done-btn {
+    background:none; border:1px solid var(--border); color:var(--muted);
+    border-radius:20px; padding:4px 12px; font-size:11px; cursor:pointer;
+    font-family:'Inter',sans-serif; transition:all 0.15s; white-space:nowrap; flex-shrink:0;
+  }
+  .sp-shuffle-done-btn:hover { border-color:#1ed760; color:#1ed760; }
+  .sp-shuffle-card.done .sp-shuffle-done-btn { border-color:var(--border); color:var(--muted); }
+  .sp-shuffle-controls {
+    display:flex; align-items:center; gap:10px; margin-bottom:20px; flex-wrap:wrap;
+  }
+  .sp-shuffle-generate {
+    background:linear-gradient(135deg,rgba(200,240,96,0.15),rgba(30,215,96,0.1));
+    border:1px solid rgba(200,240,96,0.35); color:var(--accent);
+    font-family:'Inter',sans-serif; font-size:13px; font-weight:700;
+    padding:10px 22px; border-radius:10px; cursor:pointer; transition:all 0.2s;
+  }
+  .sp-shuffle-generate:hover { background:linear-gradient(135deg,rgba(200,240,96,0.25),rgba(30,215,96,0.18)); transform:translateY(-1px); }
+  .sp-shuffle-filter {
+    background:var(--surface2); border:1px solid var(--border);
+    border-radius:8px; color:var(--text); font-family:'Inter',sans-serif;
+    font-size:12px; padding:8px 12px; outline:none; cursor:pointer;
+  }
 
   .site-footer {
     margin-top: 48px;
@@ -1736,7 +1820,11 @@
         <button class="spotify-tab" onclick="switchSpotifyTab('albums',this)">Álbumes</button>
         <button class="spotify-tab" onclick="switchSpotifyTab('timeline',this)">Timeline</button>
         <button class="spotify-tab" onclick="switchSpotifyTab('evolution',this)">Evolución</button>
+        <button class="spotify-tab" onclick="switchSpotifyTab('compare',this)">Comparar</button>
+        <button class="spotify-tab" onclick="switchSpotifyTab('thisday',this)">Este día</button>
+        <button class="spotify-tab" onclick="switchSpotifyTab('periods',this)">Períodos</button>
         <button class="spotify-tab" onclick="switchSpotifyTab('habits',this)">Hábitos</button>
+        <button class="spotify-tab" onclick="switchSpotifyTab('shuffle',this)">Shuffle 🎲</button>
         <button class="spotify-tab" onclick="switchSpotifyTab('skips',this)">Skips</button>
         <button class="spotify-tab" onclick="switchSpotifyTab('crossover',this)">× Ratings</button>
       </div>
@@ -1745,7 +1833,11 @@
       <div id="sp-panel-albums"    class="spotify-panel"></div>
       <div id="sp-panel-timeline"  class="spotify-panel"></div>
       <div id="sp-panel-evolution" class="spotify-panel"></div>
+      <div id="sp-panel-compare"   class="spotify-panel"></div>
+      <div id="sp-panel-thisday"   class="spotify-panel"></div>
+      <div id="sp-panel-periods"   class="spotify-panel"></div>
       <div id="sp-panel-habits"    class="spotify-panel"></div>
+      <div id="sp-panel-shuffle"   class="spotify-panel"></div>
       <div id="sp-panel-skips"     class="spotify-panel"></div>
       <div id="sp-panel-crossover" class="spotify-panel"></div>
     </div>
@@ -4737,7 +4829,10 @@
 
   function renderSpotifyTab(tab) {
     const fns = { artists: renderSpArtists, tracks: renderSpTracks, albums: renderSpAlbums,
-                  timeline: renderSpTimeline, evolution: renderSpEvolution, habits: renderSpHabits, skips: renderSpSkips, crossover: renderSpCrossover };
+                  timeline: renderSpTimeline, evolution: renderSpEvolution,
+                  compare: renderSpCompare, thisday: renderSpThisDay, periods: renderSpPeriods,
+                  shuffle: renderSpShuffle,
+                  habits: renderSpHabits, skips: renderSpSkips, crossover: renderSpCrossover };
     if (fns[tab]) fns[tab]();
   }
 
@@ -5356,6 +5451,285 @@
   }
 
   /* ── HABITS ── */
+  /* ══════════════════════════════════════════
+     COMPARE TWO ARTISTS
+  ══════════════════════════════════════════ */
+  let _cmpA = null, _cmpB = null;
+
+  function renderSpCompare() {
+    const panel = document.getElementById('sp-panel-compare');
+    const artistMap = {};
+    spData.forEach(s => {
+      if (!s.artist) return;
+      if (!artistMap[s.artist]) artistMap[s.artist] = { ms:0, plays:0 };
+      artistMap[s.artist].ms += s.ms; artistMap[s.artist].plays++;
+    });
+    const artists = Object.keys(artistMap).sort((a,b) => artistMap[b].ms - artistMap[a].ms);
+    if (!_cmpA) _cmpA = artists[0] || '';
+    if (!_cmpB) _cmpB = artists[1] || '';
+
+    panel.innerHTML = `
+      <div class="sp-label">Comparar dos artistas</div>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:20px">
+        <select class="sp-period-select" style="margin:0" onchange="_cmpA=this.value;renderCmpChart()">
+          ${artists.slice(0,80).map(a=>`<option value="${escHtml(a)}" ${a===_cmpA?'selected':''}>${escHtml(a)}</option>`).join('')}
+        </select>
+        <span style="color:var(--muted);font-size:12px;font-weight:700">vs</span>
+        <select class="sp-period-select" style="margin:0" onchange="_cmpB=this.value;renderCmpChart()">
+          ${artists.slice(0,80).map(a=>`<option value="${escHtml(a)}" ${a===_cmpB?'selected':''}>${escHtml(a)}</option>`).join('')}
+        </select>
+      </div>
+      <div id="sp-cmp-content"></div>`;
+    renderCmpChart();
+  }
+
+  function renderCmpChart() {
+    const content = document.getElementById('sp-cmp-content');
+    if (!content || !_cmpA || !_cmpB) return;
+    const byMonth = {};
+    spData.forEach(s => {
+      if (!s.ts || (s.artist !== _cmpA && s.artist !== _cmpB)) return;
+      const m = s.ts.slice(0,7);
+      if (!byMonth[m]) byMonth[m] = { a:0, b:0 };
+      if (s.artist === _cmpA) byMonth[m].a += s.ms;
+      else byMonth[m].b += s.ms;
+    });
+    const months = Object.keys(byMonth).sort();
+    if (!months.length) { content.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:16px 0">Sin datos para estos artistas.</div>'; return; }
+
+    // Fill gaps
+    const allMonths = [];
+    let cur = new Date(months[0]+'-01'), end = new Date(months[months.length-1]+'-01');
+    while (cur <= end) { allMonths.push(cur.toISOString().slice(0,7)); cur.setMonth(cur.getMonth()+1); }
+
+    const maxMs   = Math.max(...allMonths.map(m => Math.max(byMonth[m]?.a||0, byMonth[m]?.b||0)), 1);
+    const totalA  = allMonths.reduce((s,m)=>s+(byMonth[m]?.a||0), 0);
+    const totalB  = allMonths.reduce((s,m)=>s+(byMonth[m]?.b||0), 0);
+    const monthsA = allMonths.filter(m=>(byMonth[m]?.a||0)>0).length;
+    const monthsB = allMonths.filter(m=>(byMonth[m]?.b||0)>0).length;
+    const firstA  = allMonths.find(m=>(byMonth[m]?.a||0)>0);
+    const firstB  = allMonths.find(m=>(byMonth[m]?.b||0)>0);
+    const fmtM    = m => m ? new Date(m+'-01').toLocaleDateString('es',{month:'short',year:'numeric'}) : '—';
+
+    content.innerHTML = '';
+
+    // Stats grid
+    const statsDiv = document.createElement('div');
+    statsDiv.className = 'sp-compare-stat-grid';
+    statsDiv.innerHTML = `
+      <div class="sp-compare-stat"><div class="sp-compare-stat-val" style="color:#1ed760">${fmtHours(totalA)}</div><div class="sp-compare-stat-lbl">${escHtml(_cmpA)}</div></div>
+      <div class="sp-compare-stat"><div class="sp-compare-stat-val" style="color:#c084fc">${fmtHours(totalB)}</div><div class="sp-compare-stat-lbl">${escHtml(_cmpB)}</div></div>
+      <div class="sp-compare-stat"><div class="sp-compare-stat-val" style="color:#1ed760">${monthsA}</div><div class="sp-compare-stat-lbl">Meses activos</div></div>
+      <div class="sp-compare-stat"><div class="sp-compare-stat-val" style="color:#c084fc">${monthsB}</div><div class="sp-compare-stat-lbl">Meses activos</div></div>
+      <div class="sp-compare-stat"><div class="sp-compare-stat-val" style="color:#1ed760;font-size:12px">${fmtM(firstA)}</div><div class="sp-compare-stat-lbl">Primera escucha</div></div>
+      <div class="sp-compare-stat"><div class="sp-compare-stat-val" style="color:#c084fc;font-size:12px">${fmtM(firstB)}</div><div class="sp-compare-stat-lbl">Primera escucha</div></div>`;
+    content.appendChild(statsDiv);
+
+    // Chart
+    const chartLabel = document.createElement('div');
+    chartLabel.className = 'sp-label';
+    chartLabel.textContent = 'Plays mes a mes';
+    content.appendChild(chartLabel);
+
+    const chartWrap = document.createElement('div');
+    chartWrap.style.overflowX = 'auto';
+    const chart = document.createElement('div');
+    chart.className = 'sp-compare-chart';
+    chart.style.minWidth = `${Math.max(allMonths.length * 24, 280)}px`;
+
+    allMonths.forEach((m, idx) => {
+      const msA = byMonth[m]?.a||0, msB = byMonth[m]?.b||0;
+      const pA  = msA/maxMs*100, pB = msB/maxMs*100;
+      const lbl = new Date(m+'-01').toLocaleDateString('es',{month:'short',year:'2-digit'});
+      const item = document.createElement('div');
+      item.className = 'sp-compare-bar-item';
+      item.innerHTML = `
+        <div style="display:flex;align-items:flex-end;gap:1px;width:100%;height:130px">
+          <div class="sp-compare-bar-a" style="flex:1;height:${msA>0?Math.max(pA,2):1}%" data-tip="${escHtml(_cmpA)} · ${lbl}&#10;${fmtHours(msA)}"></div>
+          <div class="sp-compare-bar-b" style="flex:1;height:${msB>0?Math.max(pB,2):1}%" data-tip="${escHtml(_cmpB)} · ${lbl}&#10;${fmtHours(msB)}"></div>
+        </div>
+        <div class="sp-compare-lbl">${idx%3===0?lbl:''}</div>`;
+      chart.appendChild(item);
+    });
+    chartWrap.appendChild(chart);
+    content.appendChild(chartWrap);
+
+    const legend = document.createElement('div');
+    legend.className = 'sp-compare-legend';
+    legend.innerHTML = `
+      <div class="sp-compare-legend-item"><div class="sp-compare-legend-dot" style="background:#1ed760"></div>${escHtml(_cmpA)}</div>
+      <div class="sp-compare-legend-item"><div class="sp-compare-legend-dot" style="background:#c084fc"></div>${escHtml(_cmpB)}</div>`;
+    content.appendChild(legend);
+  }
+
+  /* ══════════════════════════════════════════
+     THIS DAY IN MUSIC
+  ══════════════════════════════════════════ */
+  function renderSpThisDay() {
+    const panel    = document.getElementById('sp-panel-thisday');
+    const today    = new Date();
+    const mmdd     = `${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    const dayLabel = today.toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long'});
+
+    const byYear = {};
+    spData.forEach(s => {
+      if (!s.ts) return;
+      const parts = s.ts.slice(0,10).split('-');
+      if (parts.length < 3) return;
+      if (`${parts[1]}-${parts[2]}` !== mmdd) return;
+      const yr = parts[0];
+      if (!byYear[yr]) byYear[yr] = { streams:[], ms:0 };
+      byYear[yr].streams.push(s);
+      byYear[yr].ms += s.ms;
+    });
+
+    const years = Object.keys(byYear).sort().reverse();
+    panel.innerHTML = `
+      <div class="sp-label">📅 Este día en años anteriores</div>
+      <div style="padding:10px 14px;background:rgba(30,215,96,0.05);border:1px solid rgba(30,215,96,0.15);border-radius:8px;font-size:13px;color:var(--text);margin-bottom:20px">
+        Hoy es <strong>${dayLabel}</strong>. Esto es lo que escuchabas en este mismo día.
+      </div>`;
+
+    if (!years.length) {
+      panel.innerHTML += '<div style="color:var(--muted);font-size:12px;text-align:center;padding:24px">Sin datos para este día en años anteriores.</div>';
+      return;
+    }
+
+    years.forEach((yr, yi) => {
+      const d = byYear[yr];
+      const topTracks  = {};
+      const topArtists = {};
+      d.streams.forEach(s => {
+        const k = s.track+'|'+s.artist;
+        topTracks[k]  = topTracks[k]  || { t:s.track, a:s.artist, n:0 };
+        topTracks[k].n++;
+        topArtists[s.artist] = (topArtists[s.artist]||0) + s.ms;
+      });
+      const tracks  = Object.values(topTracks).sort((a,b)=>b.n-a.n).slice(0,4);
+      const artists = Object.entries(topArtists).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+      const block = document.createElement('div');
+      block.className = 'sp-thisday-year';
+      block.innerHTML = `
+        <div class="sp-thisday-year-header">
+          <span class="sp-thisday-year-badge">${yr}</span>
+          <span style="font-size:12px;color:var(--muted)">${d.streams.length} canciones · ${fmtHours(d.ms)}</span>
+        </div>
+        <div class="sp-track-list">
+          ${tracks.map((t,i)=>`
+            <div class="sp-track-row" style="grid-template-columns:22px 1fr auto">
+              <div class="sp-track-num">${i+1}</div>
+              <div class="sp-track-info">
+                <div class="sp-track-name">${escHtml(t.t)}</div>
+                <div class="sp-track-artist">${escHtml(t.a)}</div>
+              </div>
+              <div class="sp-track-plays">${t.n}×</div>
+            </div>`).join('')}
+        </div>
+        <div style="margin-top:8px;font-size:11px;color:var(--muted)">
+          ${artists.map(([a])=>`<strong style="color:var(--text)">${escHtml(a)}</strong>`).join(' · ')}
+        </div>`;
+      panel.appendChild(block);
+      if (yi < years.length-1) {
+        const sep = document.createElement('div');
+        sep.style.cssText = 'height:1px;background:var(--border);margin:14px 0';
+        panel.appendChild(sep);
+      }
+    });
+  }
+
+  /* ══════════════════════════════════════════
+     COMPARE TWO PERIODS
+  ══════════════════════════════════════════ */
+  let _periodA = null, _periodB = null;
+
+  function renderSpPeriods() {
+    const panel  = document.getElementById('sp-panel-periods');
+    const months = [...new Set(spData.map(s=>s.ts?.slice(0,7)).filter(Boolean))].sort();
+    if (months.length < 2) {
+      panel.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:16px">Sin suficientes datos.</div>';
+      return;
+    }
+    if (!_periodA) _periodA = months[months.length-2];
+    if (!_periodB) _periodB = months[months.length-1];
+
+    const mkOpts = sel => months.map(m => {
+      const lbl = new Date(m+'-01').toLocaleDateString('es',{month:'short',year:'numeric'});
+      return `<option value="${m}" ${m===sel?'selected':''}>${lbl}</option>`;
+    }).join('');
+
+    panel.innerHTML = `
+      <div class="sp-label">Comparar dos períodos</div>
+      <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin-bottom:20px">
+        <select class="sp-period-select" style="margin:0" onchange="_periodA=this.value;renderPeriodComparison()">${mkOpts(_periodA)}</select>
+        <span style="color:var(--muted);font-size:12px;font-weight:700">vs</span>
+        <select class="sp-period-select" style="margin:0" onchange="_periodB=this.value;renderPeriodComparison()">${mkOpts(_periodB)}</select>
+      </div>
+      <div id="sp-periods-content"></div>`;
+    renderPeriodComparison();
+  }
+
+  function renderPeriodComparison() {
+    const content = document.getElementById('sp-periods-content');
+    if (!content) return;
+    const getMonthData = m => {
+      const streams = spData.filter(s => s.ts?.startsWith(m));
+      const artistMs = {}, trackPlays = {};
+      let totalMs = 0;
+      streams.forEach(s => {
+        artistMs[s.artist] = (artistMs[s.artist]||0)+s.ms;
+        const k = s.track+'|'+s.artist;
+        trackPlays[k] = trackPlays[k] || { t:s.track, a:s.artist, n:0 };
+        trackPlays[k].n++;
+        totalMs += s.ms;
+      });
+      return {
+        streams, totalMs,
+        artists: Object.entries(artistMs).sort((a,b)=>b[1]-a[1]).slice(0,5),
+        tracks:  Object.values(trackPlays).sort((a,b)=>b.n-a.n).slice(0,5),
+      };
+    };
+
+    const dA = getMonthData(_periodA), dB = getMonthData(_periodB);
+    const lblA = new Date(_periodA+'-01').toLocaleDateString('es',{month:'long',year:'numeric'});
+    const lblB = new Date(_periodB+'-01').toLocaleDateString('es',{month:'long',year:'numeric'});
+
+    const diff = (a, b) => {
+      if (!a||!b) return '';
+      const pct = Math.round((b-a)/a*100);
+      if (Math.abs(pct)<3) return `<span class="sp-period-diff same">≈</span>`;
+      return pct>0 ? `<span class="sp-period-diff up">▲${pct}%</span>` : `<span class="sp-period-diff down">▼${Math.abs(pct)}%</span>`;
+    };
+
+    content.innerHTML = `
+      <div class="sp-compare-stat-grid" style="margin-bottom:16px">
+        <div class="sp-compare-stat"><div class="sp-compare-stat-val">${fmtHours(dA.totalMs)}</div><div class="sp-compare-stat-lbl">${lblA}</div></div>
+        <div class="sp-compare-stat"><div class="sp-compare-stat-val">${fmtHours(dB.totalMs)}</div><div class="sp-compare-stat-lbl">${lblB} ${diff(dA.totalMs,dB.totalMs)}</div></div>
+        <div class="sp-compare-stat"><div class="sp-compare-stat-val">${dA.streams.length}</div><div class="sp-compare-stat-lbl">Plays</div></div>
+        <div class="sp-compare-stat"><div class="sp-compare-stat-val">${dB.streams.length}</div><div class="sp-compare-stat-lbl">Plays ${diff(dA.streams.length,dB.streams.length)}</div></div>
+      </div>
+      <div class="sp-label">Top artistas</div>
+      <div class="sp-periods-grid">
+        <div class="sp-period-col">
+          <div class="sp-period-col-title">${lblA}</div>
+          ${dA.artists.map(([a,ms],i)=>`<div class="sp-period-artist"><div class="sp-period-artist-rank">${i+1}</div><div class="sp-period-artist-name">${escHtml(a)}</div><div class="sp-period-artist-hours">${fmtHours(ms)}</div></div>`).join('')}
+        </div>
+        <div class="sp-period-col">
+          <div class="sp-period-col-title">${lblB}</div>
+          ${dB.artists.map(([a,ms],i)=>`<div class="sp-period-artist"><div class="sp-period-artist-rank">${i+1}</div><div class="sp-period-artist-name">${escHtml(a)}</div><div class="sp-period-artist-hours">${fmtHours(ms)}</div></div>`).join('')}
+        </div>
+      </div>
+      <div class="sp-label" style="margin-top:20px">Top canciones</div>
+      <div class="sp-periods-grid">
+        <div class="sp-period-col">
+          ${dA.tracks.map((t,i)=>`<div class="sp-period-artist"><div class="sp-period-artist-rank">${i+1}</div><div class="sp-period-artist-name"><div style="font-size:12px;color:var(--text)">${escHtml(t.t)}</div><div style="font-size:10px;color:var(--muted)">${escHtml(t.a)}</div></div><div class="sp-period-artist-hours">${t.n}×</div></div>`).join('')}
+        </div>
+        <div class="sp-period-col">
+          ${dB.tracks.map((t,i)=>`<div class="sp-period-artist"><div class="sp-period-artist-rank">${i+1}</div><div class="sp-period-artist-name"><div style="font-size:12px;color:var(--text)">${escHtml(t.t)}</div><div style="font-size:10px;color:var(--muted)">${escHtml(t.a)}</div></div><div class="sp-period-artist-hours">${t.n}×</div></div>`).join('')}
+        </div>
+      </div>`;
+  }
+
   function buildWrappedContent(wd, yr) {
     const div = document.createElement('div');
     div.id = 'sp-wrapped-content';
@@ -5707,6 +6081,151 @@
   }
 
   /* ── SKIPS ── */
+  /* ══════════════════════════════════════════
+     SHUFFLE INTELIGENTE
+  ══════════════════════════════════════════ */
+  let _shuffleList   = [];
+  let _shuffleDone   = new Set();
+  let _shuffleMode   = 'forgotten'; // 'forgotten' | 'peak' | 'random'
+
+  function renderSpShuffle() {
+    const panel = document.getElementById('sp-panel-shuffle');
+    panel.innerHTML = `
+      <div class="sp-label">🎲 Shuffle inteligente</div>
+      <div style="padding:12px 14px;background:rgba(200,240,96,0.05);border:1px solid rgba(200,240,96,0.12);border-radius:10px;font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:18px">
+        Canciones que escuchabas mucho en algún momento pero que <strong style="color:var(--text)">dejaste de poner</strong>. El algoritmo busca tracks con pico de escucha hace más de 3 meses y poca o ninguna actividad reciente.
+      </div>
+      <div class="sp-shuffle-controls">
+        <select class="sp-shuffle-filter" onchange="_shuffleMode=this.value">
+          <option value="forgotten">🕰 Canciones olvidadas</option>
+          <option value="peak">📈 En tu pico de algún artista</option>
+          <option value="random">🎲 Sorprendeme</option>
+        </select>
+        <button class="sp-shuffle-generate" onclick="generateShuffle()">✦ Generar lista</button>
+        ${_shuffleList.length ? `<span style="font-size:11px;color:var(--muted)">${_shuffleDone.size}/${_shuffleList.length} escuchadas</span>` : ''}
+      </div>
+      <div id="sp-shuffle-list">
+        ${_shuffleList.length ? '' : '<div style="color:var(--muted);font-size:12px;text-align:center;padding:32px 0">Dale a "Generar lista" para empezar.</div>'}
+      </div>`;
+
+    if (_shuffleList.length) renderShuffleList();
+  }
+
+  function generateShuffle() {
+    _shuffleDone = new Set();
+    const mode = _shuffleMode;
+    const now  = new Date();
+
+    // Build per-track monthly data
+    const trackData = {};
+    spData.forEach(s => {
+      if (!s.ts || !s.track) return;
+      const k = s.track + '|||' + s.artist;
+      if (!trackData[k]) trackData[k] = { track:s.track, artist:s.artist, album:s.album||'', byMonth:{}, total:0 };
+      const m = s.ts.slice(0,7);
+      trackData[k].byMonth[m] = (trackData[k].byMonth[m]||0) + 1;
+      trackData[k].total++;
+    });
+
+    const allTracks = Object.values(trackData);
+    let result = [];
+
+    if (mode === 'forgotten') {
+      // Tracks with a clear peak > 3 months ago and near-zero recent plays
+      const cutoff = new Date(now); cutoff.setMonth(cutoff.getMonth() - 3);
+      const cutoffStr = cutoff.toISOString().slice(0,7);
+
+      result = allTracks.filter(t => {
+        const months = Object.keys(t.byMonth).sort();
+        if (months.length < 2) return false;
+        const peakMonth = months.reduce((a,b) => t.byMonth[a] >= t.byMonth[b] ? a : b);
+        if (peakMonth >= cutoffStr) return false; // peak was recent
+        const recentPlays = Object.entries(t.byMonth).filter(([m]) => m >= cutoffStr).reduce((s,[,n])=>s+n, 0);
+        const peakPlays   = t.byMonth[peakMonth];
+        return peakPlays >= 3 && recentPlays <= 1;
+      }).map(t => {
+        const peakMonth = Object.keys(t.byMonth).reduce((a,b) => t.byMonth[a] >= t.byMonth[b] ? a : b);
+        const peakLabel = new Date(peakMonth+'-01').toLocaleDateString('es',{month:'long',year:'numeric'});
+        return { ...t, peakMonth, peakLabel, score: t.byMonth[peakMonth] };
+      }).sort((a,b) => b.score - a.score);
+
+    } else if (mode === 'peak') {
+      // Tracks from the top artist's peak months (eras)
+      const artistMs = {};
+      spData.forEach(s => { if(s.artist) artistMs[s.artist] = (artistMs[s.artist]||0)+s.ms; });
+      const topArtist = Object.entries(artistMs).sort((a,b)=>b[1]-a[1])[0]?.[0];
+      if (!topArtist) { result = []; }
+      else {
+        // Find artist's peak month
+        const artistMonths = {};
+        spData.filter(s=>s.artist===topArtist).forEach(s => {
+          const m = s.ts?.slice(0,7); if(m) artistMonths[m]=(artistMonths[m]||0)+s.ms;
+        });
+        const peakM = Object.entries(artistMonths).sort((a,b)=>b[1]-a[1])[0]?.[0];
+        result = allTracks.filter(t => t.byMonth[peakM] > 0 && t.artist === topArtist)
+          .sort((a,b) => (b.byMonth[peakM]||0) - (a.byMonth[peakM]||0))
+          .map(t => ({ ...t, peakLabel: `Era de ${topArtist}` }));
+      }
+
+    } else {
+      // Random from tracks not played in last 60 days
+      const cutoff = new Date(now); cutoff.setDate(cutoff.getDate()-60);
+      const cutoffStr = cutoff.toISOString().slice(0,7);
+      const eligible = allTracks.filter(t => {
+        const lastPlayed = Object.keys(t.byMonth).sort().reverse()[0];
+        return lastPlayed < cutoffStr && t.total >= 2;
+      });
+      // Fisher-Yates shuffle
+      for (let i = eligible.length-1; i > 0; i--) {
+        const j = Math.floor(Math.random()*(i+1));
+        [eligible[i],eligible[j]] = [eligible[j],eligible[i]];
+      }
+      result = eligible.slice(0,30).map(t => {
+        const lastM = Object.keys(t.byMonth).sort().reverse()[0];
+        return { ...t, peakLabel: `Última vez: ${new Date(lastM+'-01').toLocaleDateString('es',{month:'long',year:'numeric'})}` };
+      });
+    }
+
+    _shuffleList = result.slice(0,30);
+    renderSpShuffle();
+  }
+
+  function renderShuffleList() {
+    const list = document.getElementById('sp-shuffle-list');
+    if (!list) return;
+    if (!_shuffleList.length) {
+      list.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:24px">No se encontraron canciones con estos criterios.</div>';
+      return;
+    }
+    list.innerHTML = '';
+    _shuffleList.forEach((t, i) => {
+      const done = _shuffleDone.has(i);
+      const card = document.createElement('div');
+      card.className = 'sp-shuffle-card' + (done?' done':'');
+      card.id = `shuffle-card-${i}`;
+      card.innerHTML = `
+        <div class="sp-shuffle-num">${i+1}</div>
+        <div class="sp-shuffle-info">
+          <div class="sp-shuffle-title">${escHtml(t.track)}</div>
+          <div class="sp-shuffle-meta">${escHtml(t.artist)}${t.album?' · '+escHtml(t.album):''} · ${t.total} plays</div>
+          ${t.peakLabel ? `<div class="sp-shuffle-peak">📅 ${escHtml(t.peakLabel)}</div>` : ''}
+        </div>
+        <button class="sp-shuffle-done-btn" onclick="markShuffleDone(${i})">
+          ${done ? '↩ Deshacer' : '✓ Escuchada'}
+        </button>`;
+      list.appendChild(card);
+    });
+  }
+
+  function markShuffleDone(i) {
+    if (_shuffleDone.has(i)) _shuffleDone.delete(i);
+    else _shuffleDone.add(i);
+    renderShuffleList();
+    // Update counter
+    const counter = document.querySelector('#sp-panel-shuffle .sp-shuffle-controls span');
+    if (counter) counter.textContent = `${_shuffleDone.size}/${_shuffleList.length} escuchadas`;
+  }
+
   function renderSpSkips() {
     const panel = document.getElementById('sp-panel-skips');
     panel.innerHTML = '';
@@ -6162,5 +6681,14 @@
   📋 Pendientes <span id="pending-fab-count"></span>
 </button>
 
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(r => console.log('SW registrado:', r.scope))
+        .catch(e => console.warn('SW error:', e));
+    });
+  }
+</script>
 </body>
 </html>
