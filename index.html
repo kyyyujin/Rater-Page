@@ -2088,7 +2088,7 @@
   }
 
   function updateAverage() {
-    const inputs = document.querySelectorAll('#rows-body input[type="number"]');
+    const inputs = document.querySelectorAll('#rows-body input[type="number"]:not(.rescore-input)');
     let sum = 0, count = 0;
     inputs.forEach(i => { const v = parseFloat(i.value); if (!isNaN(v)) { sum += v; count++; } });
     const avgEl   = document.getElementById('avg-display');
