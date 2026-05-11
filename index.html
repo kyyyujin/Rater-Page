@@ -79,6 +79,35 @@
   .search-results.open { display: flex; }
   .search-status { margin-top: 8px; font-size: 12px; color: var(--muted); display: none; }
   .search-status.show { display: block; }
+  .se-wrap { position:relative; }
+  .se-btn {
+    width:100%; background:transparent; border:1px solid transparent; color:var(--muted);
+    padding:8px 22px 8px 10px; font-family:'DM Mono',monospace; font-size:10px;
+    letter-spacing:0.1em; text-transform:uppercase; outline:none; cursor:pointer;
+    text-align:left; transition:all .2s; display:flex; align-items:center;
+    gap:6px; position:relative; border-radius:8px; border-bottom: 1px solid var(--border);
+  }
+  .se-btn:hover, .se-btn.open { color:var(--text); border-bottom-color:#555; }
+  .se-btn .se-arrow {
+    position:absolute; right:4px; top:50%; transform:translateY(-50%);
+    font-size:7px; color:var(--muted); transition:transform .2s; pointer-events:none;
+  }
+  .se-btn.open .se-arrow { transform:translateY(-50%) rotate(180deg); }
+  .se-list {
+    position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:700;
+    background:#111; border:1px solid #2a2a2a; border-radius:8px; overflow:hidden;
+    display:none; box-shadow:0 12px 40px rgba(0,0,0,.7);
+  }
+  .se-list.open { display:block; }
+  .se-opt {
+    padding:9px 14px; cursor:pointer; font-family:'DM Mono',monospace; font-size:10px;
+    color:var(--muted); border-bottom:1px solid #1a1a1a; letter-spacing:0.1em;
+    text-transform:uppercase; transition:background .15s; display:flex; justify-content:space-between; align-items:center;
+  }
+  .se-opt:last-child { border-bottom:none; }
+  .se-opt:hover { background:#1a1a1a; color:var(--text); }
+  .se-opt.selected { color:var(--accent); }
+  .se-opt.selected::after { content:'✓'; font-size:10px; }
 
   /* Result item */
   .result-item { padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); cursor: pointer; transition: all 0.15s; }
@@ -1602,8 +1631,20 @@
           onkeydown="if(event.key==='Enter') searchAlbum()" />
       </div>
     </div>
-    <div class="search-row">
+    <div class="search-row" style="gap:10px;">
       <button class="btn-search" id="search-btn" onclick="searchAlbum()">Buscar</button>
+      <div class="se-wrap" style="flex-shrink:0;">
+        <button type="button" class="se-btn" id="se-dropdown-btn">
+          <span id="se-label">Auto</span>
+          <span class="se-arrow">▼</span>
+        </button>
+        <div class="se-list" id="se-dropdown-list" style="left:auto;right:0;">
+          <div class="se-opt selected" data-engine="auto">Auto</div>
+          <div class="se-opt" data-engine="mb">MusicBrainz</div>
+          <div class="se-opt" data-engine="itunes">iTunes</div>
+          <div class="se-opt" data-engine="lastfm">Last.fm</div>
+        </div>
+      </div>
     </div>
     <div class="search-status" id="search-status"></div>
     <div class="search-results" id="search-results"></div>
@@ -2088,7 +2129,7 @@
   }
 
   function updateAverage() {
-    const inputs = document.querySelectorAll('#rows-body input[type="number"]:not(.rescore-input)');
+    const inputs = document.querySelectorAll('#rows-body input[type="number"]');
     let sum = 0, count = 0;
     inputs.forEach(i => { const v = parseFloat(i.value); if (!isNaN(v)) { sum += v; count++; } });
     const avgEl   = document.getElementById('avg-display');
@@ -2578,6 +2619,47 @@
     return `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;
   }
 
+  let activeSearchEngine = 'auto';
+
+  function setSearchEngine(engine) {
+    activeSearchEngine = engine;
+    const labels = { auto: 'Auto', mb: 'MusicBrainz', itunes: 'iTunes', lastfm: 'Last.fm' };
+    document.getElementById('se-label').textContent = labels[engine] || engine;
+    document.querySelectorAll('.se-opt').forEach(opt => {
+      opt.classList.toggle('selected', opt.dataset.engine === engine);
+    });
+    closeSeDropdown();
+  }
+
+  function closeSeDropdown() {
+    document.getElementById('se-dropdown-btn').classList.remove('open');
+    document.getElementById('se-dropdown-list').classList.remove('open');
+  }
+
+  function initSeDropdown() {
+    const btn  = document.getElementById('se-dropdown-btn');
+    const list = document.getElementById('se-dropdown-list');
+    if (!btn || !list) return;
+
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      btn.classList.toggle('open');
+      list.classList.toggle('open');
+    });
+
+    list.querySelectorAll('.se-opt').forEach(opt => {
+      opt.addEventListener('click', e => {
+        e.stopPropagation();
+        setSearchEngine(opt.dataset.engine);
+      });
+    });
+
+    document.addEventListener('click', e => {
+      if (!btn.contains(e.target) && !list.contains(e.target)) closeSeDropdown();
+    });
+  }
+  document.addEventListener('DOMContentLoaded', initSeDropdown);
+
   async function searchAlbum() {
     const albumVal  = document.getElementById('search-input').value.trim();
     const artistVal = document.getElementById('search-artist').value.trim();
@@ -2599,9 +2681,79 @@
     btn.disabled = true; btn.textContent = '…';
     results.classList.remove('open'); results.innerHTML = '';
     status.textContent = 'Buscando…'; status.classList.add('show');
+
+    // ── Forced Last.fm ──
+    if (activeSearchEngine === 'lastfm') {
+      try {
+        const lfResults = await searchLastfmAlbums(albumVal, artistVal);
+        if (!lfResults.length) { status.textContent = 'No se encontraron resultados en Last.fm.'; }
+        else { status.classList.remove('show'); results.classList.add('open'); renderLastfmResults(lfResults, results); }
+      } catch(e) { status.textContent = 'Error al buscar en Last.fm.'; }
+      btn.disabled = false; btn.textContent = 'Buscar'; return;
+    }
+
+    // ── Forced iTunes ──
+    if (activeSearchEngine === 'itunes') {
+      try {
+        const res = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(itunesQuery)}&entity=album&limit=25`);
+        const data = await res.json();
+        const albums = data.results || [];
+        if (!albums.length) { status.textContent = 'No se encontraron resultados en iTunes.'; }
+        else {
+          status.classList.remove('show'); results.classList.add('open');
+          albums.forEach(al => {
+            const title  = al.collectionName || 'Sin título';
+            const artist = al.artistName || 'Artista desconocido';
+            const year   = al.releaseDate ? al.releaseDate.slice(0, 4) : '—';
+            const tracks = al.trackCount || 0;
+            const thumbUrl = al.artworkUrl100 ? al.artworkUrl100.replace('100x100bb', '300x300bb') : null;
+            const item = document.createElement('div');
+            item.className = 'result-item';
+            item.innerHTML = thumbUrl
+              ? `<div style="display:flex;align-items:center;gap:10px"><img src="${thumbUrl}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/><div style="flex:1;min-width:0"><div class="result-title">${title} <span class="cover-src-badge itunes">iTunes</span></div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div></div></div>`
+              : `<div class="result-title">${title} <span class="cover-src-badge itunes">iTunes</span></div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>`;
+            const coverPayload = { lf: null, itunes: al.artworkUrl100 ? al.artworkUrl100.replace('100x100bb', '600x600bb') : null };
+            item.onclick = () => openPreviewItunes(al, title, artist, coverPayload);
+            results.appendChild(item);
+          });
+        }
+      } catch(e) { status.textContent = 'Error al buscar en iTunes.'; }
+      btn.disabled = false; btn.textContent = 'Buscar'; return;
+    }
+
+    // ── Forced MusicBrainz ──
+    if (activeSearchEngine === 'mb') {
+      try {
+        const mbRes = await fetch(`https://musicbrainz.org/ws/2/release/?query=${encodeURIComponent(mbQuery)}&limit=20&fmt=json`);
+        const mbData = await mbRes.json();
+        const releases = mbData.releases || [];
+        if (!releases.length) { status.textContent = 'No se encontraron resultados en MusicBrainz.'; }
+        else {
+          const lfCovers = await Promise.all(releases.map(r => fetchLastfmCover(r['artist-credit']?.[0]?.artist?.name || '', r.title || '')));
+          status.classList.remove('show'); results.classList.add('open');
+          releases.forEach((r, idx) => {
+            const artist = r['artist-credit']?.[0]?.artist?.name || 'Artista desconocido';
+            const title  = r.title || 'Sin título';
+            const year   = r.date ? r.date.slice(0, 4) : '—';
+            const tracks = r['track-count'] || 0;
+            const thumbUrl = lfCovers[idx];
+            const item = document.createElement('div');
+            item.className = 'result-item';
+            item.innerHTML = thumbUrl
+              ? `<div style="display:flex;align-items:center;gap:10px"><img src="${thumbUrl}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/><div style="flex:1;min-width:0"><div class="result-title">${title}</div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div></div></div>`
+              : `<div class="result-title">${title}</div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>`;
+            item.onclick = () => openPreview(r.id, title, artist, { lf: lfCovers[idx], itunes: null });
+            results.appendChild(item);
+          });
+        }
+      } catch(e) { status.textContent = 'Error al buscar en MusicBrainz.'; }
+      btn.disabled = false; btn.textContent = 'Buscar'; return;
+    }
+
+    // ── Auto (original cascade: MB → iTunes → Last.fm) ──
     try {
       const [mbRes, itunesRes] = await Promise.all([
-        fetch(`https://musicbrainz.org/ws/2/release/?query=${encodeURIComponent(mbQuery)}&limit=20&fmt=json`, { headers: { 'User-Agent': 'AlbumRater/1.0' } }),
+        fetch(`https://musicbrainz.org/ws/2/release/?query=${encodeURIComponent(mbQuery)}&limit=20&fmt=json`),
         fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(itunesQuery)}&entity=album&limit=25`)
       ]);
       const mbData       = await mbRes.json();
@@ -2729,7 +2881,7 @@
         });
       }
 
-    } catch(err) { status.textContent = 'Error al buscar. Revisá tu conexión.'; }
+    } catch(err) { status.textContent = 'Error al buscar en modo Auto. Probá seleccionar Last.fm manualmente.'; }
     btn.disabled = false; btn.textContent = 'Buscar';
   }
 
@@ -2870,7 +3022,7 @@
     try {
       // Fetch full release data + covers in parallel
       const [releaseRes, covers] = await Promise.all([
-        fetch(`https://musicbrainz.org/ws/2/release/${releaseId}?inc=recordings+genres+tags+release-groups&fmt=json`, { headers: { 'User-Agent': 'AlbumRater/1.0' } }),
+        fetch(`https://musicbrainz.org/ws/2/release/${releaseId}?inc=recordings+genres+tags+release-groups&fmt=json`),
         coverPayload ? Promise.resolve(coverPayload) : (async () => {
           const lf = await fetchLastfmCover(artist, title);
           return { lf, itunes: null };
@@ -3000,7 +3152,7 @@
     status.textContent = `Cargando tracks de "${albumTitle}"…`;
     status.classList.add('show');
     try {
-      const res  = await fetch(`https://musicbrainz.org/ws/2/release/${releaseId}?inc=recordings+genres+tags+release-groups+artist-credits&fmt=json`, { headers: { 'User-Agent': 'AlbumRater/1.0' } });
+      const res  = await fetch(`https://musicbrainz.org/ws/2/release/${releaseId}?inc=recordings+genres+tags+release-groups+artist-credits&fmt=json`);
       const data = await res.json();
       const tracks = (data.media || []).flatMap(m => m.tracks || []);
       const resolvedYear = year || (data.date ? data.date.slice(0, 4) : '');
@@ -4918,7 +5070,7 @@
     try {
       // 1. MusicBrainz — find release
       const q     = `release:${encodeURIComponent(album)} AND artist:${encodeURIComponent(artist)}`;
-      const mbRes = await fetch(`https://musicbrainz.org/ws/2/release/?query=${q}&limit=1&fmt=json`, { headers:{'User-Agent':'AlbumRater/1.0'} });
+      const mbRes = await fetch(`https://musicbrainz.org/ws/2/release/?query=${q}&limit=1&fmt=json`);
       const mbDat = await mbRes.json();
       const rel   = mbDat?.releases?.[0];
       if (rel?.id) {
