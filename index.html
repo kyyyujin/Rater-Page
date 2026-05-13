@@ -363,6 +363,7 @@
 
   /* ── BEAUTIFUL OUTPUT CARD ── */
   .out-card { padding: 28px; }
+  .out-card-scaler { display: block; transform-origin: top left; }
 
   /* Album header */
   .out-album-header {
@@ -381,11 +382,27 @@
     font-size: 56px;
   }
   .out-album-meta { display: flex; flex-direction: column; gap: 5px; padding-bottom: 4px; }
-  .out-album-name { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; color: var(--text); line-height: 1.15; word-break: break-word; overflow-wrap: break-word; white-space: normal; }
+  .out-album-name { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; color: var(--text); line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 420px; }
   .out-album-artist { font-size: 13px; color: var(--muted); }
   .out-album-year   { font-size: 11px; color: #ffffff; margin-top: 2px; }
   .out-album-cover-score { font-size: 11px; color: var(--muted); margin-top: 6px; display: flex; align-items: center; gap: 6px; }
   .out-album-cover-score-val { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700; color: var(--text); }
+
+  /* ── RESPONSIVE PREVIEW (mobile) ── */
+  .out-card.previewing { padding: 16px; }
+  .out-card.previewing .out-album-header { gap: 12px; margin-bottom: 16px; }
+  .out-card.previewing .out-album-cover,
+  .out-card.previewing .out-album-cover-placeholder { width: 28vw; height: 28vw; max-width: 140px; max-height: 140px; border-radius: 10px; }
+  .out-card.previewing .out-album-name { font-size: clamp(14px, 4.5vw, 28px); white-space: normal; word-break: break-word; max-width: none; }
+  .out-card.previewing .out-album-artist { font-size: 11px; }
+  .out-card.previewing .out-album-year { font-size: 10px; }
+  .out-card.previewing .out-track { padding: 5px 0; }
+  .out-card.previewing .out-track-name { font-size: 11px; }
+  .out-card.previewing .out-track-score { font-size: 11px; }
+  .out-card.previewing .out-track-num { font-size: 10px; }
+  .out-card.previewing .out-final-avg { font-size: 2.2rem; }
+  .out-card.previewing .out-final-rank { font-size: 2.2rem; padding: 6px 14px; }
+  .out-card.previewing .out-final { margin-top: 16px; padding-top: 14px; }
 
   /* Gradient separator */
   .out-separator {
@@ -2337,7 +2354,13 @@
       card.appendChild(badge);
     }
 
-    outputEl.appendChild(card);
+    card.classList.add('previewing');
+
+    const scaler = document.createElement('div');
+    scaler.className = 'out-card-scaler';
+    scaler.appendChild(card);
+    outputEl.appendChild(scaler);
+
     outputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     showToast('✓ Resultado generado');
 
@@ -2417,6 +2440,16 @@
     if (!card) { showToast('⚠ Genera primero'); return; }
     showToast('📸 Generando imagen…');
 
+    // Remove preview class before capture so export uses full fixed layout
+    card.classList.remove('previewing');
+    await new Promise(r => setTimeout(r, 30));
+
+    // Reset scale before capture
+    const scaler = document.querySelector('.out-card-scaler');
+    const prevTransform = scaler ? scaler.style.transform : '';
+    const prevHeight    = scaler ? scaler.style.height : '';
+    if (scaler) { scaler.style.transform = 'none'; scaler.style.height = 'auto'; }
+
     // PC mode: temporarily set card to fixed 680px width
     let savedWidth = null;
     let savedMaxWidth = null;
@@ -2425,7 +2458,6 @@
       savedMaxWidth = card.style.maxWidth;
       card.style.width    = '640px';
       card.style.maxWidth = '640px';
-      // Force reflow
       card.getBoundingClientRect();
     }
     try {
@@ -2498,6 +2530,9 @@
       if (pcMode) { card.style.width = savedWidth; card.style.maxWidth = savedMaxWidth; }
       console.error(e);
       showToast('⚠ Error al exportar');
+    } finally {
+      card.classList.add('previewing');
+      if (scaler) { scaler.style.transform = prevTransform; scaler.style.height = prevHeight; }
     }
   }
 
@@ -4089,6 +4124,9 @@
     btn.innerHTML = '⏳ Guardando…';
 
     try {
+      card.classList.remove('previewing');
+      await new Promise(r => setTimeout(r, 30));
+
       // Generar imagen igual que Discord
       const savedWidth    = card.style.width;
       const savedMaxWidth = card.style.maxWidth;
@@ -4111,6 +4149,7 @@
       savedStyles.forEach(({ el, style }) => el.setAttribute('style', style));
       card.style.width    = savedWidth;
       card.style.maxWidth = savedMaxWidth;
+      card.classList.add('previewing');
 
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width  = cardCanvas.width;
@@ -4393,6 +4432,9 @@
     btnText.textContent = 'Enviando…';
 
     try {
+      card.classList.remove('previewing');
+      await new Promise(r => setTimeout(r, 30));
+
       // PC fixed mode (640px, scale 2x) — same as "Tamaño PC fijo"
       const savedWidth    = card.style.width;
       const savedMaxWidth = card.style.maxWidth;
@@ -4420,6 +4462,7 @@
       savedStyles.forEach(({ el, style }) => el.setAttribute('style', style));
       card.style.width    = savedWidth;
       card.style.maxWidth = savedMaxWidth;
+      card.classList.add('previewing');
 
       // Compose final canvas with blurred album bg
       const finalCanvas = document.createElement('canvas');
