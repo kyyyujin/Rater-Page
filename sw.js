@@ -1,4 +1,4 @@
-const CACHE = 'rater-v1';
+const CACHE = 'rater-v2';
 const ASSETS = [
   '/',
   '/index.html',
@@ -25,23 +25,23 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  // Only cache GET requests, skip API calls
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   const isAPI = ['musicbrainz.org','audioscrobbler.com','itunes.apple.com',
                   'coverartarchive.org','railway.app','supabase.co','deezer.com',
                   'theaudiodb.com','last.fm'].some(d => url.hostname.includes(d));
-  if (isAPI) return; // Always fetch API calls fresh
+  if (isAPI) return;
 
   e.respondWith(
-    caches.match(e.request).then(cached => {
-      if (cached) return cached;
-      return fetch(e.request).then(res => {
-        if (!res || res.status !== 200 || res.type === 'opaque') return res;
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-        return res;
-      }).catch(() => caches.match('/index.html'));
+    // Network first — always try to get fresh version
+    fetch(e.request).then(res => {
+      if (!res || res.status !== 200 || res.type === 'opaque') return res;
+      const clone = res.clone();
+      caches.open(CACHE).then(c => c.put(e.request, clone));
+      return res;
+    }).catch(() => {
+      // Only fall back to cache if network fails (offline)
+      return caches.match(e.request).then(cached => cached || caches.match('/index.html'));
     })
   );
 });
