@@ -1043,17 +1043,17 @@
   /* ── Drop zone ── */
   .spotify-dropzone {
     margin: 20px; border: 2px dashed var(--border); border-radius: 14px;
-    padding: 40px 24px; text-align: center; cursor: pointer;
+    padding: 40px 24px; text-align: center; cursor: default;
     transition: all 0.25s; position: relative; overflow: hidden;
   }
   .spotify-dropzone::after {
     content:''; position:absolute; inset:0; border-radius:14px;
     background: radial-gradient(ellipse at 50% 100%, rgba(30,215,96,0.08), transparent 70%);
-    opacity:0; transition:opacity 0.3s;
+    opacity:0; transition:opacity 0.3s; pointer-events:none; z-index:0;
   }
   .spotify-dropzone:hover::after, .spotify-dropzone.dragover::after { opacity:1; }
   .spotify-dropzone:hover, .spotify-dropzone.dragover { border-color: #1ed760; border-style: solid; }
-  .spotify-dropzone input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+  .spotify-dropzone input { display:none; }
   .spotify-dropzone-icon { font-size: 2.6rem; margin-bottom: 14px; display:block; animation: spFloat 3s ease-in-out infinite; }
   @keyframes spFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
   .spotify-dropzone-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; margin-bottom: 8px; }
@@ -1584,6 +1584,7 @@
     <div class="badge">🎵 Album Rater</div>
     <h1>Califica<br><span>tus álbumes</span></h1>
     <p class="subtitle">Ponle nota a cada track — el promedio se calcula solo</p>
+  <a href="https://album-vault.vercel.app/" style="display:inline-block;margin-top:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(200,240,96,0.3);background:rgba(200,240,96,0.07);color:var(--accent);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;text-decoration:none;letter-spacing:0.05em;">🗄 Ir al Vault</a>
   <button onclick="openDiscordSettings()" style="margin-top:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(88,101,242,0.4);background:rgba(88,101,242,0.08);color:#7289da;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">⚙ Configuración</button>
   <button onclick="openDedupModal()" style="margin-top:8px;padding:6px 14px;border-radius:6px;border:1px solid rgba(220,60,60,0.35);background:rgba(220,60,60,0.07);color:#e05555;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">🗑 Borrar duplicados</button>
   </header>
@@ -1848,7 +1849,7 @@
     <!-- Drop zone -->
     <div id="spotify-dropzone-wrap">
       <div class="spotify-dropzone" id="spotify-dropzone">
-        <input type="file" id="spotify-file-input" accept=".json,.zip" multiple onchange="handleSpotifyFiles(event)" style="display:none" />
+        <input type="file" id="spotify-file-input" accept=".json,.zip" multiple onchange="handleSpotifyFiles(event)" />
         <div class="spotify-dropzone-icon">📂</div>
         <div class="spotify-dropzone-title">Cargá tu historial de Spotify</div>
         <div class="spotify-dropzone-sub">
@@ -1856,8 +1857,8 @@
           o usá los botones de abajo · Todo se procesa localmente
         </div>
         <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap">
-          <button onclick="document.getElementById('spotify-file-input').click()" style="background:rgba(30,215,96,0.1);border:1px solid rgba(30,215,96,0.35);color:#1ed760;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:9px 20px;border-radius:8px;cursor:pointer;transition:all 0.2s">📁 Seleccionar archivos</button>
-          <button onclick="loadSpDataFromCloud()" style="background:rgba(88,101,242,0.1);border:1px solid rgba(88,101,242,0.35);color:#7289da;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:9px 20px;border-radius:8px;cursor:pointer;transition:all 0.2s">☁ Cargar desde la nube</button>
+          <button onclick="document.getElementById('spotify-file-input').click()" style="position:relative;z-index:2;background:rgba(30,215,96,0.1);border:1px solid rgba(30,215,96,0.35);color:#1ed760;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:9px 20px;border-radius:8px;cursor:pointer;transition:all 0.2s">📁 Seleccionar archivos</button>
+          <button onclick="loadSpDataFromCloud()" style="position:relative;z-index:2;background:rgba(88,101,242,0.1);border:1px solid rgba(88,101,242,0.35);color:#7289da;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;padding:9px 20px;border-radius:8px;cursor:pointer;transition:all 0.2s">☁ Cargar desde la nube</button>
         </div>
       </div>
       <div style="padding:0 20px 16px;font-size:11px;color:var(--muted);line-height:1.7">
@@ -2043,7 +2044,7 @@
       <div class="score-input-wrap">
         <button class="btn-step" onclick="stepScore(this,-0.5)" tabindex="-1">−</button>
         <div class="score-dot" id="dot-${rowCount}"></div>
-        <input type="number" min="0" max="11" step="0.1" placeholder="—"
+        <input type="number" min="0" max="${getMaxScore()}" step="0.1" placeholder="—"
           value="${score}" oninput="updateScore(this,${rowCount})" onblur="clampScore(this,${rowCount})" id="score-${rowCount}" />
         <button class="btn-step" onclick="stepScore(this,0.5)" tabindex="-1">＋</button>
       </div>
@@ -2095,10 +2096,15 @@
     updateAverage(); saveData();
   }
 
+  function isAdmin() {
+    return (localStorage.getItem('discord_user_id') || '').toLowerCase() === 'kyujin';
+  }
+  function getMaxScore() { return isAdmin() ? 11 : 10; }
+
   function clampScore(input, id) {
     let v = parseFloat(input.value);
     if (!isNaN(v)) {
-      v = Math.min(11, Math.max(0, Math.round(v * 10) / 10));
+      v = Math.min(getMaxScore(), Math.max(0, Math.round(v * 10) / 10));
       input.value = v;
       updateScore(input, id);
     }
@@ -2108,9 +2114,9 @@
     const input = btn.closest('.score-input-wrap').querySelector('input[type="number"]');
     const id    = input.id.replace('score-', '');
     let v = parseFloat(input.value);
-    if (isNaN(v)) v = delta > 0 ? 0 : 11;
+    if (isNaN(v)) v = delta > 0 ? 0 : getMaxScore();
     v = Math.round((v + delta) * 10) / 10;
-    v = Math.min(11, Math.max(0, v));
+    v = Math.min(getMaxScore(), Math.max(0, v));
     input.value = v;
     updateScore(input, id);
   }
@@ -2131,7 +2137,7 @@
     const input = document.getElementById('cover-score');
     let v = parseFloat(input.value);
     if (!isNaN(v)) {
-      v = Math.min(11, Math.max(0, Math.round(v * 10) / 10));
+      v = Math.min(getMaxScore(), Math.max(0, Math.round(v * 10) / 10));
       input.value = v;
       updateCover();
     }
@@ -2140,9 +2146,9 @@
   function stepCover(delta) {
     const input = document.getElementById('cover-score');
     let v = parseFloat(input.value);
-    if (isNaN(v)) v = delta > 0 ? 0 : 11;
+    if (isNaN(v)) v = delta > 0 ? 0 : getMaxScore();
     v = Math.round((v + delta) * 10) / 10;
-    v = Math.min(11, Math.max(0, v));
+    v = Math.min(getMaxScore(), Math.max(0, v));
     input.value = v;
     updateCover();
   }
@@ -6840,6 +6846,12 @@
     if (_npInterval) clearInterval(_npInterval);
     _npInterval = setInterval(fetchNowPlaying, 30000);
   }
+
+  // Set cover score max based on user
+  document.addEventListener('DOMContentLoaded', () => {
+    const coverInput = document.getElementById('cover-score');
+    if (coverInput) coverInput.max = getMaxScore();
+  });
 
   // Start on load if username already saved
   document.addEventListener('DOMContentLoaded', () => {
