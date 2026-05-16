@@ -81,6 +81,12 @@
   .search-results { margin-top: 10px; display: none; flex-direction: column; gap: 4px; max-height: 340px; overflow-y: auto; }
   .search-results.open { display: flex; }
   .search-status { margin-top: 8px; font-size: 12px; color: var(--muted); display: none; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes histSlideIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes rowSlideIn { from { opacity:0; transform:translateX(-8px); } to { opacity:1; transform:translateX(0); } }
+  @keyframes revealDown { from { clip-path:inset(0 0 100% 0); opacity:0; } to { clip-path:inset(0 0 0% 0); opacity:1; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #main-app.fade-in { animation: fadeIn 0.6s ease forwards; }
   .search-status.show { display: block; }
   .se-wrap { position:relative; }
   .se-btn {
@@ -621,12 +627,14 @@
   .history-list.open { display: block; }
   .history-empty { padding: 20px 18px; font-size: 13px; color: var(--muted); font-style: italic; }
   .history-item {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    animation: histSlideIn 0.35s ease both;
     display: flex; align-items: center; gap: 12px;
     padding: 10px 18px; border-bottom: 1px solid var(--border);
     cursor: pointer; transition: background 0.15s;
   }
   .history-item:last-child { border-bottom: none; }
-  .history-item:hover { background: rgba(255,255,255,0.03); }
+  .history-item:hover { background: rgba(255,255,255,0.04); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); }
   .history-item-cover {
     width: 40px; height: 40px; border-radius: 6px; object-fit: cover;
     border: 1px solid var(--border); flex-shrink: 0; background: var(--surface2);
@@ -653,8 +661,26 @@
     border: 1px solid rgba(96,212,240,0.3); border-radius: 3px;
     padding: 2px 7px; margin-top: 4px; max-width: fit-content;
   }
-  .toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-16px); background: var(--accent); color: #0d0d0f; font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; padding: 12px 20px; border-radius: 8px; opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); z-index: 9999; white-space: nowrap; max-width: 90vw; text-align: center; }
+  .toast {
+    position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-20px);
+    background: #1a1a2a; color: var(--text); font-family: 'DM Mono', monospace;
+    font-size: 12px; font-weight: 500; padding: 12px 18px 14px;
+    border-radius: 10px; opacity: 0; pointer-events: none;
+    transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 9999; white-space: nowrap; max-width: 90vw; text-align: center;
+    border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    display: flex; align-items: center; gap: 8px; min-width: 180px; overflow: hidden;
+  }
+  .toast::after {
+    content: ''; position: absolute; bottom: 0; left: 0; height: 2px;
+    background: var(--toast-color, var(--accent));
+    animation: toastBar var(--toast-dur, 2.5s) linear forwards;
+    border-radius: 0 0 10px 10px;
+  }
+  @keyframes toastBar { from { width: 100%; } to { width: 0%; } }
   .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast-icon { font-size: 14px; flex-shrink: 0; }
+  .toast-msg  { flex: 1; }
 
   /* DATA IMPORT / EXPORT */
   .data-io-section {
@@ -1559,6 +1585,45 @@
 </style>
 </head>
 <body>
+
+<!-- ── AUTH OVERLAY ── -->
+<div id="auth-overlay" style="position:fixed;inset:0;background:#000000;z-index:9999;display:flex;align-items:center;justify-content:center;flex-direction:column;">
+
+  <div style="position:relative;z-index:1;width:100%;max-width:360px;padding:24px;background:rgba(0,0,0,0.72);border-radius:20px;backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,0.07);margin:16px;">
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;letter-spacing:0.05em;background:linear-gradient(135deg,#ffffff 0%,#c8f060 50%,#60d0f0 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 24px rgba(200,240,96,0.25));">ALBUM RATER</div>
+
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid #2a2a2a;">
+      <button id="auth-tab-login" onclick="switchAuthTab('login')"
+        style="flex:1;background:none;border:none;border-bottom:2px solid #c8f060;color:#c8f060;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:10px;cursor:pointer;transition:all .2s;">
+        LOGIN
+      </button>
+      <button id="auth-tab-register" onclick="switchAuthTab('register')"
+        style="flex:1;background:none;border:none;border-bottom:2px solid transparent;color:#555;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:10px;cursor:pointer;transition:all .2s;">
+        REGISTRO
+      </button>
+    </div>
+
+    <!-- Inputs -->
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <input id="auth-username" type="text" placeholder="Username" autocomplete="off"
+        style="background:#1a1a2a;border:1px solid #2a2a3a;color:#fff;font-family:'DM Mono',monospace;font-size:13px;padding:12px 14px;border-radius:8px;outline:none;width:100%;box-sizing:border-box;" />
+      <input id="auth-password" type="password" placeholder="Contraseña"
+        style="background:#1a1a2a;border:1px solid #2a2a3a;color:#fff;font-family:'DM Mono',monospace;font-size:13px;padding:12px 14px;border-radius:8px;outline:none;width:100%;box-sizing:border-box;" />
+      <div id="auth-error" style="font-size:11px;color:#e05050;font-family:'DM Mono',monospace;display:none;"></div>
+      <button id="auth-submit" onclick="submitAuth()"
+        style="background:#c8f060;color:#0d0d0f;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;letter-spacing:0.1em;padding:13px;border-radius:8px;border:none;cursor:pointer;transition:opacity .2s;">
+        ENTRAR
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN APP (hidden until auth) ── -->
+<div id="main-app" style="display:none;">
 <div id="page-bg"></div>
 <div class="container">
 
@@ -1604,8 +1669,9 @@
       <input id="discord-thread-input" type="text" placeholder="ej: 1315912659295666286"
         style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid rgba(88,101,242,0.3);background:#15151a;color:#fff;font-family:'DM Mono',monospace;font-size:13px;outline:none;margin-bottom:12px;" />
       <label style="font-size:11px;color:#aaa;font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">TU NOMBRE (para el historial)</label>
-      <input id="discord-user-input" type="text" placeholder="ej: nico"
-        style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid rgba(88,101,242,0.3);background:#15151a;color:#fff;font-family:'DM Mono',monospace;font-size:13px;outline:none;margin-bottom:12px;" />
+      <input id="discord-user-input" type="text" placeholder="ej: nico" readonly
+        style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid rgba(88,101,242,0.3);background:#0d0d14;color:#888;font-family:'DM Mono',monospace;font-size:13px;outline:none;margin-bottom:4px;cursor:not-allowed;" />
+      <div style="font-size:10px;color:#555;font-family:'DM Mono',monospace;margin-bottom:12px;">Definido por tu cuenta · <span style="color:#e05050;cursor:pointer;" onclick="logoutAuth()">Cerrar sesión</span></div>
       <label style="font-size:11px;color:#aaa;font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">USUARIO DE LAST.FM <span style="color:#e05050;font-size:10px;margin-left:4px;">last.fm</span></label>
       <input id="lastfm-user-input" type="text" placeholder="ej: kyujin_music"
         style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid rgba(212,0,0,0.25);background:#15151a;color:#fff;font-family:'DM Mono',monospace;font-size:13px;outline:none;margin-bottom:16px;" />
@@ -1731,6 +1797,16 @@
     <div class="history-header" id="history-header" onclick="toggleHistory()">
       <span class="history-title">📚 Historial de álbumes</span>
       <span class="history-chevron" id="history-chevron">▼</span>
+    </div>
+    <!-- Admin user selector (Kyujin only) -->
+    <div id="admin-user-selector" style="display:none;padding:10px 16px 0;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:10px;color:#888;font-family:'DM Mono',monospace;letter-spacing:1px;">👁 VIENDO:</span>
+        <select id="admin-user-select" onchange="adminSwitchUser()"
+          style="flex:1;background:#1a1a2a;border:1px solid #2a2a3a;color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:5px 8px;border-radius:6px;cursor:pointer;">
+          <option value="">Cargando usuarios…</option>
+        </select>
+      </div>
     </div>
     <div class="history-list" id="history-list">
       <!-- History search bar -->
@@ -2039,6 +2115,7 @@
     const body = document.getElementById('rows-body');
     const row  = document.createElement('div');
     row.className  = 'row';
+    row.style.animation = `rowSlideIn 0.22s ease ${rowCount * 25}ms both`;
     row.dataset.id = rowCount;
     const safeName = name.replace(/"/g, '&quot;');
     row.innerHTML = `
@@ -2181,7 +2258,7 @@
   function generate() {
     syncAlbumMeta(); // pick up any manual edits to title/artist/year
     const rows = document.querySelectorAll('#rows-body .row');
-    if (!rows.length) { showToast('⚠ No hay datos'); return; }
+    if (!rows.length) { showToast('No hay datos', 'warning'); return; }
 
     let entries = [], sum = 0, count = 0;
     rows.forEach((r, i) => {
@@ -2364,6 +2441,7 @@
     }
 
     card.classList.add('previewing');
+    card.style.animation = 'revealDown 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards';
 
     const scaler = document.createElement('div');
     scaler.className = 'out-card-scaler';
@@ -2386,7 +2464,7 @@
   /* ── COPY (plain text) ── */
   function copyResult() {
     const card = document.querySelector('.out-card');
-    if (!card) { showToast('⚠ Genera primero'); return; }
+    if (!card) { showToast('Genera primero', 'warning'); return; }
 
     const lines = [];
     if (rescoreActive) lines.push('[Re-score]', '');
@@ -2424,14 +2502,14 @@
     const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
     ta.setSelectionRange(0, 999999);
     try { document.execCommand('copy'); showCopySuccess(); }
-    catch (e) { showToast('⚠ No se pudo copiar'); }
+    catch (e) { showToast('No se pudo copiar', 'error'); }
     document.body.removeChild(ta);
   }
 
   function showCopySuccess() {
     const fb = document.getElementById('copy-feedback');
     fb.classList.add('show'); setTimeout(() => fb.classList.remove('show'), 2000);
-    showToast('📋 Copiado al portapapeles');
+    showToast('Copiado al portapapeles', 'success');
   }
 
   function toggleExportMenu() {
@@ -2446,8 +2524,8 @@
   /* ── EXPORT AS IMAGE ── */
   async function exportImage(scale = 3, pcMode = false) {
     const card = document.querySelector('.out-card');
-    if (!card) { showToast('⚠ Genera primero'); return; }
-    showToast('📸 Generando imagen…');
+    if (!card) { showToast('Genera primero', 'warning'); return; }
+    showToast('Generando imagen…', 'info');
 
     // Remove preview class before capture so export uses full fixed layout
     card.classList.remove('previewing');
@@ -2534,11 +2612,11 @@
       link.download = `${albumName}_rating.png`;
       link.href = finalCanvas.toDataURL('image/png');
       link.click();
-      showToast('✓ Imagen guardada');
+      showToast('Imagen guardada', 'success');
     } catch(e) {
       if (pcMode) { card.style.width = savedWidth; card.style.maxWidth = savedMaxWidth; }
       console.error(e);
-      showToast('⚠ Error al exportar');
+      showToast('Error al exportar', 'error');
     } finally {
       card.classList.add('previewing');
       if (scaler) { scaler.style.transform = prevTransform; scaler.style.height = prevHeight; }
@@ -2628,8 +2706,16 @@
   }
 
   /* ── TOAST ── */
-  function showToast(msg) {
+  function showToast(msg, type = 'success', dur = 2500) {
+    const colors = { success: '#c8f060', error: '#e05050', info: '#60d0f0', warning: '#e8a020' };
+    const icons  = { success: '✓', error: '⚠', info: 'ℹ', warning: '!' };
+    const color  = colors[type] || colors.success;
+    const icon   = icons[type]  || icons.success;
     const t = document.getElementById('toast');
+    t.style.setProperty('--toast-color', color);
+    t.style.setProperty('--toast-dur', dur + 'ms');
+    t.style.borderColor = `rgba(${type === 'success' ? '200,240,96' : type === 'error' ? '224,80,80' : type === 'info' ? '96,208,240' : '232,160,32'},0.25)`;
+    t.innerHTML = `<span class="toast-icon" style="color:${color}">${icon}</span><span class="toast-msg">${msg}</span>`;
     t.textContent = msg; t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2200);
   }
@@ -2720,7 +2806,8 @@
     const btn    = document.getElementById('search-btn');
     const status = document.getElementById('search-status');
     const results = document.getElementById('search-results');
-    btn.disabled = true; btn.textContent = '…';
+    btn.disabled = true;
+    btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,0.3);border-top-color:#0d0d0f;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:6px;"></span>Verificando…';
     results.classList.remove('open'); results.innerHTML = '';
     status.textContent = 'Buscando…'; status.classList.add('show');
 
@@ -3324,7 +3411,7 @@
     if (h.length > 50) h.pop();
     setHistory(h);
     renderHistory();
-    showToast('📚 Guardado en historial');
+    showToast('Guardado en historial', 'success');
   }
 
   /* ── SYNC FROM SUPABASE ── */
@@ -3384,6 +3471,53 @@
     }
   }
 
+  /* ── ADMIN: load and display another user's history ── */
+  let adminHistoryCache = null;
+
+  async function loadCloudHistory(targetUserId) {
+    const myUserId = localStorage.getItem('discord_user_id');
+    if (!targetUserId) targetUserId = myUserId;
+    const isOwnHistory = targetUserId === myUserId;
+
+    try {
+      const res  = await fetch(`${BOT_SERVER}/history?user_id=${encodeURIComponent(targetUserId)}`);
+      const rows = await res.json();
+      if (!Array.isArray(rows)) { showToast('⚠ Error al cargar historial'); return; }
+
+      if (isOwnHistory) {
+        adminHistoryCache = null;
+        renderHistory(); return;
+      }
+
+      // Build temporary entries for display
+      adminHistoryCache = rows.map(row => {
+        const rank = getRank(parseFloat(row.final_score));
+        return {
+          id:          row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+          supabase_id: row.id,
+          _targetUser: targetUserId,
+          album: {
+            title:    row.album_title || '',
+            artist:   row.artist    || '',
+            coverUrl: row.cover_url || '',
+            year:     row.year      || '',
+            genre:    row.genre     || ''
+          },
+          rows:    Array.isArray(row.tracks) ? row.tracks.map(t => ({ name: t.name, score: String(t.score || ''), rscore: '' })) : [],
+          cover:   '',
+          comment: row.notes || '',
+          avg:     row.final_score ? parseFloat(row.final_score).toFixed(2) : null,
+          rank:    row.final_rank || rank.label,
+          rankCls: rank.cls,
+          savedAt: row.created_at ? new Date(row.created_at).toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' }) : ''
+        };
+      });
+      renderHistory();
+    } catch(e) {
+      showToast('Error de conexión', 'error');
+    }
+  }
+
   function toggleHistory() {
     const list     = document.getElementById('history-list');
     const chevron  = document.getElementById('history-chevron');
@@ -3392,11 +3526,12 @@
     list.classList.toggle('open', !isOpen);
     chevron.classList.toggle('open', !isOpen);
     header.classList.toggle('open', !isOpen);
-    if (!isOpen) { syncFromSupabase().then(() => renderHistory()); }
+    if (!isOpen) { syncFromSupabase().then(() => renderHistory()); if (isAdmin() && !document.querySelector('#admin-user-select option[value]:not([value=""])')) initAdminSelector(); }
   }
 
   function renderHistory() {
-    const h       = getHistory();
+    const isAdminView = isAdmin() && adminHistoryCache !== null;
+    const h       = isAdminView ? adminHistoryCache : getHistory();
     const list    = document.getElementById('history-list');
     const empty   = document.getElementById('history-empty');
     list.querySelectorAll('.history-item').forEach(el => el.remove());
@@ -3409,17 +3544,23 @@
     h.forEach(entry => {
       const item = document.createElement('div');
       item.className = 'history-item';
+      item.style.animationDelay = `${Array.from(list.querySelectorAll('.history-item')).length * 40}ms`;
 
       const coverHtml = entry.album?.coverUrl
         ? `<img src="${entry.album.coverUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:5px" />`
         : '🎵';
 
-      // Plays badge — shown only if lastfm username is set
-      const playsHtml = lfUser
+      // Plays badge — shown only if lastfm username is set and viewing own history
+      const playsHtml = (lfUser && !isAdminView)
         ? `<div class="history-plays" data-lfplays>
              <span class="history-plays-loading">♪</span>
            </div>`
         : '';
+
+      const deleteBtn = isAdminView
+        ? `<button class="history-item-del" title="Eliminar (admin)" style="color:#e05050"
+             onclick="adminDeleteRating('${entry.supabase_id}', '${entry._targetUser}', event)">×</button>`
+        : `<button class="history-item-del" title="Eliminar" onclick="deleteHistory(${entry.id}, event)">×</button>`;
 
       item.innerHTML = `
         <div class="history-item-cover">${coverHtml}</div>
@@ -3429,7 +3570,7 @@
         </div>
         ${playsHtml}
         <span class="history-item-rank ${entry.rankCls}" style="color:${rankColor(entry.rankCls)}">${entry.rank || '—'}</span>
-        <button class="history-item-del" title="Eliminar" onclick="deleteHistory(${entry.id}, event)">×</button>
+        ${deleteBtn}
       `;
       item.onclick = () => loadFromHistory(entry);
       list.appendChild(item);
@@ -4656,7 +4797,7 @@
 
   async function uploadSpDataToCloud() {
     const userId = localStorage.getItem('discord_user_id');
-    if (!userId) { showToast('⚠ Configurá tu usuario en ⚙ Configuración primero'); return; }
+    if (!userId) { showToast('Configurá tu usuario primero', 'warning'); return; }
     if (!spData.length) { showToast('⚠ No hay datos cargados para subir'); return; }
 
     const btn = document.getElementById('sp-cloud-btn');
@@ -6820,8 +6961,8 @@
   /* ── Load Spotify data manually from cloud ── */
   async function loadSpDataFromCloud() {
     const userId = localStorage.getItem('discord_user_id');
-    if (!userId) { showToast('⚠ Configurá tu usuario en ⚙ Configuración primero'); return; }
-    showToast('☁ Cargando desde la nube…');
+    if (!userId) { showToast('Configurá tu usuario primero', 'warning'); return; }
+    showToast('Cargando desde la nube…', 'info');
     const ok = await loadSpDataFromStorage();
     if (ok) {
       document.getElementById('spotify-dropzone-wrap').style.display = 'none';
@@ -6856,10 +6997,244 @@
     if (coverInput) coverInput.max = getMaxScore();
   });
 
-  // Start on load if username already saved
+  // ── Admin functions (Kyujin only) ──
+  let adminViewingUser = null;
+
+  async function initAdminSelector() {
+    if (!isAdmin()) return;
+    const selector = document.getElementById('admin-user-selector');
+    const select   = document.getElementById('admin-user-select');
+    selector.style.display = 'block';
+    try {
+      const res  = await fetch(`${BOT_SERVER}/users?requester=${encodeURIComponent(localStorage.getItem('discord_user_id') || '')}`);
+      const data = await res.json();
+      const users = data.users || [];
+      select.innerHTML = users.map(u =>
+        `<option value="${u}" ${u === localStorage.getItem('discord_user_id') ? 'selected' : ''}>${u}</option>`
+      ).join('');
+      adminViewingUser = localStorage.getItem('discord_user_id');
+    } catch(e) {
+      select.innerHTML = '<option value="">Error al cargar usuarios</option>';
+    }
+  }
+
+  async function adminSwitchUser() {
+    const select = document.getElementById('admin-user-select');
+    adminViewingUser = select.value;
+    await loadCloudHistory(adminViewingUser);
+  }
+
+  async function adminDeleteRating(id, targetUserId) {
+    if (!isAdmin()) return;
+    if (!confirm(`¿Borrar este rating de ${targetUserId}?`)) return;
+    try {
+      const res = await fetch(`${BOT_SERVER}/admin-delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, target_user_id: targetUserId, requester: localStorage.getItem('discord_user_id') })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast('Rating eliminado', 'success');
+        await loadCloudHistory(adminViewingUser);
+      } else {
+        showToast('Error al eliminar', 'error');
+      }
+    } catch(e) {
+      showToast('Error de conexión', 'error');
+    }
+  }
+
+  // ── AUTH ──
+  let authMode = 'login';
+
+  function switchAuthTab(mode) {
+    authMode = mode;
+    document.getElementById('auth-tab-login').style.borderBottomColor    = mode === 'login'    ? '#c8f060' : 'transparent';
+    document.getElementById('auth-tab-login').style.color                = mode === 'login'    ? '#c8f060' : '#555';
+    document.getElementById('auth-tab-register').style.borderBottomColor = mode === 'register' ? '#c8f060' : 'transparent';
+    document.getElementById('auth-tab-register').style.color             = mode === 'register' ? '#c8f060' : '#555';
+    document.getElementById('auth-submit').textContent = mode === 'login' ? 'ENTRAR' : 'REGISTRARSE';
+    document.getElementById('auth-error').style.display = 'none';
+  }
+
+  async function submitAuth() {
+    const username = document.getElementById('auth-username').value.trim();
+    const password = document.getElementById('auth-password').value;
+    const errEl    = document.getElementById('auth-error');
+    const btn      = document.getElementById('auth-submit');
+
+    if (!username || !password) { errEl.textContent = 'Completá todos los campos'; errEl.style.display = 'block'; return; }
+
+    btn.disabled = true; btn.textContent = '…';
+    errEl.style.display = 'none';
+
+    try {
+      const endpoint = authMode === 'login' ? '/login' : '/register';
+      const res  = await fetch(`${BOT_SERVER}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        errEl.textContent = data.error || 'Error desconocido';
+        errEl.style.display = 'block';
+        btn.disabled = false; btn.innerHTML = authMode === 'login' ? 'ENTRAR' : 'REGISTRARSE';
+        return;
+      }
+
+      // Save session
+      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('discord_user_id', data.username);
+      initApp();
+    } catch(e) {
+      errEl.textContent = 'Error de conexión';
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.innerHTML = authMode === 'login' ? 'ENTRAR' : 'REGISTRARSE';
+    }
+  }
+
+  // Enter key on password field
   document.addEventListener('DOMContentLoaded', () => {
-    startNowPlayingPolling();
+    document.getElementById('auth-password').addEventListener('keydown', e => {
+      if (e.key === 'Enter') submitAuth();
+    });
+    document.getElementById('auth-username').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('auth-password').focus();
+    });
   });
+
+  async function checkAuth() {
+    const token    = localStorage.getItem('auth_token');
+    const username = localStorage.getItem('discord_user_id');
+
+    if (token && username) {
+      document.getElementById('auth-overlay').style.display = 'none';
+      document.getElementById('main-app').style.display = 'block';
+      initApp();
+      // Verify silently in background
+      fetch(`${BOT_SERVER}/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      }).then(res => res.json()).then(data => {
+        if (!data.ok) { localStorage.removeItem('auth_token'); localStorage.removeItem('discord_user_id'); location.reload(); }
+      }).catch(() => { /* bot sleeping — stay logged in */ });
+      return;
+    }
+    showAuthOverlay();
+  }
+
+  function showAuthOverlay() {
+    document.getElementById('auth-overlay').style.display = 'flex';
+    document.getElementById('main-app').style.display = 'none';
+    startAuthBg();
+  }
+
+  function logoutAuth() {
+    if (!confirm('¿Cerrar sesión?')) return;
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('discord_user_id');
+    location.reload();
+  }
+
+  function initApp() {
+    const overlay = document.getElementById('auth-overlay');
+    const app     = document.getElementById('main-app');
+    overlay.style.transition = 'opacity 0.5s ease';
+    overlay.style.opacity    = '0';
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      overlay.style.opacity = '';
+      overlay.style.transition = '';
+      app.style.display = 'block';
+      app.classList.add('fade-in');
+      setTimeout(() => app.classList.remove('fade-in'), 700);
+    }, 500);
+    startNowPlayingPolling();
+    initAdminSelector();
+  }
+
+  // ── Animated auth background — floating album covers in columns ──
+  function startAuthBg() {
+    const overlay = document.getElementById('auth-overlay');
+    const old = document.getElementById('auth-bg');
+    if (old) old.remove();
+
+    const container = document.createElement('div');
+    container.id = 'auth-bg';
+    container.style.cssText = 'position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0;background:rgba(0,0,0,0.55);';
+    overlay.prepend(container);
+
+    const FALLBACK = ['https://lastfm.freetls.fastly.net/i/u/300x300/2a96cbd8b46e442fc41c2b86b821562f.png'];
+
+    const isMobile = window.innerWidth < 500;
+    const COLS     = isMobile ? 3 : 7;
+    const SIZE     = isMobile ? 110 : 130;
+    const GAP      = 10;      // gap between covers px
+    const CELL     = SIZE + GAP;
+    const SPEEDS   = isMobile ? [45, 55, 40] : [45, 55, 40, 60, 42, 52, 38];
+
+    function buildColumns(covers) {
+      const imgs = covers.length ? covers : FALLBACK;
+      container.innerHTML = '';
+
+      for (let col = 0; col < COLS; col++) {
+        const colEl = document.createElement('div');
+        const xPct  = ((col + 0.5) / COLS) * 100;
+        colEl.style.cssText = `
+          position:absolute;
+          left:${xPct}%;
+          transform:translateX(-50%);
+          top:0; width:${SIZE}px;
+          display:flex; flex-direction:column; gap:${GAP}px;
+          animation: colScroll ${SPEEDS[col]}s linear infinite;
+        `;
+
+        // Fill column with enough covers to loop seamlessly
+        const screenH   = window.innerHeight;
+        const needed    = Math.ceil((screenH * 2) / CELL) + 2;
+        const colImgs   = [];
+        for (let i = 0; i < needed; i++) {
+          colImgs.push(imgs[(col * 3 + i) % imgs.length]);
+        }
+        // Duplicate for seamless loop
+        [...colImgs, ...colImgs].forEach(src => {
+          const img = document.createElement('img');
+          img.src = src;
+          img.crossOrigin = 'anonymous';
+          img.style.cssText = `width:${SIZE}px;height:${SIZE}px;object-fit:cover;border-radius:8px;opacity:0;box-shadow:0 4px 20px rgba(0,0,0,0.6);flex-shrink:0;`;
+          img.onload = () => { img.style.opacity = String(0.13 + Math.random() * 0.15); };
+          colEl.appendChild(img);
+        });
+
+        container.appendChild(colEl);
+      }
+    }
+
+    if (!document.getElementById('auth-float-style')) {
+      const screenH = window.innerHeight;
+      const style   = document.createElement('style');
+      style.id      = 'auth-float-style';
+      style.textContent = `
+        @keyframes colScroll {
+          from { transform: translateX(-50%) translateY(0); }
+          to   { transform: translateX(-50%) translateY(-50%); }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    fetch(`${BOT_SERVER}/covers`)
+      .then(r => r.json())
+      .then(data => buildColumns(data.covers || []))
+      .catch(() => buildColumns([]));
+  }
+
+  // ── Start ──
+  checkAuth();
 
   // Restart Now Playing polling after saving settings (handled inside saveDiscordSettings directly)
 
