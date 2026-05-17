@@ -1608,17 +1608,17 @@
     </div>
 
     <!-- Inputs -->
-    <div style="display:flex;flex-direction:column;gap:12px;">
-      <input id="auth-username" type="text" placeholder="Username" autocomplete="off"
+    <form id="auth-form" onsubmit="submitAuth(); return false;" style="display:flex;flex-direction:column;gap:12px;">
+      <input id="auth-username" type="text" placeholder="Username" autocomplete="username"
         style="background:#1a1a2a;border:1px solid #2a2a3a;color:#fff;font-family:'DM Mono',monospace;font-size:13px;padding:12px 14px;border-radius:8px;outline:none;width:100%;box-sizing:border-box;" />
-      <input id="auth-password" type="password" placeholder="Contraseña"
+      <input id="auth-password" type="password" placeholder="Contraseña" autocomplete="current-password"
         style="background:#1a1a2a;border:1px solid #2a2a3a;color:#fff;font-family:'DM Mono',monospace;font-size:13px;padding:12px 14px;border-radius:8px;outline:none;width:100%;box-sizing:border-box;" />
       <div id="auth-error" style="font-size:11px;color:#e05050;font-family:'DM Mono',monospace;display:none;"></div>
-      <button id="auth-submit" onclick="submitAuth()"
+      <button id="auth-submit" type="submit"
         style="background:#c8f060;color:#0d0d0f;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;letter-spacing:0.1em;padding:13px;border-radius:8px;border:none;cursor:pointer;transition:opacity .2s;">
         ENTRAR
       </button>
-    </div>
+    </form>
   </div>
 </div>
 
