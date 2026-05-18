@@ -260,8 +260,8 @@
   .score-big { font-family: 'Syne', sans-serif; font-size: 2.4rem; font-weight: 800; color: var(--accent); line-height: 1; letter-spacing: -0.03em; transition: all 0.3s ease; min-width: 80px; }
   .score-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
   .score-bar-wrap { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
-  .score-bar-bg { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; width: 100%; }
-  .score-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--accent)); border-radius: 3px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1); width: 0%; min-width: 0; }
+  .score-bar-bg { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; width: 100%; }
+  .score-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1), background 0.5s ease; width: 0%; min-width: 0; }
   .score-count { font-size: 12px; color: var(--muted); }
   .rank-badge { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; line-height: 1; letter-spacing: -0.02em; transition: color 0.4s ease, text-shadow 0.4s ease; min-width: 80px; text-align: center; }
   .rank-ss   { color: #ffffff; text-shadow: 0 0 18px rgba(255,255,255,0.6); }
@@ -1145,6 +1145,40 @@
   .sp-overview-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
 
   /* ── Tabs ── */
+  .sp-card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 16px;
+  }
+  .sp-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 16px 8px;
+    border-radius: 12px;
+    background: #111;
+    border: 1px solid #1a1a1a;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 22px;
+    user-select: none;
+  }
+  .sp-card span {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    text-align: center;
+    text-transform: uppercase;
+  }
+  .sp-card:hover { background: #181818; border-color: #2a2a2a; }
+  .sp-card:hover span { color: var(--text); }
+  .sp-card.active { background: rgba(30,215,96,0.07); border-color: rgba(30,215,96,0.3); }
+  .sp-card.active span { color: #1ed760; }
+  #sp-panel-viewer { animation: fadeIn 0.25s ease; }
   .spotify-tabs {
     display: flex; gap: 0; border-bottom: 1px solid var(--border);
     overflow-x: auto; scrollbar-width: none; background: var(--surface2);
@@ -1766,7 +1800,7 @@
   </div>
 
   <!-- DATA IMPORT / EXPORT -->
-  <div class="data-io-section" id="data-io-section">
+  <div class="data-io-section" id="data-io-section" style="display:none;">
     <div class="data-io-header" id="data-io-header" onclick="toggleDataIO()">
       <span class="data-io-title">💾 Importar / Exportar datos</span>
       <span class="data-io-chevron" id="data-io-chevron">▼</span>
@@ -1954,32 +1988,42 @@
         <button id="sp-lfm-sync-btn" onclick="syncLastfmIntoSpData()" style="background:rgba(212,0,0,0.12);border:1px solid rgba(212,0,0,0.3);color:#e05050;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;padding:5px 14px;border-radius:20px;cursor:pointer;transition:all 0.2s;white-space:nowrap;">⟳ Sincronizar</button>
       </div>
       <div class="spotify-overview" id="spotify-overview"></div>
-      <div class="spotify-tabs">
-        <button class="spotify-tab active" onclick="switchSpotifyTab('artists',this)">Artistas</button>
-        <button class="spotify-tab" onclick="switchSpotifyTab('tracks',this)">Canciones</button>
-        <button class="spotify-tab" onclick="switchSpotifyTab('albums',this)">Álbumes</button>
-        <button class="spotify-tab" onclick="switchSpotifyTab('timeline',this)">Timeline</button>
-        <button class="spotify-tab" onclick="switchSpotifyTab('evolution',this)">Evolución</button>
-        <button class="spotify-tab" onclick="switchSpotifyTab('compare',this)">Comparar</button>
-        <button class="spotify-tab" onclick="switchSpotifyTab('thisday',this)">Este día</button>
-        <button class="spotify-tab" onclick="switchSpotifyTab('periods',this)">Períodos</button>
-        <button class="spotify-tab" onclick="switchSpotifyTab('habits',this)">Hábitos</button>
-        <button class="spotify-tab" onclick="switchSpotifyTab('shuffle',this)">Shuffle 🎲</button>
-        <button class="spotify-tab" onclick="switchSpotifyTab('skips',this)">Skips</button>
-        <button class="spotify-tab" onclick="switchSpotifyTab('crossover',this)">× Ratings</button>
+      <div class="sp-card-grid">
+        <div class="sp-card" onclick="switchSpotifyTab('artists',this)">🎤<span>Artistas</span></div>
+        <div class="sp-card" onclick="switchSpotifyTab('tracks',this)">🎵<span>Canciones</span></div>
+        <div class="sp-card" onclick="switchSpotifyTab('albums',this)">💿<span>Álbumes</span></div>
+        <div class="sp-card" onclick="switchSpotifyTab('timeline',this)">📅<span>Timeline</span></div>
+        <div class="sp-card" onclick="switchSpotifyTab('evolution',this)">📈<span>Evolución</span></div>
+        <div class="sp-card" onclick="switchSpotifyTab('compare',this)">⚖️<span>Comparar</span></div>
+        <div class="sp-card" onclick="switchSpotifyTab('thisday',this)">🗓<span>Este día</span></div>
+        <div class="sp-card" onclick="switchSpotifyTab('periods',this)">🕐<span>Períodos</span></div>
+        <div class="sp-card" onclick="switchSpotifyTab('habits',this)">🔄<span>Hábitos</span></div>
+        <div class="sp-card" onclick="switchSpotifyTab('shuffle',this)">🎲<span>Shuffle</span></div>
+        <div class="sp-card" onclick="switchSpotifyTab('skips',this)">⏭<span>Skips</span></div>
+        <div class="sp-card" onclick="switchSpotifyTab('crossover',this)">⭐<span>× Ratings</span></div>
+        <div class="sp-card" onclick="switchSpotifyTab('search',this)">🔍<span>Buscar</span></div>
       </div>
-      <div id="sp-panel-artists"   class="spotify-panel active"></div>
-      <div id="sp-panel-tracks"    class="spotify-panel"></div>
-      <div id="sp-panel-albums"    class="spotify-panel"></div>
-      <div id="sp-panel-timeline"  class="spotify-panel"></div>
-      <div id="sp-panel-evolution" class="spotify-panel"></div>
-      <div id="sp-panel-compare"   class="spotify-panel"></div>
-      <div id="sp-panel-thisday"   class="spotify-panel"></div>
-      <div id="sp-panel-periods"   class="spotify-panel"></div>
-      <div id="sp-panel-habits"    class="spotify-panel"></div>
-      <div id="sp-panel-shuffle"   class="spotify-panel"></div>
-      <div id="sp-panel-skips"     class="spotify-panel"></div>
-      <div id="sp-panel-crossover" class="spotify-panel"></div>
+
+      <!-- Panel viewer -->
+      <div id="sp-panel-viewer" style="display:none;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px 0;">
+          <span id="sp-panel-title" style="font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);"></span>
+          <button onclick="closeSpPanel()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:4px 8px;line-height:1;">✕</button>
+        </div>
+        <div id="sp-panel-artists"   class="spotify-panel active"></div>
+        <div id="sp-panel-tracks"    class="spotify-panel"></div>
+        <div id="sp-panel-albums"    class="spotify-panel"></div>
+        <div id="sp-panel-timeline"  class="spotify-panel"></div>
+        <div id="sp-panel-evolution" class="spotify-panel"></div>
+        <div id="sp-panel-compare"   class="spotify-panel"></div>
+        <div id="sp-panel-thisday"   class="spotify-panel"></div>
+        <div id="sp-panel-periods"   class="spotify-panel"></div>
+        <div id="sp-panel-habits"    class="spotify-panel"></div>
+        <div id="sp-panel-shuffle"   class="spotify-panel"></div>
+        <div id="sp-panel-skips"     class="spotify-panel"></div>
+        <div id="sp-panel-crossover" class="spotify-panel"></div>
+        <div id="sp-panel-search"    class="spotify-panel"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -2249,6 +2293,13 @@
     const rank = getRank(avg);
     avgEl.textContent   = avg.toFixed(2);
     bar.style.width     = `${Math.min(100, (avg / 11) * 100)}%`;
+    // Dynamic color based on score
+    const barColor = avg >= 9.5 ? 'linear-gradient(90deg,#c8f060,#ffe066)'
+      : avg >= 8.5 ? 'linear-gradient(90deg,#60d0f0,#c8f060)'
+      : avg >= 7   ? 'linear-gradient(90deg,#f0a030,#60d0f0)'
+      : avg >= 5   ? 'linear-gradient(90deg,#e05050,#f0a030)'
+      : 'linear-gradient(90deg,#e05050,#e05050)';
+    bar.style.background = barColor;
     countEl.textContent = `${count} track${count !== 1 ? 's' : ''}`;
     rankEl.textContent  = rank.label;
     rankEl.className    = `rank-badge ${rank.cls}`;
@@ -4108,7 +4159,7 @@
     });
   }
 
-  function openPreviewLastfm(title, artist, thumbUrl, tracks, tags) {
+  function openPreviewLastfm(title, artist, thumbUrl, tracks, tags, year) {
     previewReleaseId    = null;
     previewTitle        = title;
     previewArtist       = artist;
@@ -4116,6 +4167,8 @@
     previewItunesAlbum  = null;
     previewLastfmTracks = tracks;
     previewLastfmCover  = thumbUrl;
+    previewLastfmTags   = tags || [];
+    previewLastfmYear   = year || '';
 
     document.getElementById('preview-overlay').classList.add('show');
     const genreList = Array.isArray(tags)
@@ -4184,10 +4237,13 @@
 
   function confirmLoadFromPreviewLastfm() {
     document.getElementById('preview-overlay').classList.remove('show');
-    loadTracklistFromLastfm(previewTitle, previewArtist, previewLastfmTracks, previewLastfmCover);
+    const genre = Array.isArray(previewLastfmTags)
+      ? previewLastfmTags.filter(t => !['seen live','albums i own','favourite albums'].includes((t.name||'').toLowerCase())).slice(0,3).map(t => t.name).join(', ')
+      : '';
+    loadTracklistFromLastfm(previewTitle, previewArtist, previewLastfmTracks, previewLastfmCover, genre, previewLastfmYear);
   }
 
-  async function loadTracklistFromLastfm(albumTitle, artist, tracks, coverUrl) {
+  async function loadTracklistFromLastfm(albumTitle, artist, tracks, coverUrl, genre, year) {
     const status  = document.getElementById('search-status');
     const results = document.getElementById('search-results');
     results.classList.remove('open');
@@ -4203,6 +4259,14 @@
           const t = data.album.tracks.track;
           tracks = Array.isArray(t) ? t : [t];
           if (!coverUrl) coverUrl = pickLastfmImage(data.album.image);
+          if (!year && data.album?.wiki?.published) {
+            const match = data.album.wiki.published.match(/\d{4}/);
+            if (match) year = match[0];
+          }
+          if (!genre && data.album?.tags?.tag) {
+            const tags = Array.isArray(data.album.tags.tag) ? data.album.tags.tag : [data.album.tags.tag];
+            genre = tags.filter(t => !['seen live','albums i own','favourite albums'].includes((t.name||'').toLowerCase())).slice(0,3).map(t => t.name).join(', ');
+          }
         }
       }
       if (!tracks || !tracks.length) { status.textContent = 'No se encontraron tracks en Last.fm.'; return; }
@@ -4232,7 +4296,7 @@
         addRow(trackName, savedScore);
       });
 
-      currentAlbum = { title: albumTitle, artist, year: '', genre: '', coverUrl: coverUrl || null };
+      currentAlbum = { title: albumTitle, artist, year: year || '', genre: genre || '', coverUrl: coverUrl || null };
       showAlbumBanner(currentAlbum);
       status.textContent = `✓ ${tracks.length} tracks de ${artist} — ${albumTitle} cargados`;
       document.getElementById('search-input').value  = '';
@@ -5161,13 +5225,36 @@
     updateLfmSyncBar();
   }
 
-  function switchSpotifyTab(tab, btn) {
+  const spTabLabels = {
+    artists:'Artistas', tracks:'Canciones', albums:'Álbumes', timeline:'Timeline',
+    evolution:'Evolución', compare:'Comparar', thisday:'Este día', periods:'Períodos',
+    habits:'Hábitos', shuffle:'Shuffle', skips:'Skips', crossover:'× Ratings', search:'Buscar'
+  };
+
+  function switchSpotifyTab(tab, cardEl) {
     spActiveTab = tab;
-    document.querySelectorAll('.spotify-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+
+    // Update active card
+    document.querySelectorAll('.sp-card').forEach(c => c.classList.remove('active'));
+    if (cardEl) cardEl.classList.add('active');
+
+    // Show panel viewer, hide grid
+    document.getElementById('sp-panel-viewer').style.display = 'block';
+    document.getElementById('sp-panel-title').textContent = spTabLabels[tab] || tab;
+
+    // Switch panels
     document.querySelectorAll('.spotify-panel').forEach(p => p.classList.remove('active'));
     document.getElementById(`sp-panel-${tab}`).classList.add('active');
     renderSpotifyTab(tab);
+
+    // Scroll to panel
+    document.getElementById('sp-panel-viewer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function closeSpPanel() {
+    document.getElementById('sp-panel-viewer').style.display = 'none';
+    document.querySelectorAll('.sp-card').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.spotify-panel').forEach(p => p.classList.remove('active'));
   }
 
   function renderSpotifyTab(tab) {
@@ -5175,8 +5262,168 @@
                   timeline: renderSpTimeline, evolution: renderSpEvolution,
                   compare: renderSpCompare, thisday: renderSpThisDay, periods: renderSpPeriods,
                   shuffle: renderSpShuffle,
-                  habits: renderSpHabits, skips: renderSpSkips, crossover: renderSpCrossover };
+                  habits: renderSpHabits, skips: renderSpSkips, crossover: renderSpCrossover,
+                  search: renderSpSearch };
     if (fns[tab]) fns[tab]();
+  }
+
+  /* ── SEARCH TAB ── */
+  function renderSpSearch() {
+    const container = document.getElementById('sp-panel-search');
+    container.innerHTML = `
+      <div style="padding:16px 0;">
+        <div style="position:relative;margin-bottom:16px;">
+          <input id="sp-search-input" type="text" placeholder="Buscar artista, canción o álbum…"
+            oninput="runSpSearch()"
+            style="width:100%;box-sizing:border-box;background:#1a1a2a;border:1px solid #2a2a3a;
+            color:var(--text);font-family:'DM Mono',monospace;font-size:13px;padding:11px 40px 11px 14px;
+            border-radius:10px;outline:none;" />
+          <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;">🔍</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:16px;">
+          <button class="sp-search-filter active" data-filter="all"    onclick="setSpFilter(this,'all')">Todo</button>
+          <button class="sp-search-filter"         data-filter="artist" onclick="setSpFilter(this,'artist')">Artista</button>
+          <button class="sp-search-filter"         data-filter="track"  onclick="setSpFilter(this,'track')">Canción</button>
+          <button class="sp-search-filter"         data-filter="album"  onclick="setSpFilter(this,'album')">Álbum</button>
+        </div>
+        <div id="sp-search-results" style="display:flex;flex-direction:column;gap:10px;">
+          <p style="color:var(--muted);font-size:12px;font-family:'DM Mono',monospace;">Escribí algo para buscar.</p>
+        </div>
+      </div>`;
+
+    // Add filter button styles if not present
+    if (!document.getElementById('sp-search-style')) {
+      const s = document.createElement('style');
+      s.id = 'sp-search-style';
+      s.textContent = `
+        .sp-search-filter {
+          padding:5px 14px;border-radius:20px;border:1px solid #2a2a3a;
+          background:transparent;color:var(--muted);font-family:'DM Mono',monospace;
+          font-size:10px;letter-spacing:0.08em;cursor:pointer;transition:all .2s;
+        }
+        .sp-search-filter:hover { border-color:#444;color:var(--text); }
+        .sp-search-filter.active { border-color:#1ed760;color:#1ed760;background:rgba(30,215,96,0.08); }
+        .sp-search-card {
+          background:#111;border:1px solid #1a1a1a;border-radius:10px;
+          padding:14px 16px;transition:background .2s;
+        }
+        .sp-search-card:hover { background:#161616; }
+        .sp-search-card-title { font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px; }
+        .sp-search-card-sub   { font-size:11px;color:var(--muted);margin-bottom:10px; }
+        .sp-search-stats { display:flex;flex-wrap:wrap;gap:8px; }
+        .sp-search-stat {
+          background:#1a1a2a;border-radius:6px;padding:5px 10px;
+          font-family:'DM Mono',monospace;font-size:10px;
+          display:flex;flex-direction:column;align-items:center;gap:1px;min-width:60px;
+        }
+        .sp-search-stat-val { font-size:13px;font-weight:700;color:#1ed760; }
+        .sp-search-stat-lbl { color:var(--muted);letter-spacing:0.06em; }
+      `;
+      document.head.appendChild(s);
+    }
+  }
+
+  let spSearchFilter = 'all';
+
+  function setSpFilter(btn, filter) {
+    spSearchFilter = filter;
+    document.querySelectorAll('.sp-search-filter').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    runSpSearch();
+  }
+
+  function runSpSearch() {
+    const q      = (document.getElementById('sp-search-input')?.value || '').trim().toLowerCase();
+    const out    = document.getElementById('sp-search-results');
+    if (!out) return;
+    if (!q) { out.innerHTML = '<p style="color:var(--muted);font-size:12px;font-family:\'DM Mono\',monospace;">Escribí algo para buscar.</p>'; return; }
+
+    const f = spSearchFilter;
+
+    // Build result map
+    const results = [];
+
+    if (f === 'all' || f === 'artist') {
+      // Artist search
+      const artistMap = {};
+      spData.forEach(s => {
+        if (!s.artist.toLowerCase().includes(q)) return;
+        if (!artistMap[s.artist]) artistMap[s.artist] = { plays: 0, ms: 0, first: s.ts, last: s.ts, tracks: new Set() };
+        const a = artistMap[s.artist];
+        a.plays++; a.ms += s.ms; a.tracks.add(s.track);
+        if (s.ts < a.first) a.first = s.ts;
+        if (s.ts > a.last)  a.last  = s.ts;
+      });
+      Object.entries(artistMap).forEach(([name, d]) => {
+        results.push({ type: 'artist', name, sub: `${d.tracks.size} canciones únicas`, ...d });
+      });
+    }
+
+    if (f === 'all' || f === 'track') {
+      const trackMap = {};
+      spData.forEach(s => {
+        if (!s.track.toLowerCase().includes(q)) return;
+        const key = s.track + '|' + s.artist;
+        if (!trackMap[key]) trackMap[key] = { track: s.track, artist: s.artist, plays: 0, ms: 0, first: s.ts, last: s.ts, skips: 0 };
+        const t = trackMap[key];
+        t.plays++; t.ms += s.ms;
+        if (s.skipped || s.ms < 30000) t.skips++;
+        if (s.ts < t.first) t.first = s.ts;
+        if (s.ts > t.last)  t.last  = s.ts;
+      });
+      Object.values(trackMap).forEach(d => {
+        results.push({ type: 'track', name: d.track, sub: d.artist, ...d });
+      });
+    }
+
+    if (f === 'all' || f === 'album') {
+      const albumMap = {};
+      spData.forEach(s => {
+        if (!s.album || !s.album.toLowerCase().includes(q)) return;
+        const key = s.album + '|' + s.artist;
+        if (!albumMap[key]) albumMap[key] = { album: s.album, artist: s.artist, plays: 0, ms: 0, first: s.ts, last: s.ts, tracks: new Set() };
+        const a = albumMap[key];
+        a.plays++; a.ms += s.ms; a.tracks.add(s.track);
+        if (s.ts < a.first) a.first = s.ts;
+        if (s.ts > a.last)  a.last  = s.ts;
+      });
+      Object.values(albumMap).forEach(d => {
+        results.push({ type: 'album', name: d.album, sub: d.artist, ...d });
+      });
+    }
+
+    // Sort by plays desc, limit 30
+    results.sort((a, b) => b.plays - a.plays);
+    const top = results.slice(0, 30);
+
+    if (!top.length) { out.innerHTML = '<p style="color:var(--muted);font-size:12px;font-family:\'DM Mono\',monospace;">Sin resultados.</p>'; return; }
+
+    const typeIcon = { artist: '🎤', track: '🎵', album: '💿' };
+    const typeLabel = { artist: 'ARTISTA', track: 'CANCIÓN', album: 'ÁLBUM' };
+
+    out.innerHTML = top.map(r => {
+      const firstDate = r.first ? r.first.slice(0,10) : '—';
+      const lastDate  = r.last  ? r.last.slice(0,10)  : '—';
+      const hours     = fmtHours(r.ms);
+      const realP     = r.type === 'track' ? (r.plays - (r.skips||0)) : r.plays;
+      const skipRate  = r.type === 'track' && r.plays > 0 ? Math.round((r.skips/r.plays)*100) + '%' : null;
+
+      return `<div class="sp-search-card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.1em;border:1px solid #2a2a2a;padding:2px 6px;border-radius:4px;">${typeIcon[r.type]} ${typeLabel[r.type]}</span>
+        </div>
+        <div class="sp-search-card-title">${escHtml(r.name)}</div>
+        <div class="sp-search-card-sub">${escHtml(r.sub)}</div>
+        <div class="sp-search-stats">
+          <div class="sp-search-stat"><span class="sp-search-stat-val">${r.plays.toLocaleString()}</span><span class="sp-search-stat-lbl">PLAYS</span></div>
+          <div class="sp-search-stat"><span class="sp-search-stat-val">${hours}</span><span class="sp-search-stat-lbl">TIEMPO</span></div>
+          ${r.type === 'artist' || r.type === 'album' ? `<div class="sp-search-stat"><span class="sp-search-stat-val">${r.tracks?.size||0}</span><span class="sp-search-stat-lbl">CANCIONES</span></div>` : ''}
+          ${skipRate ? `<div class="sp-search-stat"><span class="sp-search-stat-val" style="color:${parseInt(skipRate)>40?'#f06070':'#f0a060'}">${skipRate}</span><span class="sp-search-stat-lbl">SKIPS</span></div>` : ''}
+          <div class="sp-search-stat"><span class="sp-search-stat-val" style="font-size:10px;">${firstDate}</span><span class="sp-search-stat-lbl">PRIMERA VEZ</span></div>
+          <div class="sp-search-stat"><span class="sp-search-stat-val" style="font-size:10px;">${lastDate}</span><span class="sp-search-stat-lbl">ÚLTIMA VEZ</span></div>
+        </div>
+      </div>`;
+    }).join('');
   }
 
   /* helpers */
