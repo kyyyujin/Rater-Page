@@ -5112,28 +5112,27 @@
   }
 
   async function syncLastfmIntoSpData() {
-    const lfUser  = localStorage.getItem('lastfm_username');
-    const cutoff  = localStorage.getItem('sp_lastfm_cutoff');
-    if (!lfUser)  { showToast('⚠ Configurá tu usuario de Last.fm primero (⚙ Discord)'); return; }
-    if (!cutoff)  { showToast('⚠ Cargá el historial de Spotify primero'); return; }
+    const lfUser   = localStorage.getItem('lastfm_username');
+    const cutoff   = localStorage.getItem('sp_lastfm_cutoff');
+    const lastSync = localStorage.getItem('sp_lastfm_synced_at');
+    if (!lfUser)  { showToast('Configurá tu usuario de Last.fm primero', 'warning'); return; }
+    if (!cutoff)  { showToast('Cargá el historial de Spotify primero', 'warning'); return; }
 
     const btn = document.getElementById('sp-lfm-sync-btn');
     const info = document.getElementById('sp-lfm-sync-info');
     btn.disabled = true;
     btn.textContent = '⏳ Sincronizando…';
 
-    // Convert cutoff to unix timestamp (Last.fm `from` param)
-    const cutoffDate = new Date(cutoff.replace(' ', 'T'));
-    const fromTs = Math.floor(cutoffDate.getTime() / 1000);
-    // Subtract 1h overlap to catch edge cases
-    const fromTsSafe = fromTs - 3600;
+    // Use last sync date if available, otherwise use cutoff
+    const fromDate   = lastSync ? new Date(lastSync) : new Date(cutoff.replace(' ', 'T'));
+    const fromTs     = Math.floor(fromDate.getTime() / 1000) - 3600; // 1h overlap
 
     let page = 1, fetched = [], totalPages = 1;
     info.textContent = 'Obteniendo plays de Last.fm…';
 
     try {
       do {
-        const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${encodeURIComponent(lfUser)}&api_key=${LASTFM_KEY}&format=json&limit=200&from=${fromTsSafe}&page=${page}`;
+        const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${encodeURIComponent(lfUser)}&api_key=${LASTFM_KEY}&format=json&limit=200&from=${fromTs}&page=${page}`;
         const res  = await fetch(url);
         const data = await res.json();
 
@@ -5212,9 +5211,7 @@
       return;
     }
 
-    // Remove previous Last.fm synced entries (so re-sync doesn't stack)
-    spData = spData.filter(s => s._src !== 'lastfm');
-    // Merge and sort by timestamp
+    // Just append new streams — don't remove old lastfm entries
     spData = [...spData, ...newStreams].sort((a, b) => a.ts < b.ts ? -1 : 1);
 
     localStorage.setItem('sp_lastfm_synced_at', new Date().toISOString());
@@ -5226,8 +5223,12 @@
 
     btn.disabled = false;
     btn.textContent = '⟳ Re-sincronizar';
-    showToast(`✓ +${newStreams.length} plays nuevos de Last.fm`);
+    showToast(`+${newStreams.length} plays nuevos de Last.fm — subiendo a la nube…`, 'info', 4000);
     updateLfmSyncBar();
+
+    // Auto-upload to cloud
+    try { localStorage.setItem(SP_STORAGE_KEY, JSON.stringify(spData)); } catch {}
+    await uploadSpDataToCloud();
   }
 
   const spTabLabels = {
@@ -5310,9 +5311,19 @@
         .sp-search-filter.active { border-color:#1ed760;color:#1ed760;background:rgba(30,215,96,0.08); }
         .sp-search-card {
           background:#111;border:1px solid #1a1a1a;border-radius:10px;
-          padding:14px 16px;transition:background .2s;
+          padding:14px 16px;transition:background .2s;overflow:hidden;position:relative;
         }
         .sp-search-card:hover { background:#161616; }
+        .sp-search-banner {
+          position:absolute;inset:0;background-size:cover;background-position:center;
+          opacity:0;transition:opacity 0.5s ease;z-index:0;
+        }
+        .sp-search-banner.loaded { opacity:1; }
+        .sp-search-banner::after {
+          content:'';position:absolute;inset:0;
+          background:linear-gradient(135deg,rgba(0,0,0,0.88) 0%,rgba(0,0,0,0.65) 100%);
+        }
+        .sp-search-card-inner { position:relative;z-index:1; }
         .sp-search-card-title { font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px; }
         .sp-search-card-sub   { font-size:11px;color:var(--muted);margin-bottom:10px; }
         .sp-search-stats { display:flex;flex-wrap:wrap;gap:8px; }
@@ -5406,16 +5417,19 @@
     const typeIcon = { artist: '🎤', track: '🎵', album: '💿' };
     const typeLabel = { artist: 'ARTISTA', track: 'CANCIÓN', album: 'ÁLBUM' };
 
-    out.innerHTML = top.map(r => {
+    out.innerHTML = top.map((r, idx) => {
       const firstDate = r.first ? r.first.slice(0,10) : '—';
       const lastDate  = r.last  ? r.last.slice(0,10)  : '—';
       const hours     = fmtHours(r.ms);
-      const realP     = r.type === 'track' ? (r.plays - (r.skips||0)) : r.plays;
       const skipRate  = r.type === 'track' && r.plays > 0 ? Math.round((r.skips/r.plays)*100) + '%' : null;
+      const isAlbum   = r.type === 'album';
 
-      return `<div class="sp-search-card">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-          <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.1em;border:1px solid #2a2a2a;padding:2px 6px;border-radius:4px;">${typeIcon[r.type]} ${typeLabel[r.type]}</span>
+      return `<div class="sp-search-card${isAlbum ? ' sp-album-card' : ''}" id="sp-scard-${idx}" ${isAlbum ? `onclick="toggleAlbumTracklist(this,'${escHtml(r.name)}','${escHtml(r.sub)}')"` : ''} style="${isAlbum ? 'cursor:pointer;' : ''}">
+        <div class="sp-search-banner" id="sp-sbanner-${idx}"></div>
+        <div class="sp-search-card-inner">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:0.1em;border:1px solid rgba(255,255,255,0.1);padding:2px 6px;border-radius:4px;">${typeIcon[r.type]} ${typeLabel[r.type]}</span>
+          ${isAlbum ? '<span class="sp-album-chevron" style="color:var(--muted);font-size:12px;transition:transform .2s;">▼</span>' : ''}
         </div>
         <div class="sp-search-card-title">${escHtml(r.name)}</div>
         <div class="sp-search-card-sub">${escHtml(r.sub)}</div>
@@ -5426,6 +5440,84 @@
           ${skipRate ? `<div class="sp-search-stat"><span class="sp-search-stat-val" style="color:${parseInt(skipRate)>40?'#f06070':'#f0a060'}">${skipRate}</span><span class="sp-search-stat-lbl">SKIPS</span></div>` : ''}
           <div class="sp-search-stat"><span class="sp-search-stat-val" style="font-size:10px;">${firstDate}</span><span class="sp-search-stat-lbl">PRIMERA VEZ</span></div>
           <div class="sp-search-stat"><span class="sp-search-stat-val" style="font-size:10px;">${lastDate}</span><span class="sp-search-stat-lbl">ÚLTIMA VEZ</span></div>
+        </div>
+        ${isAlbum ? '<div class="sp-album-tracklist" style="display:none;margin-top:12px;border-top:1px solid rgba(255,255,255,0.08);padding-top:12px;"></div>' : ''}
+        </div>
+      </div>`;
+    }).join('');
+
+    // Fetch images async
+    top.forEach((r, idx) => {
+      const bg = document.getElementById(`sp-sbanner-${idx}`);
+      if (!bg) return;
+      if (r.type === 'album') {
+        fetch(`https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(r.sub)}&album=${encodeURIComponent(r.name)}&api_key=${LASTFM_KEY}&format=json`)
+          .then(res => res.json())
+          .then(data => {
+            const imgs = data?.album?.image || [];
+            const src  = (imgs.find(i => i.size === 'extralarge') || imgs[imgs.length-1])?.['#text'];
+            if (src && !src.includes('2a96cbd8')) { bg.style.backgroundImage = `url('${src}')`; bg.classList.add('loaded'); }
+          }).catch(() => {});
+      } else if (r.type === 'artist') {
+        fetchArtistImg(r.name).then(src => {
+          if (src) { bg.style.backgroundImage = `url('${src}')`; bg.classList.add('loaded'); }
+        });
+      }
+    });
+  }
+
+  function toggleAlbumTracklist(card, album, artist) {
+    const tl      = card.querySelector('.sp-album-tracklist');
+    const chevron = card.querySelector('.sp-album-chevron');
+    const isOpen  = tl.style.display !== 'none';
+
+    if (isOpen) {
+      tl.style.display = 'none';
+      chevron.style.transform = 'rotate(0deg)';
+      return;
+    }
+
+    chevron.style.transform = 'rotate(180deg)';
+    tl.style.display = 'block';
+
+    // Build track stats for this album
+    const trackMap = {};
+    spData.forEach(s => {
+      if ((s.album || '').toLowerCase() !== album.toLowerCase()) return;
+      if ((s.artist || '').toLowerCase() !== artist.toLowerCase()) return;
+      if (!trackMap[s.track]) trackMap[s.track] = { track: s.track, plays: 0, ms: 0, skips: 0, first: s.ts, last: s.ts };
+      const t = trackMap[s.track];
+      t.plays++; t.ms += s.ms;
+      if (s.skipped || s.ms < 30000) t.skips++;
+      if (s.ts < t.first) t.first = s.ts;
+      if (s.ts > t.last)  t.last  = s.ts;
+    });
+
+    const tracks = Object.values(trackMap).sort((a, b) => b.plays - a.plays);
+
+    if (!tracks.length) { tl.innerHTML = '<p style="color:var(--muted);font-size:11px;font-family:\'DM Mono\',monospace;">Sin tracks encontrados.</p>'; return; }
+
+    tl.innerHTML = tracks.map(t => {
+      const skipRate = t.plays > 0 ? Math.round((t.skips / t.plays) * 100) : 0;
+      const skipColor = skipRate > 40 ? '#f06070' : skipRate > 20 ? '#f0a060' : 'var(--muted)';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #111;gap:8px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(t.track)}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${t.first.slice(0,10)} → ${t.last.slice(0,10)}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;align-items:center;">
+          <div style="text-align:center;">
+            <div style="font-size:12px;font-weight:700;color:#1ed760;">${t.plays}</div>
+            <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;">PLAYS</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:12px;font-weight:700;color:var(--muted);">${fmtHours(t.ms)}</div>
+            <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;">TIEMPO</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:12px;font-weight:700;color:${skipColor};">${skipRate}%</div>
+            <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;">SKIPS</div>
+          </div>
         </div>
       </div>`;
     }).join('');
