@@ -5328,9 +5328,12 @@
         .sp-search-card-sub   { font-size:11px;color:var(--muted);margin-bottom:10px; }
         .sp-search-stats { display:flex;flex-wrap:wrap;gap:8px; }
         .sp-search-stat {
-          background:#1a1a2a;border-radius:6px;padding:5px 10px;
+          background:rgba(255,255,255,0.08);border-radius:8px;padding:6px 10px;
           font-family:'DM Mono',monospace;font-size:10px;
           display:flex;flex-direction:column;align-items:center;gap:1px;min-width:60px;
+          backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+          border:1px solid rgba(255,255,255,0.15);
+          box-shadow:inset 0 1px 0 rgba(255,255,255,0.1);
         }
         .sp-search-stat-val { font-size:13px;font-weight:700;color:#1ed760; }
         .sp-search-stat-lbl { color:var(--muted);letter-spacing:0.06em; }
@@ -5417,6 +5420,8 @@
     const typeIcon = { artist: '🎤', track: '🎵', album: '💿' };
     const typeLabel = { artist: 'ARTISTA', track: 'CANCIÓN', album: 'ÁLBUM' };
 
+    window._spSearchResults = top;
+
     out.innerHTML = top.map((r, idx) => {
       const firstDate = r.first ? r.first.slice(0,10) : '—';
       const lastDate  = r.last  ? r.last.slice(0,10)  : '—';
@@ -5424,7 +5429,7 @@
       const skipRate  = r.type === 'track' && r.plays > 0 ? Math.round((r.skips/r.plays)*100) + '%' : null;
       const isAlbum   = r.type === 'album';
 
-      return `<div class="sp-search-card${isAlbum ? ' sp-album-card' : ''}" id="sp-scard-${idx}" ${isAlbum ? `onclick="toggleAlbumTracklist(this,'${escHtml(r.name)}','${escHtml(r.sub)}')"` : ''} style="${isAlbum ? 'cursor:pointer;' : ''}">
+      return `<div class="sp-search-card${isAlbum ? ' sp-album-card' : ''}" id="sp-scard-${idx}" ${isAlbum ? "onclick='toggleAlbumTracklist(this," + idx + ")'" : ''} style="${isAlbum ? 'cursor:pointer;' : ''}">
         <div class="sp-search-banner" id="sp-sbanner-${idx}"></div>
         <div class="sp-search-card-inner">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
@@ -5456,17 +5461,38 @@
           .then(data => {
             const imgs = data?.album?.image || [];
             const src  = (imgs.find(i => i.size === 'extralarge') || imgs[imgs.length-1])?.['#text'];
-            if (src && !src.includes('2a96cbd8')) { bg.style.backgroundImage = `url('${src}')`; bg.classList.add('loaded'); }
+            if (src && !src.includes('2a96cbd8')) {
+              bg.style.backgroundImage = `url('${src}')`;
+              bg.classList.add('loaded');
+              // Save cover URL on the card for tracklist use
+              const cardEl = document.getElementById(`sp-src-${idx}`);
+              if (cardEl) cardEl.dataset.cover = src;
+            }
           }).catch(() => {});
       } else if (r.type === 'artist') {
         fetchArtistImg(r.name).then(src => {
           if (src) { bg.style.backgroundImage = `url('${src}')`; bg.classList.add('loaded'); }
         });
+      } else if (r.type === 'track') {
+        // Find album this track belongs to
+        const stream = spData.find(s => s.track === r.name && s.artist === r.sub && s.album);
+        if (stream?.album) {
+          fetch(`https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(r.sub)}&album=${encodeURIComponent(stream.album)}&api_key=${LASTFM_KEY}&format=json`)
+            .then(res => res.json())
+            .then(data => {
+              const imgs = data?.album?.image || [];
+              const src  = (imgs.find(i => i.size === 'extralarge') || imgs[imgs.length-1])?.['#text'];
+              if (src && !src.includes('2a96cbd8')) { bg.style.backgroundImage = `url('${src}')`; bg.classList.add('loaded'); }
+            }).catch(() => {});
+        }
       }
     });
   }
 
-  function toggleAlbumTracklist(card, album, artist) {
+  function toggleAlbumTracklist(card, idx) {
+    const r      = (window._spSearchResults || [])[idx];
+    const album  = r ? r.name : '';
+    const artist = r ? r.sub  : '';
     const tl      = card.querySelector('.sp-album-tracklist');
     const chevron = card.querySelector('.sp-album-chevron');
     const isOpen  = tl.style.display !== 'none';
@@ -5479,6 +5505,9 @@
 
     chevron.style.transform = 'rotate(180deg)';
     tl.style.display = 'block';
+
+    // Get album cover from data attribute set when image loaded
+    const coverUrl = card.dataset.cover || '';
 
     // Build track stats for this album
     const trackMap = {};
@@ -5497,26 +5526,31 @@
 
     if (!tracks.length) { tl.innerHTML = '<p style="color:var(--muted);font-size:11px;font-family:\'DM Mono\',monospace;">Sin tracks encontrados.</p>'; return; }
 
-    tl.innerHTML = tracks.map(t => {
-      const skipRate = t.plays > 0 ? Math.round((t.skips / t.plays) * 100) : 0;
-      const skipColor = skipRate > 40 ? '#f06070' : skipRate > 20 ? '#f0a060' : 'var(--muted)';
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid #111;gap:8px;">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(t.track)}</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${t.first.slice(0,10)} → ${t.last.slice(0,10)}</div>
-        </div>
-        <div style="display:flex;gap:8px;flex-shrink:0;align-items:center;">
-          <div style="text-align:center;">
-            <div style="font-size:12px;font-weight:700;color:#1ed760;">${t.plays}</div>
-            <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;">PLAYS</div>
+    tl.innerHTML = tracks.map((t, i) => {
+      const skipRate  = t.plays > 0 ? Math.round((t.skips / t.plays) * 100) : 0;
+      const skipColor = skipRate > 40 ? '#f06070' : skipRate > 20 ? '#f0a060' : 'rgba(255,255,255,0.5)';
+      const bgStyle   = coverUrl ? `background-image:url('${coverUrl}');background-size:cover;background-position:center;` : 'background:#111;';
+      return `<div style="position:relative;overflow:hidden;border-radius:8px;margin-bottom:6px;">
+        <div style="position:absolute;inset:0;${bgStyle}opacity:0.25;z-index:0;"></div>
+        <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,0.85),rgba(0,0,0,0.5));z-index:1;"></div>
+        <div style="position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:8px 10px;gap:8px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:12px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(t.track)}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:1px;">${t.first.slice(0,10)} → ${t.last.slice(0,10)}</div>
           </div>
-          <div style="text-align:center;">
-            <div style="font-size:12px;font-weight:700;color:var(--muted);">${fmtHours(t.ms)}</div>
-            <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;">TIEMPO</div>
-          </div>
-          <div style="text-align:center;">
-            <div style="font-size:12px;font-weight:700;color:${skipColor};">${skipRate}%</div>
-            <div style="font-size:9px;color:var(--muted);font-family:'DM Mono',monospace;">SKIPS</div>
+          <div style="display:flex;gap:6px;flex-shrink:0;align-items:center;">
+            <div style="text-align:center;background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:4px 8px;">
+              <div style="font-size:12px;font-weight:700;color:#1ed760;">${t.plays}</div>
+              <div style="font-size:8px;color:rgba(255,255,255,0.4);font-family:'DM Mono',monospace;">PLAYS</div>
+            </div>
+            <div style="text-align:center;background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:4px 8px;">
+              <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.8);">${fmtHours(t.ms)}</div>
+              <div style="font-size:8px;color:rgba(255,255,255,0.4);font-family:'DM Mono',monospace;">TIEMPO</div>
+            </div>
+            <div style="text-align:center;background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:4px 8px;">
+              <div style="font-size:12px;font-weight:700;color:${skipColor};">${skipRate}%</div>
+              <div style="font-size:8px;color:rgba(255,255,255,0.4);font-family:'DM Mono',monospace;">SKIPS</div>
+            </div>
           </div>
         </div>
       </div>`;
