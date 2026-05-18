@@ -4920,6 +4920,11 @@
             ms: s.ms, skipped: !!s.sk, platform: '', country: '',
             _src: s.src ? 'lastfm' : 'spotify'
           } : s);
+          // Set cutoff from last stream timestamp
+          const tsSorted = spData.map(s => s.ts).filter(s => s && !s.startsWith('lastfm')).sort();
+          if (tsSorted.length && !localStorage.getItem('sp_lastfm_cutoff')) {
+            localStorage.setItem('sp_lastfm_cutoff', tsSorted[tsSorted.length - 1]);
+          }
           // Update local cache
           try { localStorage.setItem(SP_STORAGE_KEY, JSON.stringify(spData)); } catch {}
           return true;
