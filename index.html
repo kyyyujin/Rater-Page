@@ -429,6 +429,9 @@
     transition: text-shadow 0.3s;
   }
   .out-track:last-child { border-bottom: none; }
+  .out-tracks-columns { display: flex; gap: 16px; }
+  .out-tracks-col { flex: 1; min-width: 0; }
+  .out-tracks-col .out-track:last-child { border-bottom: none; }
   .out-track-num { font-size: 11px; color: rgba(255,255,255,0.55); min-width: 22px; text-align: right; flex-shrink: 0; }
   .out-track-bar-wrap { width: 36px; flex-shrink: 0; }
   .out-track-bar-bg { height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: visible; }
@@ -1986,6 +1989,7 @@
         <span style="color:#e05050;font-size:13px">last.fm</span>
         <span id="sp-lfm-sync-info" style="color:var(--muted);flex:1"></span>
         <button id="sp-lfm-sync-btn" onclick="syncLastfmIntoSpData()" style="background:rgba(212,0,0,0.12);border:1px solid rgba(212,0,0,0.3);color:#e05050;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;padding:5px 14px;border-radius:20px;cursor:pointer;transition:all 0.2s;white-space:nowrap;">⟳ Sincronizar</button>
+        <button onclick="fixLastfmTimestamps()" style="background:rgba(232,160,32,0.1);border:1px solid rgba(232,160,32,0.3);color:#e8a020;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;padding:5px 14px;border-radius:20px;cursor:pointer;transition:all 0.2s;white-space:nowrap;">🔧 Corregir timestamps</button>
       </div>
       <div class="spotify-overview" id="spotify-overview"></div>
       <div class="sp-card-grid">
@@ -2001,6 +2005,7 @@
         <div class="sp-card" onclick="switchSpotifyTab('shuffle',this)">🎲<span>Shuffle</span></div>
         <div class="sp-card" onclick="switchSpotifyTab('skips',this)">⏭<span>Skips</span></div>
         <div class="sp-card" onclick="switchSpotifyTab('crossover',this)">⭐<span>× Ratings</span></div>
+        <div class="sp-card" onclick="switchSpotifyTab('snapshot',this)">📸<span>Snapshot</span></div>
         <div class="sp-card" onclick="switchSpotifyTab('search',this)">🔍<span>Buscar</span></div>
       </div>
 
@@ -2023,6 +2028,7 @@
         <div id="sp-panel-skips"     class="spotify-panel"></div>
         <div id="sp-panel-crossover" class="spotify-panel"></div>
         <div id="sp-panel-search"    class="spotify-panel"></div>
+      <div id="sp-panel-snapshot"  class="spotify-panel"></div>
       </div>
     </div>
   </div>
@@ -2386,8 +2392,10 @@
     card.appendChild(sep1);
 
     // ── Track list with bars ──
+    const useColumns = entries.length > 20;
     let rescoreSum = 0;
-    entries.forEach(e => {
+
+    const buildTrackRow = (e) => {
       const is11   = !isNaN(e.score) && e.score >= 11;
       const isBest = e.score === maxScore && maxScore !== null;
       const row    = document.createElement('div');
@@ -2399,7 +2407,6 @@
       const bgStyle    = colorData.gradient ? colorData.gradient : colorData.color;
       const shadowStyle = colorData.glow ? `box-shadow:${colorData.glow};` : '';
 
-      // Re-score delta
       let deltaHTML = '';
       if (rescoreActive) {
         const deltaInput = document.getElementById(`rscore-${e.index}`);
@@ -2423,8 +2430,25 @@
         <span class="out-track-score">${scoreText}</span>
         ${deltaHTML}
       `;
-      card.appendChild(row);
-    });
+      return row;
+    };
+
+    if (useColumns) {
+      const mid  = Math.ceil(entries.length / 2);
+      const col1 = document.createElement('div');
+      const col2 = document.createElement('div');
+      col1.className = 'out-tracks-col';
+      col2.className = 'out-tracks-col';
+      entries.slice(0, mid).forEach(e => col1.appendChild(buildTrackRow(e)));
+      entries.slice(mid).forEach(e => col2.appendChild(buildTrackRow(e)));
+      const wrapper = document.createElement('div');
+      wrapper.className = 'out-tracks-columns';
+      wrapper.appendChild(col1);
+      wrapper.appendChild(col2);
+      card.appendChild(wrapper);
+    } else {
+      entries.forEach(e => card.appendChild(buildTrackRow(e)));
+    }
 
     // Cover score moved to album header meta
 
@@ -5111,6 +5135,40 @@
     }
   }
 
+  async function fixLastfmTimestamps() {
+    const lfStreams = spData.filter(s => s._src === 'lastfm');
+    if (!lfStreams.length) { showToast('No hay streams de Last.fm para corregir', 'info'); return; }
+
+    let fixed = 0;
+    spData = spData.map(s => {
+      if (s._src !== 'lastfm') return s;
+      // Detect if timestamp is UTC (ends in Z or has no offset info)
+      // UTC timestamps from toISOString look like "2024-03-15 14:32:00"
+      // We need to check if it was stored in UTC by comparing to local offset
+      const d = new Date(s.ts.replace(' ', 'T') + 'Z'); // parse as UTC
+      const local = new Date(s.ts.replace(' ', 'T'));    // parse as local
+      // If they differ by more than timezone offset, it was stored in UTC
+      const offsetMs = new Date().getTimezoneOffset() * 60000;
+      if (Math.abs(d.getTime() - local.getTime()) > 1000) {
+        // Was stored as UTC, convert to local
+        const ld = new Date(d.getTime()); // d is already UTC
+        const corrected = `${ld.getFullYear()}-${String(ld.getMonth()+1).padStart(2,'0')}-${String(ld.getDate()).padStart(2,'0')} ${String(ld.getHours()).padStart(2,'0')}:${String(ld.getMinutes()).padStart(2,'0')}:${String(ld.getSeconds()).padStart(2,'0')}`;
+        if (corrected !== s.ts) { fixed++; return { ...s, ts: corrected }; }
+      }
+      return s;
+    });
+
+    if (!fixed) { showToast('Los timestamps ya están correctos', 'success'); return; }
+
+    spData.sort((a, b) => a.ts < b.ts ? -1 : 1);
+    try { localStorage.setItem(SP_STORAGE_KEY, JSON.stringify(spData)); } catch {}
+
+    showToast(`${fixed} timestamps corregidos — subiendo a la nube…`, 'info', 4000);
+    renderSpotifyOverview();
+    await uploadSpDataToCloud();
+    showToast(`✓ Listo — ${fixed} timestamps corregidos y guardados`, 'success');
+  }
+
   async function syncLastfmIntoSpData() {
     const lfUser   = localStorage.getItem('lastfm_username');
     const cutoff   = localStorage.getItem('sp_lastfm_cutoff');
@@ -5170,7 +5228,10 @@
 
     // Build a dedup key set from existing spData (ts|artist|track)
     const existingKeys = new Set(
-      spData.map(s => `${s.ts.slice(0,16)}|${s.artist.toLowerCase()}|${s.track.toLowerCase()}`)
+      spData.map(s => {
+        const ts = s.ts.replace('T', ' ').slice(0, 19);
+        return `${ts}|${(s.artist||'').toLowerCase()}|${(s.track||'').toLowerCase()}`;
+      })
     );
 
     // Convert Last.fm tracks to spData format
@@ -5179,14 +5240,15 @@
     for (const t of fetched) {
       const uts = parseInt(t.date?.uts || '0', 10);
       if (!uts) continue;
-      const ts = new Date(uts * 1000).toISOString().replace('T', ' ').slice(0, 19);
+      const d   = new Date(uts * 1000);
+      const ts  = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
       const artist = t.artist?.['#text'] || '';
       const track  = t.name || '';
       const album  = t.album?.['#text'] || '';
       if (!artist || !track) continue;
 
-      // Deduplicate: same minute + same artist + same track
-      const key = `${ts.slice(0,16)}|${artist.toLowerCase()}|${track.toLowerCase()}`;
+      // Deduplicate: same second + same artist + same track
+      const key = `${ts}|${artist.toLowerCase()}|${track.toLowerCase()}`;
       if (existingKeys.has(key)) continue;
       existingKeys.add(key);
 
@@ -5234,7 +5296,8 @@
   const spTabLabels = {
     artists:'Artistas', tracks:'Canciones', albums:'Álbumes', timeline:'Timeline',
     evolution:'Evolución', compare:'Comparar', thisday:'Este día', periods:'Períodos',
-    habits:'Hábitos', shuffle:'Shuffle', skips:'Skips', crossover:'× Ratings', search:'Buscar'
+    habits:'Hábitos', shuffle:'Shuffle', skips:'Skips', crossover:'× Ratings',
+    search:'Buscar', snapshot:'Snapshot'
   };
 
   function switchSpotifyTab(tab, cardEl) {
@@ -5269,7 +5332,7 @@
                   compare: renderSpCompare, thisday: renderSpThisDay, periods: renderSpPeriods,
                   shuffle: renderSpShuffle,
                   habits: renderSpHabits, skips: renderSpSkips, crossover: renderSpCrossover,
-                  search: renderSpSearch };
+                  search: renderSpSearch, snapshot: renderSpSnapshot };
     if (fns[tab]) fns[tab]();
   }
 
@@ -5342,7 +5405,272 @@
     }
   }
 
-  let spSearchFilter = 'all';
+  /* ── SNAPSHOT ── */
+  function renderSpSnapshot() {
+    const panel = document.getElementById('sp-panel-snapshot');
+    panel.innerHTML = `
+      <div style="padding:16px 0;">
+        <!-- Mode selector -->
+        <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+          <button class="sp-snap-mode active" data-mode="day"   onclick="setSnapMode(this,'day')">Día</button>
+          <button class="sp-snap-mode"        data-mode="week"  onclick="setSnapMode(this,'week')">Semana</button>
+          <button class="sp-snap-mode"        data-mode="month" onclick="setSnapMode(this,'month')">Mes</button>
+          <button class="sp-snap-mode"        data-mode="year"  onclick="setSnapMode(this,'year')">Año</button>
+          <button class="sp-snap-mode"        data-mode="range" onclick="setSnapMode(this,'range')">Rango</button>
+        </div>
+
+        <!-- Date inputs -->
+        <div id="snap-date-inputs" style="display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap;">
+        </div>
+
+        <div id="snap-result"></div>
+      </div>`;
+
+    if (!document.getElementById('sp-snap-style')) {
+      const s = document.createElement('style');
+      s.id = 'sp-snap-style';
+      s.textContent = `
+        .sp-snap-mode {
+          padding:5px 14px;border-radius:20px;border:1px solid #2a2a3a;
+          background:transparent;color:var(--muted);font-family:'DM Mono',monospace;
+          font-size:10px;letter-spacing:0.08em;cursor:pointer;transition:all .2s;
+        }
+        .sp-snap-mode:hover { border-color:#444;color:var(--text); }
+        .sp-snap-mode.active { border-color:#1ed760;color:#1ed760;background:rgba(30,215,96,0.08); }
+        .snap-select {
+          flex:1;background:#1a1a2a;border:1px solid #2a2a3a;color:var(--text);
+          font-family:'DM Mono',monospace;font-size:12px;padding:9px 12px;
+          border-radius:8px;outline:none;cursor:pointer;appearance:none;
+          background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666'/%3E%3C/svg%3E");
+          background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;
+        }
+        .snap-select:focus { border-color:#3a3a4a; }
+        .snap-to-arrow { color:var(--muted);font-size:14px;flex-shrink:0; }
+        .snap-stat-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px; }
+        .snap-stat-box {
+          background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+          border-radius:10px;padding:14px;text-align:center;
+        }
+        .snap-stat-box .val { font-family:'Syne',sans-serif;font-size:22px;font-weight:800;line-height:1; }
+        .snap-stat-box .lbl { font-family:'DM Mono',monospace;font-size:9px;letter-spacing:0.1em;color:var(--muted);margin-top:4px; }
+        .snap-top-section { margin-bottom:18px; }
+        .snap-top-title { font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;margin-bottom:8px; }
+        .snap-top-row {
+          display:flex;align-items:center;gap:10px;padding:8px 0;
+          border-bottom:1px solid rgba(255,255,255,0.04);
+        }
+        .snap-top-rank { font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);min-width:18px; }
+        .snap-top-name { flex:1;font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+        .snap-top-val  { font-family:'DM Mono',monospace;font-size:11px;color:#1ed760;flex-shrink:0; }
+      `;
+      document.head.appendChild(s);
+    }
+
+    // Set default mode and render inputs
+    window._snapMode = 'day';
+    renderSnapInputs('day');
+  }
+
+  function setSnapMode(btn, mode) {
+    window._snapMode = mode;
+    document.querySelectorAll('.sp-snap-mode').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderSnapInputs(mode);
+    buildSnapshot();
+  }
+
+  function renderSnapInputs(mode) {
+    const container = document.getElementById('snap-date-inputs');
+    if (!container) return;
+
+    // Build available years/months from spData
+    const allDates = spData.map(s => s.ts.slice(0,10)).filter(Boolean).sort();
+    const minDate  = allDates[0] || '2020-01-01';
+    const maxDate  = allDates[allDates.length-1] || new Date().toISOString().slice(0,10);
+    const minYear  = parseInt(minDate.slice(0,4));
+    const maxYear  = parseInt(maxDate.slice(0,4));
+    const today    = new Date().toISOString().slice(0,10);
+
+    const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+    const selStyle = 'class="snap-select"';
+
+    if (mode === 'day') {
+      // Year + Month + Day
+      const years  = Array.from({length: maxYear - minYear + 1}, (_,i) => maxYear - i);
+      const todayY = parseInt(today.slice(0,4));
+      const todayM = parseInt(today.slice(5,7));
+      const todayD = parseInt(today.slice(8,10));
+      container.innerHTML = `
+        <select ${selStyle} id="snap-sel-year" onchange="snapUpdateDays()">
+          ${years.map(y => `<option value="${y}" ${y===todayY?'selected':''}>${y}</option>`).join('')}
+        </select>
+        <select ${selStyle} id="snap-sel-month" onchange="snapUpdateDays()">
+          ${months.map((m,i) => `<option value="${i+1}" ${i+1===todayM?'selected':''}>${m}</option>`).join('')}
+        </select>
+        <select ${selStyle} id="snap-sel-day" onchange="buildSnapshot()">
+        </select>`;
+      snapUpdateDays();
+
+    } else if (mode === 'week') {
+      const years = Array.from({length: maxYear - minYear + 1}, (_,i) => maxYear - i);
+      const todayY = parseInt(today.slice(0,4));
+      const todayM = parseInt(today.slice(5,7));
+      container.innerHTML = `
+        <select ${selStyle} id="snap-sel-year" onchange="buildSnapshot()">
+          ${years.map(y => `<option value="${y}" ${y===todayY?'selected':''}>${y}</option>`).join('')}
+        </select>
+        <select ${selStyle} id="snap-sel-month" onchange="buildSnapshot()">
+          ${months.map((m,i) => `<option value="${i+1}" ${i+1===todayM?'selected':''}>${m}</option>`).join('')}
+        </select>
+        <select ${selStyle} id="snap-sel-week" onchange="buildSnapshot()">
+          <option value="1">Semana 1 (1-7)</option>
+          <option value="2">Semana 2 (8-14)</option>
+          <option value="3">Semana 3 (15-21)</option>
+          <option value="4">Semana 4 (22-28)</option>
+          <option value="5">Semana 5 (29-31)</option>
+        </select>`;
+
+    } else if (mode === 'month') {
+      const years = Array.from({length: maxYear - minYear + 1}, (_,i) => maxYear - i);
+      const todayY = parseInt(today.slice(0,4));
+      const todayM = parseInt(today.slice(5,7));
+      container.innerHTML = `
+        <select ${selStyle} id="snap-sel-year" onchange="buildSnapshot()">
+          ${years.map(y => `<option value="${y}" ${y===todayY?'selected':''}>${y}</option>`).join('')}
+        </select>
+        <select ${selStyle} id="snap-sel-month" onchange="buildSnapshot()">
+          ${months.map((m,i) => `<option value="${i+1}" ${i+1===todayM?'selected':''}>${m}</option>`).join('')}
+        </select>`;
+
+    } else if (mode === 'year') {
+      const years = Array.from({length: maxYear - minYear + 1}, (_,i) => maxYear - i);
+      const todayY = parseInt(today.slice(0,4));
+      container.innerHTML = `
+        <select ${selStyle} id="snap-sel-year" onchange="buildSnapshot()">
+          ${years.map(y => `<option value="${y}" ${y===todayY?'selected':''}>${y}</option>`).join('')}
+        </select>`;
+
+    } else if (mode === 'range') {
+      const years = Array.from({length: maxYear - minYear + 1}, (_,i) => maxYear - i);
+      const todayY = parseInt(today.slice(0,4));
+      const todayM = parseInt(today.slice(5,7));
+      container.innerHTML = `
+        <select ${selStyle} id="snap-sel-from-year" onchange="buildSnapshot()">
+          ${years.map(y => `<option value="${y}" ${y===todayY?'selected':''}>${y}</option>`).join('')}
+        </select>
+        <select ${selStyle} id="snap-sel-from-month" onchange="buildSnapshot()">
+          ${months.map((m,i) => `<option value="${i+1}" ${i+1===todayM?'selected':''}>${m}</option>`).join('')}
+        </select>
+        <span class="snap-to-arrow">→</span>
+        <select ${selStyle} id="snap-sel-to-year" onchange="buildSnapshot()">
+          ${years.map(y => `<option value="${y}" ${y===todayY?'selected':''}>${y}</option>`).join('')}
+        </select>
+        <select ${selStyle} id="snap-sel-to-month" onchange="buildSnapshot()">
+          ${months.map((m,i) => `<option value="${i+1}" ${i+1===todayM?'selected':''}>${m}</option>`).join('')}
+        </select>`;
+    }
+  }
+
+  function snapUpdateDays() {
+    const y   = parseInt(document.getElementById('snap-sel-year')?.value || new Date().getFullYear());
+    const m   = parseInt(document.getElementById('snap-sel-month')?.value || 1);
+    const sel = document.getElementById('snap-sel-day');
+    if (!sel) return;
+    const days = new Date(y, m, 0).getDate();
+    const prev = parseInt(sel.value) || new Date().getDate();
+    sel.innerHTML = Array.from({length: days}, (_,i) => `<option value="${i+1}" ${i+1===prev?'selected':''}>${i+1}</option>`).join('');
+    buildSnapshot();
+  }
+
+  function buildSnapshot() {
+    const mode   = window._snapMode || 'day';
+    const result = document.getElementById('snap-result');
+    if (!result) return;
+
+    const g = id => parseInt(document.getElementById(id)?.value || 0);
+    let from, to;
+
+    if (mode === 'day') {
+      const y = g('snap-sel-year'), m = g('snap-sel-month'), d = g('snap-sel-day');
+      if (!y || !m || !d) return;
+      from = new Date(y, m-1, d);
+      to   = new Date(y, m-1, d+1);
+    } else if (mode === 'week') {
+      const y = g('snap-sel-year'), m = g('snap-sel-month'), w = g('snap-sel-week');
+      if (!y || !m || !w) return;
+      const startDay = (w-1) * 7 + 1;
+      from = new Date(y, m-1, startDay);
+      to   = new Date(y, m-1, startDay + 7);
+    } else if (mode === 'month') {
+      const y = g('snap-sel-year'), m = g('snap-sel-month');
+      if (!y || !m) return;
+      from = new Date(y, m-1, 1);
+      to   = new Date(y, m, 1);
+    } else if (mode === 'year') {
+      const y = g('snap-sel-year');
+      if (!y) return;
+      from = new Date(y, 0, 1);
+      to   = new Date(y+1, 0, 1);
+    } else if (mode === 'range') {
+      const fy = g('snap-sel-from-year'), fm = g('snap-sel-from-month');
+      const ty = g('snap-sel-to-year'),   tm = g('snap-sel-to-month');
+      if (!fy || !fm || !ty || !tm) return;
+      from = new Date(fy, fm-1, 1);
+      to   = new Date(ty, tm, 1);
+    }
+
+    const streams = spData.filter(s => {
+      const d = new Date(s.ts.replace(' ', 'T'));
+      return d >= from && d < to;
+    });
+
+    if (!streams.length) {
+      result.innerHTML = '<p style="color:var(--muted);font-family:\'DM Mono\',monospace;font-size:12px;padding:20px 0;">Sin escuchas en este período.</p>';
+      return;
+    }
+
+    const totalMs       = streams.reduce((a, s) => a + (s.ms || 0), 0);
+    const totalPlays    = streams.filter(s => !s.skipped && (s.ms||0) >= 30000).length;
+    const uniqueArtists = new Set(streams.map(s => s.artist)).size;
+    const uniqueTracks  = new Set(streams.map(s => s.track + '|' + s.artist)).size;
+
+    const artistMap = {}, trackMap = {}, albumMap = {};
+    streams.forEach(s => {
+      if (!s.skipped && (s.ms||0) >= 30000) {
+        artistMap[s.artist] = (artistMap[s.artist] || 0) + 1;
+        const tk = s.track + '|' + s.artist;
+        trackMap[tk] = trackMap[tk] || { name: s.track, artist: s.artist, plays: 0 };
+        trackMap[tk].plays++;
+        if (s.album) {
+          const ak = s.album + '|' + s.artist;
+          albumMap[ak] = albumMap[ak] || { name: s.album, artist: s.artist, plays: 0 };
+          albumMap[ak].plays++;
+        }
+      }
+    });
+
+    const topArtists = Object.entries(artistMap).sort((a,b) => b[1]-a[1]).slice(0,5);
+    const topTracks  = Object.values(trackMap).sort((a,b) => b.plays-a.plays).slice(0,5);
+    const topAlbums  = Object.values(albumMap).sort((a,b) => b.plays-a.plays).slice(0,5);
+
+    const hrs     = Math.floor(totalMs / 3600000);
+    const mins    = Math.floor((totalMs % 3600000) / 60000);
+    const timeStr = hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+
+    result.innerHTML = `
+      <div class="snap-stat-grid">
+        <div class="snap-stat-box"><div class="val" style="color:#1ed760;">${timeStr}</div><div class="lbl">TIEMPO TOTAL</div></div>
+        <div class="snap-stat-box"><div class="val" style="color:#60d0f0;">${totalPlays.toLocaleString()}</div><div class="lbl">PLAYS REALES</div></div>
+        <div class="snap-stat-box"><div class="val" style="color:#c8f060;">${uniqueArtists.toLocaleString()}</div><div class="lbl">ARTISTAS ÚNICOS</div></div>
+        <div class="snap-stat-box"><div class="val" style="color:#f0a030;">${uniqueTracks.toLocaleString()}</div><div class="lbl">CANCIONES ÚNICAS</div></div>
+      </div>
+      ${topArtists.length ? `<div class="snap-top-section"><div class="snap-top-title">🎤 Top Artistas</div>${topArtists.map(([name, plays], i) => `<div class="snap-top-row"><span class="snap-top-rank">${i+1}</span><span class="snap-top-name">${escHtml(name)}</span><span class="snap-top-val">${plays} plays</span></div>`).join('')}</div>` : ''}
+      ${topTracks.length ? `<div class="snap-top-section"><div class="snap-top-title">🎵 Top Canciones</div>${topTracks.map((t, i) => `<div class="snap-top-row"><span class="snap-top-rank">${i+1}</span><span class="snap-top-name">${escHtml(t.name)} <span style="color:var(--muted);font-size:11px;">— ${escHtml(t.artist)}</span></span><span class="snap-top-val">${t.plays} plays</span></div>`).join('')}</div>` : ''}
+      ${topAlbums.length ? `<div class="snap-top-section"><div class="snap-top-title">💿 Top Álbumes</div>${topAlbums.map((a, i) => `<div class="snap-top-row"><span class="snap-top-rank">${i+1}</span><span class="snap-top-name">${escHtml(a.name)} <span style="color:var(--muted);font-size:11px;">— ${escHtml(a.artist)}</span></span><span class="snap-top-val">${a.plays} plays</span></div>`).join('')}</div>` : ''}
+    `;
+  }
+
 
   function setSpFilter(btn, filter) {
     spSearchFilter = filter;
