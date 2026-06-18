@@ -24,7 +24,7 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #0d0d0f; --surface: #15151a; --surface2: #1e1e26;
+    --bg: #080809; --surface: #111115; --surface2: #18181f;
     --border: #2a2a38; --accent: #c8f060; --accent2: #60d4f0;
     --text: #f0ede8; --muted: #6b6b80; --danger: #f06070; --radius: 12px;
   }
@@ -32,8 +32,8 @@
     font-family: 'DM Mono', monospace; background: var(--bg); color: var(--text);
     min-height: 100vh; padding: 40px 20px;
     background-image:
-      radial-gradient(ellipse at 10% 0%, rgba(200,240,96,0.07) 0%, transparent 50%),
-      radial-gradient(ellipse at 90% 100%, rgba(96,212,240,0.06) 0%, transparent 50%);
+      radial-gradient(ellipse at 10% 0%, rgba(200,240,96,0.03) 0%, transparent 50%),
+      radial-gradient(ellipse at 90% 100%, rgba(96,212,240,0.025) 0%, transparent 50%);
     position: relative; overflow-x: hidden;
   }
 
@@ -61,7 +61,205 @@
   .subtitle { margin-top: 10px; color: var(--muted); font-size: 13px; }
 
   /* SEARCH */
-  .search-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 24px; }
+  /* ── DESKTOP HERO BANNER ── */
+  #desktop-hero {
+    position: relative; overflow: hidden;
+    border-radius: 16px; margin-bottom: 0;
+    min-height: 280px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+  }
+  #desktop-hero-bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    transition: opacity .6s ease;
+  }
+  #desktop-hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.55) 50%, rgba(0,0,0,0.2) 100%);
+  }
+  #desktop-hero-content {
+    position: relative; z-index: 2;
+    padding: 20px 24px 24px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  #desktop-hero-top {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  #desktop-hero-actions { display: flex; gap: 6px; }
+  #desktop-hero-title {
+    font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800;
+    color: #fff; line-height: 1.1; margin: 0;
+  }
+  #desktop-hero-title span { color: var(--accent); }
+  #desktop-hero-sub {
+    font-size: 11px; color: rgba(255,255,255,0.55);
+    font-family: 'DM Mono', monospace; margin: 0;
+  }
+  /* (legacy .hero-input / .hero-search-btn / .hero-se-btn styles removed — search box now reparents the real .search-section into the hero) */
+
+  /* ── DESKTOP GRID LAYOUT ── */
+  @media (min-width: 900px) {
+    .container { max-width: 1600px; }
+    body { padding: 32px 5vw; }
+    #desktop-grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    /* Hero banner spans the full width, above both columns */
+    #desktop-hero {
+      grid-column: 1 / -1;
+    }
+    #grid-left {
+      position: sticky;
+      top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    /* Desktop search slot: full-width between hero and two-column grid */
+    #desktop-search-slot {
+      grid-column: 1 / -1;
+      display: flex !important;
+      align-items: center;
+      gap: 12px;
+      padding: 0 2px;
+    }
+    #desktop-search-slot .search-section {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+    }
+    #desktop-search-slot .search-label { display: none; }
+    #desktop-search-slot .search-inputs {
+      flex-direction: row;
+      flex: 1;
+      gap: 10px;
+      margin: 0;
+    }
+    #desktop-search-slot .search-input-wrap { flex: 1; }
+    #desktop-search-slot .search-row {
+      flex-shrink: 0;
+      margin: 0;
+    }
+    #desktop-search-slot .search-results {
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      right: 0;
+      z-index: 800;
+      background: #111;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.6);
+      padding: 6px;
+      margin: 0;
+    }
+    #desktop-search-slot .search-section { position: relative; }
+    #desktop-search-slot .search-status { font-size: 11px; }
+    /* Left column order (search moved out to #desktop-search-slot above) */
+    .album-art-wrap   { order: 1; }
+    .score-hero       { order: 2; }
+    .data-io-section  { order: 3; }
+    .history-section  { order: 4; }
+    .stats-section    { order: 5; }
+    #grid-right {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+    /* Hide header on desktop */
+    header { display: none; }
+    /* Now Playing: smaller, quieter — a status line, not a second hero */
+    #now-playing-bar { margin-bottom: 12px; border-color: rgba(30,215,96,0.15); }
+    #now-playing-bar::before { display: none; }
+    #np-inner { padding: 8px 14px; gap: 10px; }
+    #np-art { width: 34px; height: 34px; }
+    #np-track { font-size: 12px; }
+    #np-artist { font-size: 10px; }
+    #np-bars { height: 18px; }
+    #np-footer { display: none; }
+    #desktop-hero { display: flex !important; }
+    #desktop-hero-content { padding: 24px 32px 28px; }
+    #desktop-hero-text { display: flex; flex-direction: column; gap: 12px; }
+    .score-hero { margin-bottom: 0; flex-direction: column; gap: 12px; padding: 16px 20px; }
+    .score-hero .score-bar-wrap { width: 100%; }
+    .history-section, .stats-section { margin-bottom: 0; }
+    .search-section { margin-bottom: 0; }
+    .album-art-wrap {
+      margin-bottom: 0;
+      display: block;
+      position: relative;
+      padding: 0;
+      overflow: hidden;
+      min-height: 320px;
+    }
+    /* Cover image fills the entire panel as a background */
+    .album-art-wrap .album-cover-btn {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      border-radius: var(--radius);
+    }
+    .album-art-wrap .album-art-img,
+    .album-art-wrap .album-cover-placeholder {
+      width: 100%; height: 100%;
+      border-radius: var(--radius);
+      border: none;
+    }
+    .album-art-wrap .album-cover-placeholder {
+      font-size: 48px;
+      background: linear-gradient(135deg, var(--surface2) 0%, var(--surface) 100%);
+    }
+    /* Dark gradient so the text stays readable over any image */
+    .album-art-wrap::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 45%, transparent 75%);
+      border-radius: var(--radius);
+      pointer-events: none;
+      z-index: 1;
+    }
+    /* Info sits on top of the image + gradient, anchored to the bottom */
+    .album-art-wrap .album-art-info {
+      position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+      display: flex; flex-direction: column;
+      padding: 16px 18px;
+      gap: 4px;
+    }
+    .album-art-wrap .album-edit-input.title  { color: #fff; }
+    .album-art-wrap .album-edit-input.artist { color: rgba(255,255,255,0.75); }
+    .album-art-wrap .album-edit-input.year   { color: rgba(255,255,255,0.6); }
+    .album-art-wrap .album-edit-input:hover  { background: rgba(255,255,255,0.12); }
+    .album-art-wrap .album-edit-input:focus  { background: rgba(255,255,255,0.16); }
+    .album-art-wrap .album-edit-input.genre {
+      background: rgba(96,212,240,0.18);
+      border-color: rgba(96,212,240,0.4);
+    }
+    /* Edit-cover overlay still works on hover over the whole panel */
+    .album-art-wrap .album-cover-overlay { border-radius: var(--radius); z-index: 1; font-size: 28px; }
+    .table-wrap { margin-bottom: 0; }
+    .comment-section { margin-bottom: 0; }
+    .actions { margin-bottom: 0; }
+    .output-section { margin-bottom: 0; }
+  }
+  @media (max-width: 899px) {
+    #desktop-grid { display: contents; }
+    #grid-left { display: contents; }
+    #grid-right { display: contents; }
+    #desktop-hero { display: none !important; }
+    #search-section-mobile { display: block !important; }
+  }
+
+  .search-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 24px; position: relative; z-index: 50; }
   .search-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin-bottom: 10px; display: block; }
   .search-row { display: flex; gap: 8px; }
   .search-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 14px; padding: 10px 36px 10px 14px; outline: none; transition: border-color 0.2s; }
@@ -88,7 +286,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   #main-app.fade-in { animation: fadeIn 0.6s ease forwards; }
   .search-status.show { display: block; }
-  .se-wrap { position:relative; }
+  .se-wrap { position:relative; z-index: 60; }
   .se-btn {
     width:100%; background:transparent; border:1px solid transparent; color:var(--muted);
     padding:8px 22px 8px 10px; font-family:'DM Mono',monospace; font-size:10px;
@@ -103,7 +301,7 @@
   }
   .se-btn.open .se-arrow { transform:translateY(-50%) rotate(180deg); }
   .se-list {
-    position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:700;
+    position:absolute; top:calc(100% + 4px); left:0; right:0; z-index:900;
     background:#111; border:1px solid #2a2a2a; border-radius:8px; overflow:hidden;
     display:none; box-shadow:0 12px 40px rgba(0,0,0,.7);
   }
@@ -157,6 +355,14 @@
   .edition-item:hover { background: rgba(200,240,96,0.04); }
   .edition-item-label { color: var(--muted); flex: 1; }
   .edition-item-tracks { color: var(--muted); font-size: 11px; }
+
+  /* Reliable blur: filter() on the app content is far more consistent across browsers than
+     backdrop-filter on a fixed overlay (some Android Chrome versions fail to composite
+     backdrop-filter correctly over elements with their own overflow:hidden/border-radius layer,
+     leaving some panels sharp). Modals are moved to be direct children of <body> via JS so this
+     blur never affects the modal itself. */
+  #main-app { transition: filter 0.25s; }
+  #main-app.app-blurred { filter: blur(10px); pointer-events: none; }
 
   /* Preview modal */
   .preview-overlay {
@@ -294,14 +500,21 @@
   .score-dot.low  { background: var(--danger); }
   .btn-delete { width: 30px; height: 30px; border-radius: 6px; border: 1px solid transparent; background: transparent; color: var(--muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.2s; margin: auto; }
   .btn-delete:hover { border-color: var(--danger); color: var(--danger); background: rgba(240,96,112,0.1); }
-  .cover-row { display: grid; grid-template-columns: 40px 1fr 150px 48px; align-items: center; padding: 10px 16px; border-top: 1px solid var(--border); background: rgba(200,240,96,0.03); }
-  .cover-label { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
 
   /* Re-score column in table */
   .row.rescore-mode { grid-template-columns: 36px 1fr 70px 80px 28px 28px; }
   .table-header.rescore-mode { grid-template-columns: 36px 1fr 70px 80px 28px 28px; }
   .cover-row.rescore-mode { grid-template-columns: 36px 1fr 70px 80px 28px 28px; }
-  .cover-row { display: grid; grid-template-columns: 36px 1fr 70px 28px 28px; align-items: center; padding: 10px 16px; border-top: 1px solid var(--border); background: rgba(200,240,96,0.03); }
+  .cover-row {
+    display: grid; grid-template-columns: 36px 1fr 70px 28px 28px; align-items: center;
+    padding: 12px 16px; margin-top: 4px;
+    border-top: 1px dashed rgba(200,240,96,0.25);
+    background: rgba(200,240,96,0.05);
+  }
+  .cover-label {
+    font-size: 11px; color: var(--accent); display: flex; align-items: center; gap: 6px;
+    text-transform: uppercase; letter-spacing: 0.1em; font-weight: 600;
+  }
   .rescore-col {
     display: none;
   }
@@ -429,9 +642,6 @@
     transition: text-shadow 0.3s;
   }
   .out-track:last-child { border-bottom: none; }
-  .out-tracks-columns { display: flex; gap: 16px; }
-  .out-tracks-col { flex: 1; min-width: 0; }
-  .out-tracks-col .out-track:last-child { border-bottom: none; }
   .out-track-num { font-size: 11px; color: rgba(255,255,255,0.55); min-width: 22px; text-align: right; flex-shrink: 0; }
   .out-track-bar-wrap { width: 36px; flex-shrink: 0; }
   .out-track-bar-bg { height: 4px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: visible; }
@@ -858,9 +1068,13 @@
   .pending-empty { text-align:center; padding:32px 20px; color:var(--muted); font-size:13px; }
   .pending-overlay { position:fixed; inset:0; z-index:1199; background:rgba(0,0,0,0.5); opacity:0; pointer-events:none; transition:opacity 0.3s; }
   .pending-overlay.visible { opacity:1; pointer-events:all; }
-  #pending-fab { position:fixed; bottom:20px; right:20px; z-index:1100; background:var(--surface2); border:1px solid rgba(200,240,96,0.35); border-radius:50px; padding:10px 18px; cursor:pointer; display:flex; align-items:center; gap:8px; box-shadow:0 4px 20px rgba(0,0,0,0.4); transition:all 0.2s; font-family:'Inter',sans-serif; font-size:12px; color:var(--accent); font-weight:600; }
+  #pending-fab { position:fixed; bottom:20px; right:20px; z-index:1100; background:var(--surface2); border:1px solid rgba(200,240,96,0.35); border-radius:50px; padding:10px 18px; cursor:pointer; display:flex; align-items:center; gap:8px; box-shadow:0 4px 20px rgba(0,0,0,0.4); transition:all 0.2s, opacity 0.2s, visibility 0.2s; font-family:'Inter',sans-serif; font-size:12px; color:var(--accent); font-weight:600; }
   #pending-fab:hover { border-color:rgba(200,240,96,0.7); transform:translateY(-2px); }
   #pending-fab-count { background:var(--accent); color:#000; border-radius:10px; padding:1px 7px; font-size:11px; font-weight:800; display:none; }
+  /* Hide the floating "Pendientes" button behind the preview modal (progressive enhancement; JS watchModalsForFab() handles all modals reliably) */
+  body:has(.preview-overlay.show) #pending-fab {
+    opacity: 0; visibility: hidden; pointer-events: none;
+  }
 
   /* ── Compare Artists ── */
   .sp-compare-chart { display:flex; align-items:flex-end; gap:3px; height:140px; position:relative; overflow-x:auto; }
@@ -1619,6 +1833,38 @@
   #np-footer a:hover { color:#e05050; }
   #now-playing-bar:hover #np-inner { background: rgba(30,215,96,0.04); }
   #now-playing-bar:hover #np-track { color: rgba(200,240,96,0.9); }
+  /* ── DESKTOP FLATTEN: remove all panel chrome — placed last so it wins the cascade ── */
+  @media (min-width: 900px) {
+    .search-section,
+    .score-hero,
+    .history-section,
+    .stats-section,
+    .table-wrap,
+    .comment-section,
+    .output-section,
+    .spotify-section,
+    .data-io-section {
+      background: transparent !important;
+      border: none !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      padding-left: 0 !important;
+      padding-right: 0 !important;
+    }
+    .score-hero::before { display: none !important; }
+    .history-header:hover, .stats-header:hover { background: transparent !important; }
+    .history-header.open, .stats-header.open, .data-io-header.open, .spotify-header.open { border-bottom-color: transparent !important; }
+    .stats-body { padding-left: 0; padding-right: 0; }
+    .table-header { background: transparent !important; border: none !important; padding-left: 4px; padding-right: 4px; }
+    .row { padding-left: 4px; padding-right: 4px; border-bottom: none !important; padding-top: 14px; padding-bottom: 14px; }
+    .cover-row { padding-left: 4px; padding-right: 4px; border-top: none !important; }
+    .comment-section { padding-top: 0; }
+    .output-header { background: transparent !important; border-bottom: none !important; padding-left: 0; padding-right: 0; }
+    #output-text { padding-left: 0; padding-right: 0; }
+    .spotify-header { padding-left: 0; padding-right: 0; }
+    .spotify-panel { padding-left: 0; padding-right: 0; }
+    .table-wrap, .comment-section, .actions, .output-section { margin-bottom: 0; }
+  }
 </style>
 </head>
 <body>
@@ -1738,7 +1984,35 @@
   </div>
 
   <!-- SEARCH -->
-  <div class="search-section">
+  <div id="desktop-grid">
+
+    <!-- Desktop hero banner (only shown on PC) -->
+    <div id="desktop-hero" style="display:none;">
+      <div id="desktop-hero-bg"></div>
+      <div id="desktop-hero-overlay"></div>
+      <div id="desktop-hero-content">
+        <div id="desktop-hero-text">
+        <div id="desktop-hero-top">
+          <span class="badge" style="background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);">🎵 Album Rater</span>
+          <div id="desktop-hero-actions">
+            <a href="https://album-vault.vercel.app/" style="display:inline-block;padding:5px 12px;border-radius:6px;border:1px solid rgba(200,240,96,0.4);background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);color:var(--accent);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;text-decoration:none;letter-spacing:0.05em;">🗄 Vault</a>
+            <button onclick="openDiscordSettings()" style="padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);color:rgba(255,255,255,0.7);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;">⚙</button>
+            <button onclick="openDedupModal()" style="padding:5px 12px;border-radius:6px;border:1px solid rgba(220,60,60,0.4);background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);color:#e05555;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;">🗑</button>
+          </div>
+        </div>
+        <h1 id="desktop-hero-title">Califica<br><span>tus álbumes</span></h1>
+        <p id="desktop-hero-sub">Ponle nota a cada track — el promedio se calcula solo</p>
+        </div>
+        <!-- Search box lives in its own panel below the hero (see #grid-left) -->
+      </div>
+    </div>
+
+  <!-- Desktop search slot: full-width, between hero and the two-column grid (only shown on desktop) -->
+  <div id="desktop-search-slot" style="display:none;"></div>
+
+  <div id="grid-left">
+
+  <div class="search-section" id="search-section-mobile">
     <span class="search-label">🔍 Buscar tracklist de un álbum</span>
     <div class="search-inputs">
       <div style="display:flex;align-items:center;gap:6px">
@@ -1869,9 +2143,9 @@
     <div class="stats-body" id="stats-body">
       <div id="stats-content"><p class="stats-empty">Todavía no hay álbumes guardados.</p></div>
     </div>
-  </div>
+  </div><!-- end stats-section -->
 
-  <!-- SCORE HERO -->
+  <!-- SCORE HERO in left panel -->
   <div class="score-hero">
     <div style="display:flex;flex-direction:column;gap:6px;align-items:center;">
       <div class="score-label">Promedio</div>
@@ -1884,6 +2158,9 @@
       <div class="score-count" id="count-label">0 tracks</div>
     </div>
   </div>
+
+  </div><!-- end grid-left -->
+  <div id="grid-right">
 
   <!-- TABLE -->
   <div class="table-wrap">
@@ -1951,6 +2228,9 @@
     <div id="output-text"></div>
   </div>
 </div>
+
+  </div><!-- end grid-right -->
+  </div><!-- end desktop-grid -->
 
 <!-- SPOTIFY STATS -->
 <div>
@@ -2392,10 +2672,8 @@
     card.appendChild(sep1);
 
     // ── Track list with bars ──
-    const useColumns = entries.length > 20;
     let rescoreSum = 0;
-
-    const buildTrackRow = (e) => {
+    entries.forEach(e => {
       const is11   = !isNaN(e.score) && e.score >= 11;
       const isBest = e.score === maxScore && maxScore !== null;
       const row    = document.createElement('div');
@@ -2407,6 +2685,7 @@
       const bgStyle    = colorData.gradient ? colorData.gradient : colorData.color;
       const shadowStyle = colorData.glow ? `box-shadow:${colorData.glow};` : '';
 
+      // Re-score delta
       let deltaHTML = '';
       if (rescoreActive) {
         const deltaInput = document.getElementById(`rscore-${e.index}`);
@@ -2430,25 +2709,8 @@
         <span class="out-track-score">${scoreText}</span>
         ${deltaHTML}
       `;
-      return row;
-    };
-
-    if (useColumns) {
-      const mid  = Math.ceil(entries.length / 2);
-      const col1 = document.createElement('div');
-      const col2 = document.createElement('div');
-      col1.className = 'out-tracks-col';
-      col2.className = 'out-tracks-col';
-      entries.slice(0, mid).forEach(e => col1.appendChild(buildTrackRow(e)));
-      entries.slice(mid).forEach(e => col2.appendChild(buildTrackRow(e)));
-      const wrapper = document.createElement('div');
-      wrapper.className = 'out-tracks-columns';
-      wrapper.appendChild(col1);
-      wrapper.appendChild(col2);
-      card.appendChild(wrapper);
-    } else {
-      entries.forEach(e => card.appendChild(buildTrackRow(e)));
-    }
+      card.appendChild(row);
+    });
 
     // Cover score moved to album header meta
 
@@ -3780,7 +4042,11 @@
     filterHistory();
   }
 
+  // Dynamic page background tinted by album cover — currently DISABLED.
+  // Set to true to re-enable; the original logic below is kept intact.
+  const PAGE_BG_DYNAMIC_ENABLED = false;
   function updatePageBg(coverUrl) {
+    if (!PAGE_BG_DYNAMIC_ENABLED) return;
     const bg = document.getElementById('page-bg');
     if (!coverUrl) { bg.classList.remove('loaded'); return; }
     bg.style.backgroundImage = `url(${coverUrl})`;
@@ -7861,7 +8127,92 @@
     }, 500);
     startNowPlayingPolling();
     initAdminSelector();
+    loadHeroBg();
+    syncHeroSearch();
+    relocateModalsToBody();
+    watchModalsForBlurAndFab();
   }
+
+  // ── Move modal/overlay elements to be direct children of <body> ──
+  // They're deeply nested inside #main-app by default; moving them out lets us safely
+  // blur #main-app's content (via filter, not backdrop-filter) without blurring the modal itself.
+  function relocateModalsToBody() {
+    ['preview-overlay', 'dedup-modal', 'discord-modal', 'welcome-modal'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && el.parentNode !== document.body) document.body.appendChild(el);
+    });
+  }
+
+  // ── Blur the app behind any open modal, and hide the floating "Pendientes" button ──
+  function watchModalsForBlurAndFab() {
+    const fab = document.getElementById('pending-fab');
+    const app = document.getElementById('main-app');
+    const watchedIds = ['preview-overlay', 'dedup-modal', 'discord-modal', 'welcome-modal', 'pending-overlay'];
+    function isAnyModalOpen() {
+      return watchedIds.some(id => {
+        const el = document.getElementById(id);
+        if (!el) return false;
+        if (el.classList.contains('show') || el.classList.contains('visible')) return true;
+        const cs = window.getComputedStyle(el);
+        return cs.display !== 'none' && el.style.display && el.style.display !== 'none';
+      });
+    }
+    function refresh() {
+      const open = isAnyModalOpen();
+      if (fab) { fab.style.visibility = open ? 'hidden' : ''; fab.style.opacity = open ? '0' : ''; }
+      if (app) app.classList.toggle('app-blurred', open);
+    }
+    watchedIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) new MutationObserver(refresh).observe(el, { attributes: true, attributeFilter: ['class', 'style'] });
+    });
+    refresh();
+  }
+
+  // ── Desktop hero background ──
+  async function loadHeroBg() {
+    const hero = document.getElementById('desktop-hero');
+    if (!hero || getComputedStyle(hero).display === 'none') return;
+    try {
+      const res   = await fetch(`${BOT_SERVER}/covers`);
+      const data  = await res.json();
+      const covers = (data.covers || []).filter(Boolean);
+      if (!covers.length) return;
+      const src = covers[Math.floor(Math.random() * covers.length)];
+      const bg  = document.getElementById('desktop-hero-bg');
+      const img = new Image();
+      img.onload = () => { bg.style.backgroundImage = `url('${src}')`; bg.style.opacity = '1'; };
+      img.src = src;
+    } catch {}
+  }
+
+  function syncHeroSearch() {
+    const searchSection   = document.getElementById('search-section-mobile');
+    const desktopSlot     = document.getElementById('desktop-search-slot');
+    if (!searchSection || !desktopSlot) return;
+
+    const mobileParent    = searchSection.parentNode;
+    const placeholder     = document.createComment('search-mobile-placeholder');
+    let movedToDesktop    = false;
+
+    function place() {
+      const isDesktop = window.innerWidth >= 900;
+      if (isDesktop && searchSection.parentNode !== desktopSlot) {
+        if (!movedToDesktop) {
+          mobileParent.insertBefore(placeholder, searchSection);
+          movedToDesktop = true;
+        }
+        desktopSlot.appendChild(searchSection);
+      } else if (!isDesktop && searchSection.parentNode === desktopSlot) {
+        mobileParent.insertBefore(searchSection, placeholder);
+      }
+    }
+
+    place();
+    window.addEventListener('resize', place);
+  }
+
+
 
   // ── Animated auth background — floating album covers in columns ──
   function startAuthBg() {
