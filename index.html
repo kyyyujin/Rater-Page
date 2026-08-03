@@ -2564,9 +2564,22 @@
   }
 
   function updateAverage() {
-    const inputs = document.querySelectorAll('#rows-body input[type="number"]');
+    const inputs = document.querySelectorAll('#rows-body input[type="number"]:not(.rescore-input)');
     let sum = 0, count = 0;
-    inputs.forEach(i => { const v = parseFloat(i.value); if (!isNaN(v)) { sum += v; count++; } });
+    inputs.forEach(i => {
+      const v = parseFloat(i.value);
+      if (!isNaN(v)) {
+        if (rescoreActive) {
+          const row = i.closest('.row');
+          const deltaInput = row ? row.querySelector('.rescore-input') : null;
+          const delta = deltaInput ? parseFloat(deltaInput.value) : NaN;
+          sum += v + (isNaN(delta) ? 0 : delta);
+        } else {
+          sum += v;
+        }
+        count++;
+      }
+    });
     const avgEl   = document.getElementById('avg-display');
     const bar     = document.getElementById('avg-bar');
     const countEl = document.getElementById('count-label');
@@ -2599,10 +2612,13 @@
 
     let entries = [], sum = 0, count = 0;
     rows.forEach((r, i) => {
-      const name  = r.querySelector('input[type="text"]').value.trim() || `Track ${i + 1}`;
-      const score = parseFloat(r.querySelector('input[type="number"]').value);
+      const name      = r.querySelector('input[type="text"]').value.trim() || `Track ${i + 1}`;
+      const baseScore = parseFloat(r.querySelector('input[type="number"]:not(.rescore-input)').value);
+      const deltaInput = r.querySelector('.rescore-input');
+      const delta      = (rescoreActive && deltaInput) ? parseFloat(deltaInput.value) : NaN;
+      const score      = !isNaN(baseScore) ? baseScore + (isNaN(delta) ? 0 : delta) : NaN;
       if (!isNaN(score)) { sum += score; count++; }
-      entries.push({ index: i + 1, name, score });
+      entries.push({ index: i + 1, name, score, baseScore, delta: isNaN(delta) ? 0 : delta });
     });
 
     const coverVal  = parseFloat(document.getElementById('cover-score').value);
@@ -3728,9 +3744,18 @@
     });
     const cover   = document.getElementById('cover-score').value;
     const comment = document.getElementById('comment-input').value;
-    const inputs  = document.querySelectorAll('#rows-body input[type="number"]');
+    const inputs  = document.querySelectorAll('#rows-body input[type="number"]:not(.rescore-input)');
     let sum = 0, count = 0;
-    inputs.forEach(i => { const v = parseFloat(i.value); if (!isNaN(v)) { sum += v; count++; } });
+    inputs.forEach(i => {
+      const v = parseFloat(i.value);
+      if (!isNaN(v)) {
+        const row = i.closest('.row');
+        const deltaInput = row ? row.querySelector('.rescore-input') : null;
+        const delta = (rescoreActive && deltaInput) ? parseFloat(deltaInput.value) : NaN;
+        sum += v + (isNaN(delta) ? 0 : delta);
+        count++;
+      }
+    });
     const avg  = count > 0 ? sum / count : null;
     const rank = getRank(avg);
     const entry = {
@@ -3922,6 +3947,21 @@
 
   /* ── LAST.FM PLAYS FETCH ── */
   const _lfPlaysCache = {};
+
+  function cleanAlbumName(name) {
+    return name
+      .replace(/\s*[-–]\s*(EP|LP|Single|Mini Album|Full Album|Repackage|Special Album|OST)$/i, '')
+      .replace(/\s*\(.*?(EP|LP|Single|Repackage|Remastered|Deluxe|Edition|Version|Ver\.?).*?\)$/i, '')
+      .trim();
+  }
+
+  async function lfAlbumGetinfo(artist, album, lfUser) {
+    const url = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}&username=${encodeURIComponent(lfUser)}&api_key=${LASTFM_KEY}&format=json`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    return parseInt(data?.album?.userplaycount || '0', 10);
+  }
+
   async function fetchLastfmPlays(lfUser, artist, album, badgeEl) {
     const cacheKey = `${lfUser}|${artist}|${album}`.toLowerCase();
     if (_lfPlaysCache[cacheKey] !== undefined) {
@@ -3929,10 +3969,39 @@
       return;
     }
     try {
-      const url = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}&username=${encodeURIComponent(lfUser)}&api_key=${LASTFM_KEY}&format=json`;
-      const res  = await fetch(url);
-      const data = await res.json();
-      const plays = parseInt(data?.album?.userplaycount || '0', 10);
+      // 1. Exact match
+      let plays = await lfAlbumGetinfo(artist, album, lfUser);
+
+      // 2. Cleaned name (remove - EP, - Single etc)
+      if (!plays) {
+        const cleaned = cleanAlbumName(album);
+        if (cleaned !== album) plays = await lfAlbumGetinfo(artist, cleaned, lfUser);
+      }
+
+      // 3. Search fallback — find how Last.fm names this album
+      if (!plays) {
+        const searchUrl = `https://ws.audioscrobbler.com/2.0/?method=album.search&album=${encodeURIComponent(cleanAlbumName(album))}&api_key=${LASTFM_KEY}&format=json&limit=8`;
+        const searchRes  = await fetch(searchUrl);
+        const searchData = await searchRes.json();
+        const matches = searchData?.results?.albummatches?.album || [];
+        const best = matches.find(m => m.artist.toLowerCase() === artist.toLowerCase());
+        if (best) plays = await lfAlbumGetinfo(best.artist, best.name, lfUser);
+      }
+
+      // 4. Artist top albums fallback — fuzzy name match
+      if (!plays) {
+        const topUrl = `https://ws.audioscrobbler.com/2.0/?method=artist.gettopalbums&artist=${encodeURIComponent(artist)}&api_key=${LASTFM_KEY}&format=json&limit=20`;
+        const topRes  = await fetch(topUrl);
+        const topData = await topRes.json();
+        const topAlbums = topData?.topalbums?.album || [];
+        const cleanedAlbum = cleanAlbumName(album).toLowerCase();
+        const fuzzy = topAlbums.find(a => {
+          const n = a.name.toLowerCase();
+          return n === cleanedAlbum || n.includes(cleanedAlbum) || cleanedAlbum.includes(n);
+        });
+        if (fuzzy) plays = await lfAlbumGetinfo(artist, fuzzy.name, lfUser);
+      }
+
       _lfPlaysCache[cacheKey] = plays;
       renderPlaysBadge(badgeEl, plays);
     } catch {
