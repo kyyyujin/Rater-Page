@@ -2204,6 +2204,7 @@
     <button class="btn btn-toggle" id="rescore-btn" onclick="toggleRescore()">
       <span class="toggle-dot"></span> Re-score
     </button>
+    <button class="btn" id="rescore-apply-btn" onclick="applyRescore()" style="display:none;color:var(--accent2);border-color:rgba(96,212,240,0.5);background:rgba(96,212,240,0.08);">✓ Aplicar</button>
     <button class="btn" onclick="clearAll()" style="color:var(--danger);border-color:rgba(240,96,112,0.3)">🗑 Limpiar</button>
   </div>
 
@@ -2385,10 +2386,138 @@
     document.getElementById('table-header').classList.toggle('rescore-mode', rescoreActive);
     document.querySelectorAll('#rows-body .row').forEach(r => r.classList.toggle('rescore-mode', rescoreActive));
 
-    // Show/hide total block
+    // Show/hide total block and apply button
     document.getElementById('rescore-total-val').textContent = '+0.00';
     document.getElementById('rescore-total-wrap').classList.toggle('show', rescoreActive);
+    const applyBtn = document.getElementById('rescore-apply-btn');
+    if (applyBtn) applyBtn.style.display = rescoreActive ? 'inline-flex' : 'none';
     updateRescoreTotal();
+  }
+
+  async function applyRescore() {
+    // Collect deltas before touching anything
+    const deltas = [];
+    document.querySelectorAll('#rows-body .row').forEach(row => {
+      const scoreInput = row.querySelector('input[type="number"]:not(.rescore-input)');
+      const deltaInput = row.querySelector('.rescore-input');
+      const base  = scoreInput ? parseFloat(scoreInput.value) : NaN;
+      const delta = deltaInput ? parseFloat(deltaInput.value) : NaN;
+      deltas.push({ scoreInput, deltaInput, base, delta });
+    });
+
+    const hasChanges = deltas.some(d => !isNaN(d.delta) && d.delta !== 0);
+    if (!hasChanges) {
+      showToast('No hay deltas para aplicar', 'info');
+      toggleRescore();
+      return;
+    }
+
+    // Step 1: generate image WITH rescore active (shows deltas and total)
+    generate();
+    await new Promise(r => setTimeout(r, 200));
+
+    // Step 2: apply deltas permanently to inputs
+    let changed = 0;
+    deltas.forEach(({ scoreInput, deltaInput, base, delta }) => {
+      if (!scoreInput || !deltaInput) return;
+      if (isNaN(delta) || delta === 0) { if (deltaInput) deltaInput.value = ''; return; }
+      if (!isNaN(base)) {
+        const newScore = Math.min(getMaxScore(), Math.round((base + delta) * 10) / 10);
+        scoreInput.value = newScore;
+        changed++;
+      }
+      deltaInput.value = '';
+    });
+
+    // Step 3: turn off rescore mode
+    rescoreActive = false;
+    document.getElementById('rescore-btn').classList.remove('active');
+    document.getElementById('table-header').classList.remove('rescore-mode');
+    document.querySelectorAll('#rows-body .row').forEach(r => r.classList.remove('rescore-mode'));
+    document.getElementById('rescore-total-wrap').classList.remove('show');
+    const applyBtn = document.getElementById('rescore-apply-btn');
+    if (applyBtn) applyBtn.style.display = 'none';
+
+    // Step 4: calculate final score and rank directly from updated inputs
+    const allScores = [];
+    document.querySelectorAll('#rows-body .row').forEach(row => {
+      const v = parseFloat(row.querySelector('input[type="number"]:not(.rescore-input)')?.value);
+      if (!isNaN(v)) allScores.push(v);
+    });
+    const coverVal = parseFloat(document.getElementById('cover-score')?.value);
+    if (!isNaN(coverVal)) allScores.push(coverVal);
+    const finalAvg = allScores.length ? (allScores.reduce((a,b) => a+b, 0) / allScores.length) : 0;
+    const finalRankData = getRank(finalAvg);
+
+    // Step 5: save to localStorage
+    updateAverage();
+    saveData();
+
+    // Step 5b: update the local history entry so it loads correctly next time
+    try {
+      const history = getHistory();
+      const idx = history.findIndex(e =>
+        e.album?.title?.toLowerCase()  === currentAlbum?.title?.toLowerCase() &&
+        e.album?.artist?.toLowerCase() === currentAlbum?.artist?.toLowerCase()
+      );
+      if (idx !== -1) {
+        // Update rows with new scores
+        history[idx].rows = history[idx].rows.map((r, i) => {
+          const row = document.querySelectorAll('#rows-body .row')[i];
+          if (!row) return r;
+          const newScore = row.querySelector('input[type="number"]:not(.rescore-input)')?.value;
+          return { ...r, score: newScore || r.score, rscore: '' };
+        });
+        history[idx].avg  = finalAvg.toFixed(2);
+        history[idx].rank = finalRankData?.label || history[idx].rank;
+        localStorage.setItem('albumRaterHistory', JSON.stringify(history));
+      }
+    } catch(e) { console.warn('History update failed:', e); }
+
+    // Step 6: build tracks from updated inputs and save directly to DB
+    showToast(`✓ ${changed} nota${changed !== 1 ? 's' : ''} aplicada${changed !== 1 ? 's' : ''} — guardando…`, 'success');
+
+    const tracks = [];
+    document.querySelectorAll('#rows-body .row').forEach(row => {
+      const name  = row.querySelector('input[type="text"]')?.value.trim();
+      const score = parseFloat(row.querySelector('input[type="number"]:not(.rescore-input)')?.value);
+      if (name) tracks.push({ name, score: isNaN(score) ? '' : score.toFixed(2) });
+    });
+
+    // Call /update-rating directly with JSON — no image needed
+    const userId     = localStorage.getItem('discord_user_id') || '';
+    const albumTitle = currentAlbum?.title || '';
+
+    if (!userId || !albumTitle) {
+      showToast('✓ Notas aplicadas localmente', 'success');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${BOT_SERVER}/update-rating`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id:     userId,
+          album_title: albumTitle,
+          artist:      currentAlbum?.artist   || '',
+          year:        currentAlbum?.year     || '',
+          genre:       currentAlbum?.genre    || '',
+          cover_url:   currentAlbum?.coverUrl || '',
+          final_score: finalAvg.toFixed(2),
+          final_rank:  finalRankData?.label   || '',
+          tracks:      tracks
+        })
+      });
+      if (res.ok) {
+        showToast('✅ Re-score guardado en la base de datos', 'success');
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(`⚠ Error al guardar: ${err.error || res.status}`, 'error');
+      }
+    } catch {
+      showToast('⚠ Error de conexión', 'error');
+    }
   }
 
   function updateRescoreTotal() {
@@ -3008,7 +3137,7 @@
       const ri = r.querySelector('.rescore-input');
       rows.push({
         name:   r.querySelector('input[type="text"]').value,
-        score:  r.querySelector('input[type="number"]').value,
+        score:  r.querySelector('input[type="number"]:not(.rescore-input)').value,
         rscore: ri ? ri.value : ''
       });
     });
@@ -3456,7 +3585,7 @@
       const existingScores = {};
       existingRows.forEach(r => {
         const name  = r.querySelector('input[type="text"]').value.trim().toLowerCase();
-        const score = r.querySelector('input[type="number"]').value;
+        const score = r.querySelector('input[type="number"]:not(.rescore-input)').value;
         if (name) existingScores[name] = score;
       });
       const hasSameAlbum = currentAlbum &&
@@ -3674,7 +3803,7 @@
       const existingScores = {};
       existingRows.forEach(r => {
         const name  = r.querySelector('input[type="text"]').value.trim().toLowerCase();
-        const score = r.querySelector('input[type="number"]').value;
+        const score = r.querySelector('input[type="number"]:not(.rescore-input)').value;
         if (name) existingScores[name] = score;
       });
       const hasSameAlbum = currentAlbum &&
@@ -3789,19 +3918,16 @@
       const existing = getHistory();
       const existingIds = new Set(existing.map(e => e.supabase_id).filter(Boolean));
 
-      let added = 0;
+      let added = 0, updated = 0;
       rows.forEach(row => {
-        if (existingIds.has(row.id)) return; // already synced
         const rank = getRank(parseFloat(row.final_score));
-        // Clean the album title in case old entries have Discord format
         let cleanTitle = row.album_title || '';
         if (cleanTitle.startsWith('- ')) {
           cleanTitle = cleanTitle.replace(/^- /, '').replace(/\s*\[.*\]$/, '').trim();
-          // Restore proper case from artist field if needed
         }
 
         const entry = {
-          id:         row.created_at ? new Date(row.created_at).getTime() : Date.now(),
+          id:          row.created_at ? new Date(row.created_at).getTime() : Date.now(),
           supabase_id: row.id,
           album: {
             title:    cleanTitle,
@@ -3810,16 +3936,24 @@
             year:     row.year      || '',
             genre:    row.genre     || ''
           },
-          rows:     Array.isArray(row.tracks) ? row.tracks.map(t => ({ name: t.name, score: String(t.score || ''), rscore: '' })) : [],
-          cover:    '',
-          comment:  row.notes || '',
-          avg:      row.final_score ? parseFloat(row.final_score).toFixed(2) : null,
-          rank:     row.final_rank || rank.label,
-          rankCls:  rank.cls,
-          savedAt:  row.created_at ? new Date(row.created_at).toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' }) : ''
+          rows:    Array.isArray(row.tracks) ? row.tracks.map(t => ({ name: t.name, score: String(t.score || ''), rscore: '' })) : [],
+          cover:   '',
+          comment: row.notes || '',
+          avg:     row.final_score ? parseFloat(row.final_score).toFixed(2) : null,
+          rank:    row.final_rank || rank.label,
+          rankCls: rank.cls,
+          savedAt: row.created_at ? new Date(row.created_at).toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' }) : ''
         };
-        existing.push(entry);
-        added++;
+
+        const existingIdx = existing.findIndex(e => e.supabase_id === row.id);
+        if (existingIdx >= 0) {
+          // Update existing entry with fresh data from DB
+          existing[existingIdx] = entry;
+          updated++;
+        } else {
+          existing.push(entry);
+          added++;
+        }
       });
 
       if (added > 0) {
@@ -4634,7 +4768,7 @@
       const existingScores = {};
       existingRows.forEach(r => {
         const name  = r.querySelector('input[type="text"]').value.trim().toLowerCase();
-        const score = r.querySelector('input[type="number"]').value;
+        const score = r.querySelector('input[type="number"]:not(.rescore-input)').value;
         if (name) existingScores[name] = score;
       });
       const hasSameAlbum = currentAlbum &&
@@ -4761,13 +4895,20 @@
 
       const trackInputRows = document.querySelectorAll('#rows-body .row');
       const tracks = [];
+      let scoreSum = 0, scoreCount = 0;
       trackInputRows.forEach(row => {
         const nameEl  = row.querySelector('input[type="text"]');
-        const scoreEl = row.querySelector('input[type="number"]');
-        const name  = nameEl  ? nameEl.value.trim()  : '';
-        const score = scoreEl ? scoreEl.value.trim() : '';
-        if (name) tracks.push({ name, score });
+        const scoreEl = row.querySelector('input[type="number"]:not(.rescore-input)');
+        const name    = nameEl  ? nameEl.value.trim() : '';
+        const score   = scoreEl ? parseFloat(scoreEl.value) : NaN;
+        if (!isNaN(score)) { scoreSum += score; scoreCount++; }
+        if (name) tracks.push({ name, score: !isNaN(score) ? score.toFixed(2) : '' });
       });
+      // Include cover score in average
+      const _coverVal = parseFloat(document.getElementById('cover-score')?.value);
+      if (!isNaN(_coverVal)) { scoreSum += _coverVal; scoreCount++; }
+      const computedAvg  = scoreCount > 0 ? (scoreSum / scoreCount).toFixed(2) : '';
+      const computedRank = document.querySelector('.out-final-rank')?.textContent || '';
 
       const userId = localStorage.getItem('discord_user_id') || '';
 
@@ -4780,8 +4921,8 @@
       formData.append('year',        currentAlbum?.year     || '');
       formData.append('genre',       currentAlbum?.genre    || '');
       formData.append('cover_url',   currentAlbum?.coverUrl || '');
-      formData.append('final_score', document.querySelector('.out-final-avg')?.textContent || '');
-      formData.append('final_rank',  document.querySelector('.out-final-rank')?.textContent || '');
+      formData.append('final_score', computedAvg);
+      formData.append('final_rank',  computedRank);
       formData.append('tracks',      JSON.stringify(tracks));
       formData.append('db_only',     '1');
       // Sin thread_id → el servidor guarda en DB pero no postea en Discord
@@ -5095,11 +5236,16 @@
       const trackInputRows = document.querySelectorAll('#rows-body .row');
       const tracks = [];
       trackInputRows.forEach(row => {
-        const nameEl  = row.querySelector('input[type="text"]');
-        const scoreEl = row.querySelector('input[type="number"]');
-        const name  = nameEl  ? nameEl.value.trim()  : '';
-        const score = scoreEl ? scoreEl.value.trim() : '';
-        if (name) tracks.push({ name, score });
+        const nameEl    = row.querySelector('input[type="text"]');
+        const scoreEl   = row.querySelector('input[type="number"]:not(.rescore-input)');
+        const deltaEl   = row.querySelector('.rescore-input');
+        const name      = nameEl  ? nameEl.value.trim() : '';
+        const baseScore = scoreEl ? parseFloat(scoreEl.value) : NaN;
+        const delta     = (rescoreActive && deltaEl) ? parseFloat(deltaEl.value) : NaN;
+        const finalScore = !isNaN(baseScore)
+          ? (baseScore + (isNaN(delta) ? 0 : delta)).toFixed(2)
+          : '';
+        if (name) tracks.push({ name, score: finalScore });
       });
       formData.append('tracks', JSON.stringify(tracks));
 
