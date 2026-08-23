@@ -1939,7 +1939,13 @@
   </div>
 
   <header>
-    <div class="badge">🎵 Album Rater</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
+      <div class="badge" style="margin-bottom:0;">🎵 Album Rater</div>
+      <div id="user-session-chip-mobile" style="display:none;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:20px;background:rgba(88,101,242,0.1);border:1px solid rgba(88,101,242,0.3);cursor:pointer;" onclick="openDiscordSettings()">
+        <img id="user-session-avatar-mobile" src="" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;display:block;" />
+        <span id="user-session-name-mobile" style="font-family:'DM Mono',monospace;font-size:11px;color:#c8c8e0;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+      </div>
+    </div>
     <h1>Califica<br><span>tus álbumes</span></h1>
     <p class="subtitle">Ponle nota a cada track — el promedio se calcula solo</p>
   <a href="https://album-vault.vercel.app/" style="display:inline-block;margin-top:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(200,240,96,0.3);background:rgba(200,240,96,0.07);color:var(--accent);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;text-decoration:none;letter-spacing:0.05em;">🗄 Ir al Vault</a>
@@ -2002,6 +2008,10 @@
         <div id="desktop-hero-top">
           <span class="badge" style="background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);">🎵 Album Rater</span>
           <div id="desktop-hero-actions">
+            <div id="user-session-chip-desktop" style="display:none;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:20px;background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);cursor:pointer;" onclick="openDiscordSettings()">
+              <img id="user-session-avatar-desktop" src="" alt="" style="width:20px;height:20px;border-radius:50%;object-fit:cover;display:block;" />
+              <span id="user-session-name-desktop" style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,0.8);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+            </div>
             <a href="https://album-vault.vercel.app/" style="display:inline-block;padding:5px 12px;border-radius:6px;border:1px solid rgba(200,240,96,0.4);background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);color:var(--accent);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;text-decoration:none;letter-spacing:0.05em;">🗄 Vault</a>
             <button onclick="openDiscordSettings()" style="padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);color:rgba(255,255,255,0.7);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;">⚙</button>
             <button onclick="openDedupModal()" style="padding:5px 12px;border-radius:6px;border:1px solid rgba(220,60,60,0.4);background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);color:#e05555;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;">🗑</button>
@@ -8416,6 +8426,32 @@
     syncHeroSearch();
     relocateModalsToBody();
     watchModalsForBlurAndFab();
+    renderUserSessionChip();
+  }
+
+  // ── Chip de sesión (avatar + nombre de Discord) en el header móvil y en el hero de escritorio ──
+  function renderUserSessionChip() {
+    const username = localStorage.getItem('discord_user_id');
+    const avatar   = localStorage.getItem(DISCORD_AVATAR_KEY);
+    if (!username) return;
+
+    [
+      { chip: 'user-session-chip-mobile',  img: 'user-session-avatar-mobile',  name: 'user-session-name-mobile'  },
+      { chip: 'user-session-chip-desktop', img: 'user-session-avatar-desktop', name: 'user-session-name-desktop' }
+    ].forEach(({ chip, img, name }) => {
+      const chipEl = document.getElementById(chip);
+      const imgEl  = document.getElementById(img);
+      const nameEl = document.getElementById(name);
+      if (!chipEl || !imgEl || !nameEl) return;
+      nameEl.textContent = username;
+      if (avatar) {
+        imgEl.src = avatar;
+        imgEl.style.display = 'block';
+      } else {
+        imgEl.style.display = 'none';
+      }
+      chipEl.style.display = 'flex';
+    });
   }
 
   // ── Move modal/overlay elements to be direct children of <body> ──
