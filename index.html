@@ -1,3 +1,4 @@
+<!-- Album Rater v2.8.0 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1878,30 +1879,36 @@
 
     </div>
 
-    <!-- Tabs -->
-    <div style="display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid #2a2a2a;">
-      <button id="auth-tab-login" onclick="switchAuthTab('login')"
-        style="flex:1;background:none;border:none;border-bottom:2px solid #c8f060;color:#c8f060;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:10px;cursor:pointer;transition:all .2s;">
-        LOGIN
+    <!-- Discord Login -->
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div id="auth-error" style="font-size:11px;color:#e05050;font-family:'DM Mono',monospace;display:none;text-align:center;"></div>
+      <button id="discord-auth-btn" onclick="startDiscordAuth()" type="button"
+        style="display:flex;align-items:center;justify-content:center;gap:10px;background:#5865F2;color:#fff;font-family:'DM Mono',monospace;font-size:13px;font-weight:700;letter-spacing:0.05em;padding:13px;border-radius:8px;border:none;cursor:pointer;transition:opacity .2s;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.369a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037 19.736 19.736 0 0 0-4.885 1.515.07.07 0 0 0-.032.027C.533 9.045-.32 13.579.099 18.057a.082.082 0 0 0 .031.056 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01c3.927 1.793 8.18 1.793 12.061 0a.073.073 0 0 1 .078.009c.12.099.246.198.373.292a.077.077 0 0 1-.006.128 12.3 12.3 0 0 1-1.873.891.076.076 0 0 0-.04.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.029 19.84 19.84 0 0 0 6.001-3.03.077.077 0 0 0 .032-.055c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.331c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.211 0 2.176 1.096 2.157 2.42 0 1.332-.955 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.332-.946 2.418-2.157 2.418z"/></svg>
+        Continuar con Discord
       </button>
-      <button id="auth-tab-register" onclick="switchAuthTab('register')"
-        style="flex:1;background:none;border:none;border-bottom:2px solid transparent;color:#555;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.1em;padding:10px;cursor:pointer;transition:all .2s;">
-        REGISTRO
-      </button>
+      <p style="font-size:10px;color:#666;text-align:center;font-family:'DM Mono',monospace;line-height:1.5;margin:0;">
+        Iniciá sesión con tu cuenta de Discord.<br>Se usará tu nombre y foto de perfil.
+      </p>
     </div>
 
-    <!-- Inputs -->
-    <form id="auth-form" onsubmit="submitAuth(); return false;" style="display:flex;flex-direction:column;gap:12px;">
-      <input id="auth-username" type="text" placeholder="Username" autocomplete="username"
+    <!-- Formulario de vinculación: se muestra solo cuando el nombre de Discord no coincide con ninguna cuenta vieja -->
+    <div id="discord-link-form" style="display:none;flex-direction:column;gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid #2a2a2a;">
+      <p style="font-size:12px;color:#ccc;text-align:center;font-family:'DM Mono',monospace;line-height:1.5;margin:0;">
+        No encontramos una cuenta con tu nombre de Discord (<span id="discord-link-username" style="color:#c8f060;"></span>).<br>
+        Si ya tenías cuenta con otro nombre, escribila para conservar tus datos:
+      </p>
+      <input id="discord-link-legacy-username" type="text" placeholder="Tu username anterior (opcional)" autocomplete="off"
         style="background:#1a1a2a;border:1px solid #2a2a3a;color:#fff;font-family:'DM Mono',monospace;font-size:13px;padding:12px 14px;border-radius:8px;outline:none;width:100%;box-sizing:border-box;" />
-      <input id="auth-password" type="password" placeholder="Contraseña" autocomplete="current-password"
-        style="background:#1a1a2a;border:1px solid #2a2a3a;color:#fff;font-family:'DM Mono',monospace;font-size:13px;padding:12px 14px;border-radius:8px;outline:none;width:100%;box-sizing:border-box;" />
-      <div id="auth-error" style="font-size:11px;color:#e05050;font-family:'DM Mono',monospace;display:none;"></div>
-      <button id="auth-submit" type="submit"
-        style="background:#c8f060;color:#0d0d0f;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;letter-spacing:0.1em;padding:13px;border-radius:8px;border:none;cursor:pointer;transition:opacity .2s;">
-        ENTRAR
+      <button id="discord-link-submit" onclick="submitDiscordLink()" type="button"
+        style="background:#c8f060;color:#0d0d0f;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;letter-spacing:0.1em;padding:13px;border-radius:8px;border:none;cursor:pointer;">
+        VINCULAR CUENTA
       </button>
-    </form>
+      <button onclick="submitDiscordLink(true)" type="button"
+        style="background:none;color:#888;font-family:'DM Mono',monospace;font-size:11px;padding:8px;border-radius:8px;border:1px solid #2a2a3a;cursor:pointer;">
+        No tenía cuenta antes — crear una nueva
+      </button>
+    </div>
   </div>
 </div>
 
@@ -8232,68 +8239,130 @@
     }
   }
 
-  // ── AUTH ──
-  let authMode = 'login';
+  // ── AUTH (Discord OAuth) ──
+  // Reemplaza el flujo previo de username/password (bcrypt) por login con Discord.
+  // Contrato esperado con el backend (BOT_SERVER):
+  //   1) GET  ${BOT_SERVER}/auth/discord/start   → { url: '<link de autorización de Discord>' }
+  //      El backend arma la URL de OAuth de Discord (client_id, redirect_uri, scope=identify, state, etc.)
+  //   2) Discord redirige de vuelta a una página del backend (redirect_uri), que:
+  //        - intercambia el "code" por un token de Discord
+  //        - obtiene el perfil (id, username, avatar) desde /users/@me de Discord
+  //        - busca una cuenta ya vinculada a ese discord_id, o una cuenta vieja con username == discordUsername
+  //          y la vincula automáticamente
+  //        - si no encuentra ninguna coincidencia, NO crea la cuenta todavía: redirige con ?discord_pending=<token>
+  //          para que el frontend le pregunte al usuario si tenía una cuenta con otro nombre (ver discord-link-form)
+  //   3) Si volvimos con ?discord_pending=..., el frontend muestra el formulario y llama a
+  //      POST ${BOT_SERVER}/auth/discord/finish  { pending_token, legacy_username }
+  //        - si legacy_username coincide con una cuenta vieja, la vincula (conserva sus datos)
+  //        - si viene vacío, crea una cuenta nueva vinculada directo a Discord
+  //   4) En ambos casos (match automático o /finish), el backend redirige/responde con
+  //      auth_token + discord_user_id + discord_username + discord_avatar, y esta página
+  //      guarda la sesión (ver handleDiscordAuthCallback / submitDiscordLink).
 
-  function switchAuthTab(mode) {
-    authMode = mode;
-    document.getElementById('auth-tab-login').style.borderBottomColor    = mode === 'login'    ? '#c8f060' : 'transparent';
-    document.getElementById('auth-tab-login').style.color                = mode === 'login'    ? '#c8f060' : '#555';
-    document.getElementById('auth-tab-register').style.borderBottomColor = mode === 'register' ? '#c8f060' : 'transparent';
-    document.getElementById('auth-tab-register').style.color             = mode === 'register' ? '#c8f060' : '#555';
-    document.getElementById('auth-submit').textContent = mode === 'login' ? 'ENTRAR' : 'REGISTRARSE';
-    document.getElementById('auth-error').style.display = 'none';
-  }
+  const DISCORD_AVATAR_KEY = 'discord_avatar_url';
+  let pendingDiscordToken = null;
 
-  async function submitAuth() {
-    const username = document.getElementById('auth-username').value.trim();
-    const password = document.getElementById('auth-password').value;
-    const errEl    = document.getElementById('auth-error');
-    const btn      = document.getElementById('auth-submit');
-
-    if (!username || !password) { errEl.textContent = 'Completá todos los campos'; errEl.style.display = 'block'; return; }
-
-    btn.disabled = true; btn.textContent = '…';
+  async function startDiscordAuth() {
+    const errEl = document.getElementById('auth-error');
+    const btn   = document.getElementById('discord-auth-btn');
     errEl.style.display = 'none';
-
+    btn.disabled = true;
     try {
-      const endpoint = authMode === 'login' ? '/login' : '/register';
-      const res  = await fetch(`${BOT_SERVER}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
+      const res  = await fetch(`${BOT_SERVER}/auth/discord/start?return_to=${encodeURIComponent(location.origin + location.pathname)}`);
       const data = await res.json();
-
-      if (!res.ok) {
-        errEl.textContent = data.error || 'Error desconocido';
-        errEl.style.display = 'block';
-        btn.disabled = false; btn.innerHTML = authMode === 'login' ? 'ENTRAR' : 'REGISTRARSE';
-        return;
-      }
-
-      // Save session
-      localStorage.setItem('auth_token', data.token);
-      localStorage.setItem('discord_user_id', data.username);
-      initApp();
-    } catch(e) {
-      errEl.textContent = 'Error de conexión';
+      if (!res.ok || !data.url) throw new Error(data.error || 'No se pudo iniciar Discord');
+      location.href = data.url;
+    } catch (e) {
+      errEl.textContent = 'No se pudo conectar con Discord. Intentá de nuevo.';
       errEl.style.display = 'block';
-      btn.disabled = false; btn.innerHTML = authMode === 'login' ? 'ENTRAR' : 'REGISTRARSE';
+      btn.disabled = false;
     }
   }
 
-  // Enter key on password field
-  document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('auth-password').addEventListener('keydown', e => {
-      if (e.key === 'Enter') submitAuth();
-    });
-    document.getElementById('auth-username').addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('auth-password').focus();
-    });
-  });
+  // Procesa el resultado del callback de Discord si volvimos con los parámetros en la URL.
+  function handleDiscordAuthCallback() {
+    const params = new URLSearchParams(location.search);
+    const token       = params.get('auth_token');
+    const username    = params.get('discord_username');
+    const discordId   = params.get('discord_user_id');
+    const avatar      = params.get('discord_avatar');
+    const authError   = params.get('auth_error');
+    const pending     = params.get('discord_pending');
+
+    if (authError) {
+      showAuthOverlay();
+      const errEl = document.getElementById('auth-error');
+      errEl.textContent = decodeURIComponent(authError);
+      errEl.style.display = 'block';
+      cleanAuthQueryParams();
+      return true;
+    }
+
+    // Discord no tiene una cuenta vieja que coincida por nombre: mostrar formulario de vinculación manual.
+    if (pending) {
+      showAuthOverlay();
+      pendingDiscordToken = pending;
+      document.getElementById('discord-link-username').textContent = username || '';
+      document.getElementById('discord-link-form').style.display = 'flex';
+      document.getElementById('discord-auth-btn').style.display = 'none';
+      cleanAuthQueryParams();
+      return true;
+    }
+
+    if (token && username) {
+      localStorage.setItem('auth_token', token);
+      localStorage.setItem('discord_user_id', discordId || username);
+      if (avatar) localStorage.setItem(DISCORD_AVATAR_KEY, avatar);
+      cleanAuthQueryParams();
+      return true;
+    }
+    return false;
+  }
+
+  // Se llama desde el formulario de vinculación manual (cuando el username de Discord no coincidía con ninguna cuenta vieja).
+  async function submitDiscordLink(skipLegacy) {
+    const errEl       = document.getElementById('auth-error');
+    const submitBtn   = document.getElementById('discord-link-submit');
+    const legacyInput = document.getElementById('discord-link-legacy-username');
+    const legacyUsername = skipLegacy ? '' : legacyInput.value.trim();
+
+    errEl.style.display = 'none';
+    submitBtn.disabled = true;
+
+    try {
+      const res  = await fetch(`${BOT_SERVER}/auth/discord/finish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pending_token: pendingDiscordToken, legacy_username: legacyUsername })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        errEl.textContent = data.error || 'Error desconocido';
+        errEl.style.display = 'block';
+        submitBtn.disabled = false;
+        return;
+      }
+      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('discord_user_id', data.username);
+      if (data.discord_avatar) localStorage.setItem(DISCORD_AVATAR_KEY, data.discord_avatar);
+      initApp();
+    } catch (e) {
+      errEl.textContent = 'Error de conexión';
+      errEl.style.display = 'block';
+      submitBtn.disabled = false;
+    }
+  }
+
+  function cleanAuthQueryParams() {
+    const url = new URL(location.href);
+    ['auth_token', 'discord_username', 'discord_user_id', 'discord_avatar', 'auth_error'].forEach(k => url.searchParams.delete(k));
+    history.replaceState({}, '', url.pathname + (url.search ? url.search : '') + url.hash);
+  }
 
   async function checkAuth() {
+    // Si venimos de un redirect de Discord, procesarlo primero.
+    handleDiscordAuthCallback();
+
     const token    = localStorage.getItem('auth_token');
     const username = localStorage.getItem('discord_user_id');
 
@@ -8307,7 +8376,7 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token })
       }).then(res => res.json()).then(data => {
-        if (!data.ok) { localStorage.removeItem('auth_token'); localStorage.removeItem('discord_user_id'); location.reload(); }
+        if (!data.ok) { localStorage.removeItem('auth_token'); localStorage.removeItem('discord_user_id'); localStorage.removeItem(DISCORD_AVATAR_KEY); location.reload(); }
       }).catch(() => { /* bot sleeping — stay logged in */ });
       return;
     }
@@ -8324,6 +8393,7 @@
     if (!confirm('¿Cerrar sesión?')) return;
     localStorage.removeItem('auth_token');
     localStorage.removeItem('discord_user_id');
+    localStorage.removeItem(DISCORD_AVATAR_KEY);
     location.reload();
   }
 
