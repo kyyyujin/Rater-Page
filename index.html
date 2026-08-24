@@ -3148,7 +3148,7 @@
   }
 
   /* ── STORAGE ── */
-  function saveData() {
+  function buildWorkInProgressPayload() {
     const rows = [];
     document.querySelectorAll('#rows-body .row').forEach(r => {
       const ri = r.querySelector('.rescore-input');
@@ -3167,7 +3167,11 @@
       genre:    document.getElementById('album-art-genre').value,
       coverUrl: currentAlbum.coverUrl || null
     } : null;
-    const payload = { rows, cover, comment, album };
+    return { rows, cover, comment, album };
+  }
+
+  function saveData() {
+    const payload = buildWorkInProgressPayload();
     try { localStorage.setItem('albumRater', JSON.stringify(payload)); } catch(e) {}
     queueWorkInProgressSync(payload);
   }
@@ -3180,13 +3184,26 @@
     const token = localStorage.getItem('auth_token');
     if (!token) return; // sin sesión no hay a qué cuenta asociarlo
     clearTimeout(wipSyncTimer);
-    wipSyncTimer = setTimeout(() => {
-      fetch(`${BOT_SERVER}/work-in-progress`, {
+    wipSyncTimer = setTimeout(() => { flushWorkInProgressSync(payload); }, 1500); // debounce: espera a que el usuario deje de escribir/tocar antes de mandar
+  }
+
+  // Manda el estado actual al servidor de inmediato, sin esperar el debounce.
+  // Se usa antes de cerrar sesión para no perder los últimos segundos de cambios
+  // que el debounce todavía no había mandado. Si no se le pasa payload (ej. al
+  // cerrar sesión sin haber tocado nada en esta carga de página), lo arma fresco
+  // desde el DOM para no depender de que saveData() se haya llamado antes.
+  async function flushWorkInProgressSync(payload) {
+    clearTimeout(wipSyncTimer);
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+    const wip = payload || buildWorkInProgressPayload();
+    try {
+      await fetch(`${BOT_SERVER}/work-in-progress`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, wip: payload })
-      }).catch(() => { /* backend dormido o sin conexión — localStorage ya lo tiene igual */ });
-    }, 1500); // debounce: espera a que el usuario deje de escribir/tocar antes de mandar
+        body: JSON.stringify({ token, wip })
+      });
+    } catch (e) { /* backend dormido o sin conexión — localStorage ya lo tiene igual */ }
   }
 
   async function fetchRemoteWorkInProgress() {
@@ -8461,17 +8478,22 @@
     startAuthBg();
   }
 
-  function logoutAuth() {
+  async function logoutAuth() {
     if (!confirm('¿Cerrar sesión?')) return;
     const token = localStorage.getItem('auth_token');
+    // Manda cualquier cambio reciente (álbum/tracks/notas) antes de cerrar sesión,
+    // sin esperar el debounce normal — si no, se pierde lo tocado en los últimos 1.5s.
+    await flushWorkInProgressSync();
     // Como la sesión ahora dura indefinidamente en el servidor, hay que borrarla explícitamente
     // (no alcanza con limpiar localStorage, o seguiría siendo válida desde otro dispositivo/navegador).
     if (token) {
-      fetch(`${BOT_SERVER}/auth/logout`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
-      }).catch(() => {}); // best-effort — igual limpiamos localStorage y recargamos aunque falle
+      try {
+        await fetch(`${BOT_SERVER}/auth/logout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+      } catch (e) {} // best-effort — igual limpiamos localStorage y recargamos aunque falle
     }
     localStorage.removeItem('auth_token');
     localStorage.removeItem('discord_user_id');
@@ -8685,6 +8707,18 @@
   }
 
   // ── Start ──
+  // Respaldo best-effort: si el usuario cierra la pestaña o recarga sin pasar por
+  // "Cerrar sesión", igual intenta mandar el último estado (localStorage ya lo tiene
+  // de todas formas, esto es solo para que la copia en el servidor no quede vieja).
+  window.addEventListener('beforeunload', () => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+    try {
+      const payload = JSON.stringify({ token, wip: buildWorkInProgressPayload() });
+      navigator.sendBeacon(`${BOT_SERVER}/work-in-progress`, new Blob([payload], { type: 'application/json' }));
+    } catch (e) {}
+  });
+
   checkAuth();
 
   // Restart Now Playing polling after saving settings (handled inside saveDiscordSettings directly)
