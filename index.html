@@ -3149,6 +3149,22 @@
 
   /* ── STORAGE ── */
   function buildWorkInProgressPayload() {
+    // Misma técnica que usa el Historial (saveToHistory → syncAlbumMeta): releer los
+    // inputs de título/artista/año/género hacia currentAlbum antes de armar el payload,
+    // en vez de confiar en que currentAlbum ya esté al día por sí solo.
+    if (document.getElementById('album-art-title').value || document.getElementById('album-art-artist').value || currentAlbum) {
+      if (!currentAlbum) currentAlbum = { title: '', artist: '', year: '', genre: '', coverUrl: null };
+      currentAlbum.title  = document.getElementById('album-art-title').value;
+      currentAlbum.artist = document.getElementById('album-art-artist').value;
+      currentAlbum.year   = document.getElementById('album-art-year').value;
+      currentAlbum.genre  = document.getElementById('album-art-genre').value;
+      // coverUrl no vive en un input de texto — lo toma del <img> del banner si currentAlbum no lo tenía.
+      if (!currentAlbum.coverUrl) {
+        const img = document.getElementById('album-art-img');
+        if (img && img.style.display !== 'none' && img.src) currentAlbum.coverUrl = img.src;
+      }
+    }
+
     const rows = [];
     document.querySelectorAll('#rows-body .row').forEach(r => {
       const ri = r.querySelector('.rescore-input');
@@ -3167,6 +3183,7 @@
       genre:    document.getElementById('album-art-genre').value,
       coverUrl: currentAlbum.coverUrl || null
     } : null;
+    console.log('[WIP DEBUG] buildWorkInProgressPayload → currentAlbum:', currentAlbum, '→ album construido:', album);
     return { rows, cover, comment, album };
   }
 
@@ -3223,6 +3240,7 @@
   }
 
   function applyLoadedData(saved) {
+    console.log('[WIP DEBUG] applyLoadedData recibió:', saved);
     const rows    = Array.isArray(saved) ? saved : (saved.rows || []);
     const cover   = Array.isArray(saved) ? '' : (saved.cover || '');
     const comment = Array.isArray(saved) ? '' : (saved.comment || '');
@@ -8480,6 +8498,8 @@
 
   async function logoutAuth() {
     if (!confirm('¿Cerrar sesión?')) return;
+    // Diagnóstico temporal visible sin consola — se puede quitar una vez resuelto el bug del álbum.
+    alert('[DEBUG] Título input: "' + document.getElementById('album-art-title').value + '" | currentAlbum: ' + JSON.stringify(currentAlbum));
     const token = localStorage.getItem('auth_token');
     // Manda cualquier cambio reciente (álbum/tracks/notas) antes de cerrar sesión,
     // sin esperar el debounce normal — si no, se pierde lo tocado en los últimos 1.5s.
