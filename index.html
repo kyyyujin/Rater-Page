@@ -3167,7 +3167,67 @@
       genre:    document.getElementById('album-art-genre').value,
       coverUrl: currentAlbum.coverUrl || null
     } : null;
-    try { localStorage.setItem('albumRater', JSON.stringify({ rows, cover, comment, album })); } catch(e) {}
+    const payload = { rows, cover, comment, album };
+    try { localStorage.setItem('albumRater', JSON.stringify(payload)); } catch(e) {}
+    queueWorkInProgressSync(payload);
+  }
+
+  // ── Álbum en progreso: sincronización con el backend (además de localStorage) ──
+  // localStorage sigue siendo la fuente rápida/offline; esto lo respalda en la
+  // cuenta del usuario para que sobreviva a un logout o a un dispositivo nuevo.
+  let wipSyncTimer = null;
+  function queueWorkInProgressSync(payload) {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return; // sin sesión no hay a qué cuenta asociarlo
+    clearTimeout(wipSyncTimer);
+    wipSyncTimer = setTimeout(() => {
+      fetch(`${BOT_SERVER}/work-in-progress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, wip: payload })
+      }).catch(() => { /* backend dormido o sin conexión — localStorage ya lo tiene igual */ });
+    }, 1500); // debounce: espera a que el usuario deje de escribir/tocar antes de mandar
+  }
+
+  async function fetchRemoteWorkInProgress() {
+    const token = localStorage.getItem('auth_token');
+    if (!token) return null;
+    try {
+      const res  = await fetch(`${BOT_SERVER}/work-in-progress/get`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+      const data = await res.json();
+      return (res.ok && data.wip) ? data.wip : null;
+    } catch (e) {
+      return null; // backend dormido o sin conexión — seguimos solo con localStorage
+    }
+  }
+
+  function applyLoadedData(saved) {
+    const rows    = Array.isArray(saved) ? saved : (saved.rows || []);
+    const cover   = Array.isArray(saved) ? '' : (saved.cover || '');
+    const comment = Array.isArray(saved) ? '' : (saved.comment || '');
+    const album   = Array.isArray(saved) ? null : (saved.album || null);
+    if (rows.length) {
+      rows.forEach(r => addRow(r.name, r.score));
+      document.querySelectorAll('#rows-body .row').forEach((rowEl, i) => {
+        const ri = rowEl.querySelector('.rescore-input');
+        if (ri && rows[i]?.rscore) { ri.value = rows[i].rscore; }
+      });
+      updateRescoreTotal();
+      if (cover)   { document.getElementById('cover-score').value   = cover;   updateCover(); }
+      if (comment) { document.getElementById('comment-input').value = comment; }
+      if (album) {
+        currentAlbum = album;
+        showAlbumBanner(album); // also calls updatePageBg
+      } else {
+        document.getElementById('album-art-wrap').classList.add('show');
+      }
+      return true;
+    }
+    return false;
   }
 
   function loadData() {
@@ -3175,33 +3235,35 @@
       const raw = localStorage.getItem('albumRater');
       if (raw) {
         const saved = JSON.parse(raw);
-        const rows    = Array.isArray(saved) ? saved : (saved.rows || []);
-        const cover   = Array.isArray(saved) ? '' : (saved.cover || '');
-        const comment = Array.isArray(saved) ? '' : (saved.comment || '');
-        const album   = Array.isArray(saved) ? null : (saved.album || null);
-        if (rows.length) {
-          rows.forEach(r => addRow(r.name, r.score));
-          // Restore rescore deltas after rows are added
-          document.querySelectorAll('#rows-body .row').forEach((rowEl, i) => {
-            const ri = rowEl.querySelector('.rescore-input');
-            if (ri && rows[i]?.rscore) { ri.value = rows[i].rscore; }
-          });
-          updateRescoreTotal();
-          if (cover)   { document.getElementById('cover-score').value   = cover;   updateCover(); }
-          if (comment) { document.getElementById('comment-input').value = comment; }
-          if (album) {
-            currentAlbum = album;
-            showAlbumBanner(album); // also calls updatePageBg
-          } else {
-            document.getElementById('album-art-wrap').classList.add('show');
-          }
-          return;
-        }
+        if (applyLoadedData(saved)) return;
       }
     } catch(e) {}
     addRow();
     // Always show banner for manual entry
     document.getElementById('album-art-wrap').classList.add('show');
+  }
+
+  // Se llama una vez logueado (ver initApp): si localStorage no tenía nada útil
+  // (ej. dispositivo nuevo, o se deslogeó y volvió), busca el progreso guardado
+  // en la cuenta y lo aplica.
+  async function syncWorkInProgressFromServer() {
+    const raw = localStorage.getItem('albumRater');
+    const hasLocalRows = raw && (() => { try {
+      const s = JSON.parse(raw);
+      const rows = Array.isArray(s) ? s : (s.rows || []);
+      return rows.length > 0;
+    } catch(e) { return false; } })();
+    if (hasLocalRows) return; // ya hay algo local, no lo pisamos
+
+    const remote = await fetchRemoteWorkInProgress();
+    if (!remote) return;
+    const rows = Array.isArray(remote) ? remote : (remote.rows || []);
+    if (!rows.length) return;
+
+    // Limpiar la fila vacía inicial que puso loadData() antes de aplicar lo remoto
+    document.getElementById('rows-body').innerHTML = '';
+    applyLoadedData(remote);
+    try { localStorage.setItem('albumRater', JSON.stringify(remote)); } catch(e) {}
   }
 
   /* ── TOAST ── */
@@ -8401,6 +8463,16 @@
 
   function logoutAuth() {
     if (!confirm('¿Cerrar sesión?')) return;
+    const token = localStorage.getItem('auth_token');
+    // Como la sesión ahora dura indefinidamente en el servidor, hay que borrarla explícitamente
+    // (no alcanza con limpiar localStorage, o seguiría siendo válida desde otro dispositivo/navegador).
+    if (token) {
+      fetch(`${BOT_SERVER}/auth/logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      }).catch(() => {}); // best-effort — igual limpiamos localStorage y recargamos aunque falle
+    }
     localStorage.removeItem('auth_token');
     localStorage.removeItem('discord_user_id');
     localStorage.removeItem(DISCORD_AVATAR_KEY);
@@ -8427,6 +8499,7 @@
     relocateModalsToBody();
     watchModalsForBlurAndFab();
     renderUserSessionChip();
+    syncWorkInProgressFromServer();
   }
 
   // ── Chip de sesión (avatar + nombre de Discord) en el header móvil y en el hero de escritorio ──
