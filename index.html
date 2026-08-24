@@ -3183,7 +3183,6 @@
       genre:    document.getElementById('album-art-genre').value,
       coverUrl: currentAlbum.coverUrl || null
     } : null;
-    console.log('[WIP DEBUG] buildWorkInProgressPayload → currentAlbum:', currentAlbum, '→ album construido:', album);
     return { rows, cover, comment, album };
   }
 
@@ -3240,7 +3239,6 @@
   }
 
   function applyLoadedData(saved) {
-    console.log('[WIP DEBUG] applyLoadedData recibió:', saved);
     const rows    = Array.isArray(saved) ? saved : (saved.rows || []);
     const cover   = Array.isArray(saved) ? '' : (saved.cover || '');
     const comment = Array.isArray(saved) ? '' : (saved.comment || '');
@@ -3281,21 +3279,18 @@
   // Se llama una vez logueado (ver initApp): si localStorage no tenía nada útil
   // (ej. dispositivo nuevo, o se deslogeó y volvió), busca el progreso guardado
   // en la cuenta y lo aplica.
+  // Al iniciar sesión, el servidor manda: siempre se trae y aplica lo que haya ahí
+  // (así el álbum en progreso es consistente entre dispositivos/navegadores, y no
+  // se queda pegado con una copia vieja de localStorage de una sesión anterior).
+  // Si el servidor no tiene nada guardado (ej. cuenta nueva), se deja lo que ya
+  // había cargado loadData() desde localStorage como estaba.
   async function syncWorkInProgressFromServer() {
-    const raw = localStorage.getItem('albumRater');
-    const hasLocalRows = raw && (() => { try {
-      const s = JSON.parse(raw);
-      const rows = Array.isArray(s) ? s : (s.rows || []);
-      return rows.length > 0;
-    } catch(e) { return false; } })();
-    if (hasLocalRows) return; // ya hay algo local, no lo pisamos
-
     const remote = await fetchRemoteWorkInProgress();
     if (!remote) return;
     const rows = Array.isArray(remote) ? remote : (remote.rows || []);
     if (!rows.length) return;
 
-    // Limpiar la fila vacía inicial que puso loadData() antes de aplicar lo remoto
+    // Limpiar lo que loadData() haya puesto (de localStorage o la fila vacía inicial) antes de aplicar lo remoto.
     document.getElementById('rows-body').innerHTML = '';
     applyLoadedData(remote);
     try { localStorage.setItem('albumRater', JSON.stringify(remote)); } catch(e) {}
@@ -8498,8 +8493,6 @@
 
   async function logoutAuth() {
     if (!confirm('¿Cerrar sesión?')) return;
-    // Diagnóstico temporal visible sin consola — se puede quitar una vez resuelto el bug del álbum.
-    alert('[DEBUG] Título input: "' + document.getElementById('album-art-title').value + '" | currentAlbum: ' + JSON.stringify(currentAlbum));
     const token = localStorage.getItem('auth_token');
     // Manda cualquier cambio reciente (álbum/tracks/notas) antes de cerrar sesión,
     // sin esperar el debounce normal — si no, se pierde lo tocado en los últimos 1.5s.
