@@ -3430,7 +3430,7 @@
             const item = document.createElement('div');
             item.className = 'result-item';
             item.innerHTML = thumbUrl
-              ? `<div style="display:flex;align-items:center;gap:10px"><img src="${thumbUrl}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/><div style="flex:1;min-width:0"><div class="result-title">${title} <span class="cover-src-badge itunes">iTunes</span></div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div></div></div>`
+              ? `<div style="display:flex;align-items:center;gap:10px"><img src="${escHtml(thumbUrl)}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/><div style="flex:1;min-width:0"><div class="result-title">${title} <span class="cover-src-badge itunes">iTunes</span></div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div></div></div>`
               : `<div class="result-title">${title} <span class="cover-src-badge itunes">iTunes</span></div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>`;
             const coverPayload = { lf: null, itunes: al.artworkUrl100 ? al.artworkUrl100.replace('100x100bb', '600x600bb') : null };
             item.onclick = () => openPreviewItunes(al, title, artist, coverPayload);
@@ -3460,7 +3460,7 @@
             const item = document.createElement('div');
             item.className = 'result-item';
             item.innerHTML = thumbUrl
-              ? `<div style="display:flex;align-items:center;gap:10px"><img src="${thumbUrl}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/><div style="flex:1;min-width:0"><div class="result-title">${title}</div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div></div></div>`
+              ? `<div style="display:flex;align-items:center;gap:10px"><img src="${escHtml(thumbUrl)}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/><div style="flex:1;min-width:0"><div class="result-title">${title}</div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div></div></div>`
               : `<div class="result-title">${title}</div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>`;
             item.onclick = () => openPreview(r.id, title, artist, { lf: lfCovers[idx], itunes: null });
             results.appendChild(item);
@@ -3509,7 +3509,7 @@
           item.className = 'result-item';
           item.innerHTML = thumbUrl
             ? `<div style="display:flex;align-items:center;gap:10px">
-                <img src="${thumbUrl}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/>
+                <img src="${escHtml(thumbUrl)}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/>
                 <div style="flex:1;min-width:0">
                   <div class="result-title">${title} <span class="cover-src-badge itunes">iTunes</span></div>
                   <div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>
@@ -3558,7 +3558,7 @@
         item.className = 'result-item';
         item.innerHTML = thumbUrl
           ? `<div style="display:flex;align-items:center;gap:10px">
-              <img src="${thumbUrl}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/>
+              <img src="${escHtml(thumbUrl)}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/>
               <div style="flex:1;min-width:0">
                 <div class="result-title">${title}</div>
                 <div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>
@@ -3588,7 +3588,7 @@
           item.className = 'result-item';
           item.innerHTML = thumbUrl
             ? `<div style="display:flex;align-items:center;gap:10px">
-                <img src="${thumbUrl}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/>
+                <img src="${escHtml(thumbUrl)}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/>
                 <div style="flex:1;min-width:0">
                   <div class="result-title">${title} <span class="cover-src-badge itunes">iTunes</span></div>
                   <div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>
@@ -3629,7 +3629,7 @@
         <div class="preview-header">
           <button class="preview-close" onclick="closePreview()">✕</button>
           ${thumbUrl
-            ? `<img class="preview-cover" src="${thumbUrl}" crossorigin="anonymous"/>`
+            ? `<img class="preview-cover" src="${escHtml(thumbUrl)}" crossorigin="anonymous"/>`
             : `<div class="preview-cover-ph">🎵</div>`}
           <div class="preview-meta">
             <div class="preview-title">${title}</div>
@@ -3765,7 +3765,7 @@
         <div class="preview-header">
           <button class="preview-close" onclick="closePreview()">✕</button>
           ${thumbUrl
-            ? `<img class="preview-cover" src="${thumbUrl}" crossorigin="anonymous"/>`
+            ? `<img class="preview-cover" src="${escHtml(thumbUrl)}" crossorigin="anonymous"/>`
             : `<div class="preview-cover-ph">🎵</div>`}
           <div class="preview-meta">
             <div class="preview-title">${data.title || title}</div>
@@ -4152,7 +4152,7 @@
       item.style.animationDelay = `${Array.from(list.querySelectorAll('.history-item')).length * 40}ms`;
 
       const coverHtml = entry.album?.coverUrl
-        ? `<img src="${entry.album.coverUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:5px" />`
+        ? `<img src="${escHtml(entry.album.coverUrl)}" style="width:100%;height:100%;object-fit:cover;border-radius:5px" />`
         : '🎵';
 
       // Plays badge — shown only if lastfm username is set and viewing own history
@@ -4749,7 +4749,7 @@
       item.className = 'result-item';
       item.innerHTML = thumbUrl
         ? `<div style="display:flex;align-items:center;gap:10px">
-            <img src="${thumbUrl}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/>
+            <img src="${escHtml(thumbUrl)}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/>
             <div style="flex:1;min-width:0">
               <div class="result-title">${title} <span class="cover-src-badge lastfm">Last.fm</span></div>
               <div class="result-meta">${artist}</div>
@@ -4780,7 +4780,7 @@
     document.getElementById('preview-content').innerHTML = `
       <div class="preview-header">
         <button class="preview-close" onclick="closePreview()">✕</button>
-        ${thumbUrl ? `<img class="preview-cover" src="${thumbUrl}" crossorigin="anonymous"/>` : `<div class="preview-cover-ph">🎵</div>`}
+        ${thumbUrl ? `<img class="preview-cover" src="${escHtml(thumbUrl)}" crossorigin="anonymous"/>` : `<div class="preview-cover-ph">🎵</div>`}
         <div class="preview-meta">
           <div class="preview-title">${title}</div>
           <div class="preview-artist">${artist}</div>
@@ -6447,7 +6447,7 @@
     tl.innerHTML = tracks.map((t, i) => {
       const skipRate  = t.plays > 0 ? Math.round((t.skips / t.plays) * 100) : 0;
       const skipColor = skipRate > 40 ? '#f06070' : skipRate > 20 ? '#f0a060' : 'rgba(255,255,255,0.5)';
-      const bgStyle   = coverUrl ? `background-image:url('${coverUrl}');background-size:cover;background-position:center;` : 'background:#111;';
+      const bgStyle   = coverUrl ? `background-image:url('${escHtml(coverUrl)}');background-size:cover;background-position:center;` : 'background:#111;';
       return `<div style="position:relative;overflow:hidden;border-radius:8px;margin-bottom:6px;">
         <div style="position:absolute;inset:0;${bgStyle}opacity:0.25;z-index:0;"></div>
         <div style="position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,0.85),rgba(0,0,0,0.5));z-index:1;"></div>
@@ -6756,7 +6756,7 @@
       fetchAlbumImg(d.artist, d.album).then(src => {
         if (!src) return;
         const el = document.getElementById(covId);
-        if (el) el.innerHTML = `<img src="${src}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='💿'" />`;
+        if (el) el.innerHTML = `<img src="${escHtml(src)}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='💿'" />`;
       });
     });
     panel.appendChild(list);
@@ -6935,7 +6935,7 @@
     fetchArtistImg(artist).then(src => {
       if (!src) return;
       const ph = document.getElementById('sp-evo-artist-img-ph');
-      if (ph) { ph.style.background='none'; ph.innerHTML=`<img class="sp-evo-artist-img" src="${src}" alt="${escHtml(artist)}" style="width:52px;height:52px;" onerror="this.parentElement.textContent='🎤'" />`; }
+      if (ph) { ph.style.background='none'; ph.innerHTML=`<img class="sp-evo-artist-img" src="${escHtml(src)}" alt="${escHtml(artist)}" style="width:52px;height:52px;" onerror="this.parentElement.textContent='🎤'" />`; }
     });
 
     // First seen callout
@@ -8075,13 +8075,13 @@
       // Album art
       const artEl = document.getElementById('np-art');
       if (imgSrc && !imgSrc.includes('2a96cbd8b46e442fc41c2b86b821562f')) {
-        artEl.innerHTML = `<img src="${imgSrc}" alt="" />`;
+        artEl.innerHTML = `<img src="${escHtml(imgSrc)}" alt="" />`;
         document.getElementById('np-bg').style.backgroundImage = `url('${imgSrc}')`;
       } else {
         // Fallback: try iTunes
         fetchAlbumImg(artistName, albumName).then(src => {
           if (src) {
-            artEl.innerHTML = `<img src="${src}" alt="" />`;
+            artEl.innerHTML = `<img src="${escHtml(src)}" alt="" />`;
             document.getElementById('np-bg').style.backgroundImage = `url('${src}')`;
           } else {
             artEl.innerHTML = `<div id="np-art-placeholder">🎵</div>`;
@@ -8176,7 +8176,7 @@
           pendingAlbums[i].cover = url;
           savePending();
           const el = document.getElementById(`pending-cover-${i}`);
-          if (el) { el.innerHTML = `<img src="${url}" />`; }
+          if (el) { el.innerHTML = `<img src="${escHtml(url)}" />`; }
         });
       }
     });
