@@ -5185,6 +5185,7 @@
       formData.append('final_score', computedAvg);
       formData.append('final_rank',  computedRank);
       formData.append('tracks',      JSON.stringify(tracks));
+      formData.append('notes',       (document.getElementById('comment-input')?.value || '').trim());
       formData.append('db_only',     '1');
       // Sin thread_id → el servidor guarda en DB pero no postea en Discord
 
@@ -5509,6 +5510,7 @@
         if (name) tracks.push({ name, score: finalScore });
       });
       formData.append('tracks', JSON.stringify(tracks));
+      formData.append('notes', (document.getElementById('comment-input')?.value || '').trim());
 
       const res = await fetch(`${BOT_SERVER}/post`, { method: 'POST', body: formData });
       const data = await res.json();
