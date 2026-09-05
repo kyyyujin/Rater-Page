@@ -3432,7 +3432,7 @@
             item.innerHTML = thumbUrl
               ? `<div style="display:flex;align-items:center;gap:10px"><img src="${escHtml(thumbUrl)}" style="width:40px;height:40px;border-radius:4px;object-fit:cover;flex-shrink:0" crossorigin="anonymous"/><div style="flex:1;min-width:0"><div class="result-title">${title} <span class="cover-src-badge itunes">iTunes</span></div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div></div></div>`
               : `<div class="result-title">${title} <span class="cover-src-badge itunes">iTunes</span></div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>`;
-            const coverPayload = { lf: null, itunes: al.artworkUrl100 ? al.artworkUrl100.replace('100x100bb', '600x600bb') : null };
+            const coverPayload = { lf: null, itunes: al.artworkUrl100 ? al.artworkUrl100.replace('100x100bb', '1200x1200bb') : null };
             item.onclick = () => openPreviewItunes(al, title, artist, coverPayload);
             results.appendChild(item);
           });
@@ -3516,7 +3516,7 @@
                 </div>
                </div>`
             : `<div class="result-title">${title} <span class="cover-src-badge itunes">iTunes</span></div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>`;
-          const coverPayload = { lf: null, itunes: al.artworkUrl100 ? al.artworkUrl100.replace('100x100bb', '600x600bb') : null };
+          const coverPayload = { lf: null, itunes: al.artworkUrl100 ? al.artworkUrl100.replace('100x100bb', '1200x1200bb') : null };
           item.onclick = () => openPreviewItunes(al, title, artist, coverPayload);
           results.appendChild(item);
         });
@@ -3595,7 +3595,7 @@
                 </div>
                </div>`
             : `<div class="result-title">${title} <span class="cover-src-badge itunes">iTunes</span></div><div class="result-meta">${artist} · ${year} · ${tracks} tracks</div>`;
-          const coverPayload = { lf: null, itunes: al.artworkUrl100 ? al.artworkUrl100.replace('100x100bb', '600x600bb') : null };
+          const coverPayload = { lf: null, itunes: al.artworkUrl100 ? al.artworkUrl100.replace('100x100bb', '1200x1200bb') : null };
           item.onclick = () => openPreviewItunes(al, title, artist, coverPayload);
           results.appendChild(item);
         });
@@ -3862,7 +3862,7 @@
     if (!match) match = itunesAlbums.find(al => norm(al.collectionName).includes(t) || t.includes(norm(al.collectionName)));
     if (!match) match = itunesAlbums[0];
     // Return highest res iTunes URL
-    return match ? match.artworkUrl100.replace('100x100bb', '600x600bb') : null;
+    return match ? match.artworkUrl100.replace('100x100bb', '1200x1200bb') : null;
   }
 
   // Cascada de respaldo cuando la portada guardada de un álbum ya no carga (p. ej.
@@ -4059,10 +4059,10 @@
       // Resolve cover: Last.fm → iTunes fallback
       let highResCover = null;
       if (coverPayload && typeof coverPayload === 'object' && ('lf' in coverPayload)) {
-        highResCover = coverPayload.lf || coverPayload.itunes || null;
+        highResCover = coverPayload.itunes || coverPayload.lf || null;
       } else if (typeof coverPayload === 'string' && coverPayload) {
         // Legacy string passed directly
-        highResCover = coverPayload.replace('100x100bb', '600x600bb').replace('100x100', '600x600');
+        highResCover = coverPayload.replace('100x100bb', '1200x1200bb').replace('100x100', '1200x1200');
       }
 
       currentAlbum = { title: albumTitle, artist, year: resolvedYear, genre: resolvedGenre, coverUrl: highResCover };
@@ -6700,7 +6700,7 @@
       const res  = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(artist)}&media=music&entity=album&limit=5&attribute=artistTerm`);
       const data = await res.json();
       const best = (data?.results||[]).find(r=>r.artistName?.toLowerCase()===artist.toLowerCase()) || data?.results?.[0];
-      return set(best?.artworkUrl100?.replace('100x100bb','600x600bb') || '');
+      return set(best?.artworkUrl100?.replace('100x100bb','1200x1200bb') || '');
     } catch { return set(''); }
   }
 
@@ -8382,7 +8382,7 @@
         (!p.artist || norm(a.artistName).includes(norm(p.artist)))
       ) || dat.results?.[0];
       if (hit) {
-        const cover = { lf:null, itunes: hit.artworkUrl100?.replace('100x100bb','600x600bb')||null };
+        const cover = { lf:null, itunes: hit.artworkUrl100?.replace('100x100bb','1200x1200bb')||null };
         openPreviewItunes(hit, hit.collectionName, hit.artistName, cover);
         return;
       }
