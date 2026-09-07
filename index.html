@@ -470,6 +470,16 @@
   .score-bar-bg { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; width: 100%; }
   .score-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s cubic-bezier(0.4,0,0.2,1), background 0.5s ease; width: 0%; min-width: 0; }
   .score-count { font-size: 12px; color: var(--muted); }
+  .short-track-reduction {
+    display:none; align-items:center; gap:6px; margin-top:2px;
+    color:#f06a7c; font-size:10px; font-family:'DM Mono', monospace;
+    letter-spacing:0.03em;
+  }
+  .short-track-reduction.show { display:flex; }
+  .short-track-reduction::before {
+    content:'−0.25'; font-weight:700; padding:2px 5px; border:1px solid rgba(240,96,112,0.38);
+    background:rgba(240,96,112,0.08); border-radius:4px;
+  }
   .rank-badge { font-family: 'Syne', sans-serif; font-size: 1.3rem; font-weight: 800; line-height: 1; letter-spacing: -0.02em; transition: color 0.4s ease, text-shadow 0.4s ease; min-width: 80px; text-align: center; }
   .rank-ss   { color: #ffffff; text-shadow: 0 0 18px rgba(255,255,255,0.6); }
   .rank-s    { color: #f5c842; text-shadow: 0 0 14px rgba(245,200,66,0.5); }
@@ -2174,6 +2184,7 @@
       <div class="score-label">Progreso hacia 11</div>
       <div class="score-bar-bg"><div class="score-bar-fill" id="avg-bar"></div></div>
       <div class="score-count" id="count-label">0 tracks</div>
+      <div class="short-track-reduction" id="short-track-reduction" role="status"> &lt;5 tracks Reduction</div>
     </div>
   </div>
 
@@ -2456,15 +2467,15 @@
     const applyBtn = document.getElementById('rescore-apply-btn');
     if (applyBtn) applyBtn.style.display = 'none';
 
-    // Step 4: calculate final score and rank directly from updated inputs
-    const allScores = [];
+    // Step 4: calculate the same final score used everywhere else.
+    const trackScores = [];
     document.querySelectorAll('#rows-body .row').forEach(row => {
       const v = parseFloat(row.querySelector('input[type="number"]:not(.rescore-input)')?.value);
-      if (!isNaN(v)) allScores.push(v);
+      if (!isNaN(v)) trackScores.push(v);
     });
     const coverVal = parseFloat(document.getElementById('cover-score')?.value);
-    if (!isNaN(coverVal)) allScores.push(coverVal);
-    const finalAvg = allScores.length ? (allScores.reduce((a,b) => a+b, 0) / allScores.length) : 0;
+    const rawAvg = trackScores.length ? (trackScores.reduce((a,b) => a + b, 0) / trackScores.length) : null;
+    const { finalAvg } = finalizeTrackAverage(rawAvg, trackScores.length);
     const finalRankData = getRank(finalAvg);
 
     // Step 5: save to localStorage
@@ -2716,6 +2727,16 @@
     updateCover();
   }
 
+  function finalizeTrackAverage(rawAvg, trackCount) {
+    const penaltyApplied = trackCount > 0 && trackCount < 5;
+    const penalty = penaltyApplied ? 0.25 : 0;
+    return {
+      penaltyApplied,
+      penalty,
+      finalAvg: rawAvg === null ? null : Math.max(0, rawAvg - penalty)
+    };
+  }
+
   function updateAverage() {
     const inputs = document.querySelectorAll('#rows-body input[type="number"]:not(.rescore-input)');
     let sum = 0, count = 0;
@@ -2733,26 +2754,35 @@
         count++;
       }
     });
-    const avgEl   = document.getElementById('avg-display');
-    const bar     = document.getElementById('avg-bar');
-    const countEl = document.getElementById('count-label');
-    const rankEl  = document.getElementById('rank-display');
+
+    const avgEl       = document.getElementById('avg-display');
+    const bar         = document.getElementById('avg-bar');
+    const countEl     = document.getElementById('count-label');
+    const rankEl      = document.getElementById('rank-display');
+    const reductionEl = document.getElementById('short-track-reduction');
+
     if (count === 0) {
       avgEl.textContent = '—'; bar.style.width = '0%';
-      countEl.textContent = '0 tracks'; rankEl.textContent = '—'; rankEl.className = 'rank-badge rank-none'; return;
+      countEl.textContent = '0 tracks';
+      rankEl.textContent = '—'; rankEl.className = 'rank-badge rank-none';
+      reductionEl.classList.remove('show');
+      return;
     }
-    const avg  = sum / count;
-    const rank = getRank(avg);
-    avgEl.textContent   = avg.toFixed(2);
-    bar.style.width     = `${Math.min(100, (avg / 11) * 100)}%`;
-    // Dynamic color based on score
-    const barColor = avg >= 9.5 ? 'linear-gradient(90deg,#c8f060,#ffe066)'
-      : avg >= 8.5 ? 'linear-gradient(90deg,#60d0f0,#c8f060)'
-      : avg >= 7   ? 'linear-gradient(90deg,#f0a030,#60d0f0)'
-      : avg >= 5   ? 'linear-gradient(90deg,#e05050,#f0a030)'
+
+    const rawAvg = sum / count;
+    const { penaltyApplied, finalAvg } = finalizeTrackAverage(rawAvg, count);
+    const rank = getRank(finalAvg);
+    avgEl.textContent   = finalAvg.toFixed(2);
+    bar.style.width     = `${Math.min(100, (finalAvg / 11) * 100)}%`;
+    // Dynamic color based on the actual final score.
+    const barColor = finalAvg >= 9.5 ? 'linear-gradient(90deg,#c8f060,#ffe066)'
+      : finalAvg >= 8.5 ? 'linear-gradient(90deg,#60d0f0,#c8f060)'
+      : finalAvg >= 7   ? 'linear-gradient(90deg,#f0a030,#60d0f0)'
+      : finalAvg >= 5   ? 'linear-gradient(90deg,#e05050,#f0a030)'
       : 'linear-gradient(90deg,#e05050,#e05050)';
     bar.style.background = barColor;
     countEl.textContent = `${count} track${count !== 1 ? 's' : ''}`;
+    reductionEl.classList.toggle('show', penaltyApplied);
     rankEl.textContent  = rank.label;
     rankEl.className    = `rank-badge ${rank.cls}`;
   }
@@ -2787,11 +2817,9 @@
     const bestEntry = pinnedIndex >= 0 ? entries[pinnedIndex] : entries.find(e => e.score === maxScore);
     const rawAvg    = count > 0 ? sum / count : null;
 
-    // Penalty: -0.25 if fewer than 5 scored tracks
-    const penaltyApplied = count > 0 && count < 5;
-    const penalty        = penaltyApplied ? 0.25 : 0;
-    const finalAvg       = rawAvg !== null ? Math.max(0, rawAvg - penalty) : null;
-    const rank           = getRank(finalAvg);
+    // Keep the exported card aligned with the live score, saved history and database.
+    const { penaltyApplied, penalty, finalAvg } = finalizeTrackAverage(rawAvg, count);
+    const rank = getRank(finalAvg);
 
     const outputEl = document.getElementById('output-text');
     outputEl.innerHTML = '';
@@ -4128,7 +4156,8 @@
         count++;
       }
     });
-    const avg  = count > 0 ? sum / count : null;
+    const rawAvg = count > 0 ? sum / count : null;
+    const { finalAvg: avg } = finalizeTrackAverage(rawAvg, count);
     const rank = getRank(avg);
     const entry = {
       id:       Date.now(),
@@ -5174,10 +5203,10 @@
         if (!isNaN(score)) { scoreSum += score; scoreCount++; }
         if (name) tracks.push({ name, score: !isNaN(score) ? score.toFixed(2) : '' });
       });
-      // Include cover score in average
-      const _coverVal = parseFloat(document.getElementById('cover-score')?.value);
-      if (!isNaN(_coverVal)) { scoreSum += _coverVal; scoreCount++; }
-      const computedAvg  = scoreCount > 0 ? (scoreSum / scoreCount).toFixed(2) : '';
+      // Cover score is stored separately; final score is based on tracks only.
+      const rawAvg = scoreCount > 0 ? scoreSum / scoreCount : null;
+      const { finalAvg } = finalizeTrackAverage(rawAvg, scoreCount);
+      const computedAvg  = finalAvg !== null ? finalAvg.toFixed(2) : '';
       const computedRank = document.querySelector('.out-final-rank')?.textContent || '';
 
       const userId = localStorage.getItem('discord_user_id') || '';
