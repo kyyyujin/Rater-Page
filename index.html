@@ -552,6 +552,7 @@
 
   /* Out rescore delta in result */
   .out-track-delta { font-size: 12px; color: var(--accent2); min-width: 46px; text-align: right; flex-shrink: 0; }
+  .out-track-delta.negative, .out-rescore-total-val.negative { color: var(--danger); }
   .out-rescore-total {
     display: flex; align-items: center; justify-content: space-between;
     margin-top: 10px; padding: 10px 14px;
@@ -2404,7 +2405,7 @@
     document.querySelectorAll('#rows-body .row').forEach(r => r.classList.toggle('rescore-mode', rescoreActive));
 
     // Show/hide total block and apply button
-    document.getElementById('rescore-total-val').textContent = '+0.00';
+    document.getElementById('rescore-total-val').textContent = '0.00';
     document.getElementById('rescore-total-wrap').classList.toggle('show', rescoreActive);
     const applyBtn = document.getElementById('rescore-apply-btn');
     if (applyBtn) applyBtn.style.display = rescoreActive ? 'inline-flex' : 'none';
@@ -2439,7 +2440,7 @@
       if (!scoreInput || !deltaInput) return;
       if (isNaN(delta) || delta === 0) { if (deltaInput) deltaInput.value = ''; return; }
       if (!isNaN(base)) {
-        const newScore = Math.min(getMaxScore(), Math.round((base + delta) * 10) / 10);
+        const newScore = Math.max(0, Math.min(getMaxScore(), Math.round((base + delta) * 10) / 10));
         scoreInput.value = newScore;
         changed++;
       }
@@ -2537,6 +2538,10 @@
     }
   }
 
+  function formatRescoreDelta(value) {
+    return `${value > 0 ? '+' : ''}${value.toFixed(2)}`;
+  }
+
   function updateRescoreTotal() {
     let total = 0;
     document.querySelectorAll('.rescore-input').forEach(inp => {
@@ -2544,7 +2549,8 @@
       if (!isNaN(v)) total += v;
     });
     const el = document.getElementById('rescore-total-val');
-    el.textContent = `+${total.toFixed(2)}`;
+    el.textContent = formatRescoreDelta(total);
+    el.style.color = total < 0 ? 'var(--danger)' : 'var(--accent2)';
   }
 
   /* ── RANK ── */
@@ -2606,8 +2612,8 @@
       </div>
       <div class="rescore-col">
         <div class="rescore-input-wrap">
-          <span class="rescore-prefix">+</span>
-          <input type="number" class="rescore-input" min="0" max="5" step="0.25" placeholder="0"
+          <span class="rescore-prefix">±</span>
+          <input type="number" class="rescore-input" min="-5" max="5" step="0.25" placeholder="0"
             id="rscore-${rowCount}" oninput="updateRescoreTotal()" />
         </div>
       </div>
@@ -2719,7 +2725,7 @@
           const row = i.closest('.row');
           const deltaInput = row ? row.querySelector('.rescore-input') : null;
           const delta = deltaInput ? parseFloat(deltaInput.value) : NaN;
-          sum += v + (isNaN(delta) ? 0 : delta);
+          sum += Math.min(getMaxScore(), Math.max(0, v + (isNaN(delta) ? 0 : delta)));
         } else {
           sum += v;
         }
@@ -2762,7 +2768,9 @@
       const baseScore = parseFloat(r.querySelector('input[type="number"]:not(.rescore-input)').value);
       const deltaInput = r.querySelector('.rescore-input');
       const delta      = (rescoreActive && deltaInput) ? parseFloat(deltaInput.value) : NaN;
-      const score      = !isNaN(baseScore) ? baseScore + (isNaN(delta) ? 0 : delta) : NaN;
+      const score      = !isNaN(baseScore)
+        ? Math.min(getMaxScore(), Math.max(0, baseScore + (isNaN(delta) ? 0 : delta)))
+        : NaN;
       if (!isNaN(score)) { sum += score; count++; }
       entries.push({ index: i + 1, name, score, baseScore, delta: isNaN(delta) ? 0 : delta });
     });
@@ -2852,9 +2860,9 @@
       if (rescoreActive) {
         const deltaInput = document.getElementById(`rscore-${e.index}`);
         const deltaVal   = deltaInput ? parseFloat(deltaInput.value) : NaN;
-        if (!isNaN(deltaVal) && deltaVal > 0) {
+        if (!isNaN(deltaVal) && deltaVal !== 0) {
           rescoreSum += deltaVal;
-          deltaHTML = `<span class="out-track-delta">+${deltaVal.toFixed(2)}</span>`;
+          deltaHTML = `<span class="out-track-delta${deltaVal < 0 ? ' negative' : ''}">${formatRescoreDelta(deltaVal)}</span>`;
         } else {
           deltaHTML = `<span class="out-track-delta" style="opacity:0.3">—</span>`;
         }
@@ -2889,12 +2897,12 @@
     }
 
     // ── Re-score total in output ──
-    if (rescoreActive && rescoreSum > 0) {
+    if (rescoreActive && rescoreSum !== 0) {
       const rt = document.createElement('div');
       rt.className = 'out-rescore-total';
       rt.innerHTML = `
         <span class="out-rescore-total-label">⚡ Re-score Total</span>
-        <span class="out-rescore-total-val">+${rescoreSum.toFixed(2)}</span>
+        <span class="out-rescore-total-val${rescoreSum < 0 ? ' negative' : ''}">${formatRescoreDelta(rescoreSum)}</span>
       `;
       card.appendChild(rt);
     }
