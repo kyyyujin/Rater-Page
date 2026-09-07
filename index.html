@@ -2522,6 +2522,7 @@
           year:        currentAlbum?.year     || '',
           genre:       currentAlbum?.genre    || '',
           cover_url:   currentAlbum?.coverUrl || '',
+          ...(Number.isFinite(coverVal) ? { cover_score: coverVal } : {}),
           final_score: finalAvg.toFixed(2),
           final_rank:  finalRankData?.label   || '',
           tracks:      tracks
@@ -5190,6 +5191,7 @@
       formData.append('year',        currentAlbum?.year     || '');
       formData.append('genre',       currentAlbum?.genre    || '');
       formData.append('cover_url',   currentAlbum?.coverUrl || '');
+      formData.append('cover_score', document.getElementById('cover-score')?.value || '');
       formData.append('final_score', computedAvg);
       formData.append('final_rank',  computedRank);
       formData.append('tracks',      JSON.stringify(tracks));
@@ -5499,6 +5501,7 @@
       formData.append('year',      currentAlbum?.year     || '');
       formData.append('genre',     currentAlbum?.genre    || '');
       formData.append('cover_url', currentAlbum?.coverUrl || '');
+      formData.append('cover_score', document.getElementById('cover-score')?.value || '');
       formData.append('final_score', document.querySelector('.out-final-avg')?.textContent || '');
       formData.append('final_rank',  document.querySelector('.out-final-rank')?.textContent || '');
 
