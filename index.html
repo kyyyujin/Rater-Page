@@ -2994,6 +2994,19 @@
       const row    = document.createElement('div');
       row.className = 'out-track' + (isBest ? ' best' : '') + (is11 ? ' score-11' : '');
 
+      // Re-score delta remains available even though score bars are gone.
+      let deltaHTML = '';
+      if (rescoreActive) {
+        const deltaInput = document.getElementById(`rscore-${e.index}`);
+        const deltaVal = deltaInput ? parseFloat(deltaInput.value) : NaN;
+        if (!isNaN(deltaVal) && deltaVal !== 0) {
+          rescoreSum += deltaVal;
+          deltaHTML = `<span class="out-track-delta${deltaVal < 0 ? ' negative' : ''}">${formatRescoreDelta(deltaVal)}</span>`;
+        } else {
+          deltaHTML = '<span class="out-track-delta" style="opacity:0.3">—</span>';
+        }
+      }
+
       const scoreText = isNaN(e.score) ? '—' : e.score.toFixed(1);
       const numEl = document.createElement('span');
       numEl.className = 'out-track-num';
