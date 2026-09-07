@@ -782,107 +782,6 @@
     white-space: nowrap;
   }
 
-  /* ── EXPORT CARD: COVER RAIL ── */
-  .out-card {
-    --export-rail: 236px;
-    display:grid;
-    grid-template-columns:var(--export-rail) minmax(0,1fr);
-    padding:0;
-    background:#0a0b0f;
-    border:1px solid rgba(255,255,255,0.08);
-    isolation:isolate;
-  }
-  .out-card.no-cover { grid-template-columns:1fr; }
-  .out-card-bg { display:none; }
-  .out-cover-rail {
-    position:relative; align-self:stretch; min-width:0;
-    background:#101116; overflow:visible;
-  }
-  .out-cover-rail::after {
-    content:''; position:absolute; z-index:2; pointer-events:none;
-    top:0; right:-126px; bottom:0; width:190px;
-    background:linear-gradient(to right, rgba(10,11,15,0), #0a0b0f 74%);
-  }
-  .out-cover-image, .out-cover-placeholder {
-    display:block; width:100%; aspect-ratio:1 / 1;
-    object-fit:cover; background:#101116;
-  }
-  .out-cover-placeholder {
-    display:flex; align-items:center; justify-content:center;
-    font-size:54px;
-  }
-  .out-export-content {
-    min-width:0; padding:36px 38px 32px 22px;
-    display:flex; flex-direction:column;
-  }
-  .out-album-header {
-    display:flex; flex-direction:column; align-items:flex-start; gap:5px;
-    min-height:154px; margin:0 0 22px;
-  }
-  .out-album-name {
-    max-width:none; font-size:36px; line-height:1.02;
-    letter-spacing:-0.055em;
-  }
-  .out-album-artist { font-size:15px; color:rgba(255,255,255,0.62); }
-  .out-album-facts {
-    margin-top:7px; color:rgba(255,255,255,0.48);
-    font-size:10px; letter-spacing:0.12em; text-transform:uppercase;
-  }
-  .out-album-cover-score {
-    margin-top:auto; padding-top:12px; gap:9px;
-    text-transform:uppercase; letter-spacing:0.12em; font-size:9px;
-  }
-  .out-album-cover-score-val { font-size:16px; color:var(--accent); }
-  .out-separator {
-    height:1px; margin:0 0 14px;
-    background:linear-gradient(90deg, rgba(255,255,255,0.26), rgba(255,255,255,0.04));
-    opacity:1;
-  }
-  .out-track {
-    display:grid; grid-template-columns:34px minmax(0,1fr) auto;
-    gap:12px; align-items:baseline; padding:10px 0;
-    border-bottom:1px solid rgba(255,255,255,0.075); border-radius:0;
-  }
-  .out-track-bar-wrap, .out-track-bar-bg, .out-track-bar-fill { display:none !important; }
-  .out-track-num { min-width:0; font-size:10px; letter-spacing:0.1em; color:rgba(255,255,255,0.32); }
-  .out-track-name {
-    min-width:0; white-space:normal; overflow:visible; text-overflow:clip;
-    font-size:14px; line-height:1.35; color:rgba(255,255,255,0.88);
-  }
-  .out-track-score {
-    min-width:42px; font-family:'Syne',sans-serif; font-size:16px; font-weight:800;
-    color:rgba(255,255,255,0.78);
-  }
-  .out-track.best .out-track-name, .out-track.best .out-track-score { color:var(--accent); }
-  .out-track-delta { grid-column:3; font-size:10px; min-width:0; margin-top:-7px; }
-  .out-best-track {
-    margin-top:18px; padding:12px 14px; border-radius:0;
-    background:rgba(200,240,96,0.06); border-color:rgba(200,240,96,0.24);
-  }
-  .out-comment {
-    margin:18px 0 0; padding:14px 15px; border-left-color:rgba(200,240,96,0.62);
-    font-size:13px; line-height:1.7; color:rgba(255,255,255,0.6);
-  }
-  .out-penalty { margin-top:16px; border-radius:0; }
-  .out-final {
-    margin-top:28px; padding-top:22px;
-    border-top-color:rgba(255,255,255,0.14);
-  }
-  .out-final-avg { font-size:3.8rem; }
-  .out-final-rank { font-size:2.6rem; padding:9px 17px; border-radius:6px; }
-  .out-card.previewing { --export-rail:30%; padding:0; }
-  .out-card.previewing .out-export-content { padding:20px 18px 20px 14px; }
-  .out-card.previewing .out-album-header { min-height:108px; margin-bottom:15px; }
-  .out-card.previewing .out-album-name { font-size:clamp(17px,5vw,28px); }
-  .out-card.previewing .out-album-artist { font-size:11px; }
-  .out-card.previewing .out-album-facts { font-size:8px; margin-top:3px; }
-  .out-card.previewing .out-album-cover-score { padding-top:6px; }
-  .out-card.previewing .out-track { grid-template-columns:26px minmax(0,1fr) auto; gap:7px; padding:7px 0; }
-  .out-card.previewing .out-track-name { font-size:11px; }
-  .out-card.previewing .out-track-score { font-size:12px; min-width:31px; }
-  .out-card.previewing .out-final-avg { font-size:2.4rem; }
-  .out-card.previewing .out-final-rank { font-size:2rem; padding:6px 11px; }
-
   /* Best-track pin switch */
   .pin-btn {
     width: 20px; height: 20px; border-radius: 50%;
@@ -2926,65 +2825,50 @@
     outputEl.innerHTML = '';
 
     const card = document.createElement('div');
-    card.className = 'out-card' + (currentAlbum ? '' : ' no-cover');
+    card.className = 'out-card';
 
-    const content = document.createElement('div');
-    content.className = 'out-export-content';
-
-    // ── Cover rail: the image remains complete and fades into the dark details column.
-    if (currentAlbum) {
-      const rail = document.createElement('div');
-      rail.className = 'out-cover-rail';
-      if (currentAlbum.coverUrl) {
-        const img = document.createElement('img');
-        img.className = 'out-cover-image';
-        img.src = currentAlbum.coverUrl;
-        img.alt = currentAlbum.title;
-        rail.appendChild(img);
-      } else {
-        const ph = document.createElement('div');
-        ph.className = 'out-cover-placeholder';
-        ph.textContent = '🎵';
-        rail.appendChild(ph);
-      }
-      card.appendChild(rail);
-
-      const hdr = document.createElement('div');
-      hdr.className = 'out-album-header';
-      const title = document.createElement('div');
-      title.className = 'out-album-name';
-      title.textContent = currentAlbum.title || 'Álbum';
-      const artist = document.createElement('div');
-      artist.className = 'out-album-artist';
-      artist.textContent = currentAlbum.artist || '';
-      hdr.append(title, artist);
-
-      const facts = [currentAlbum.year, currentAlbum.genre].filter(Boolean).join(' · ');
-      if (facts) {
-        const factsEl = document.createElement('div');
-        factsEl.className = 'out-album-facts';
-        factsEl.textContent = facts;
-        hdr.appendChild(factsEl);
-      }
-
-      const coverScore = parseFloat(document.getElementById('cover-score').value);
-      if (!isNaN(coverScore)) {
-        const scoreLine = document.createElement('div');
-        scoreLine.className = 'out-album-cover-score';
-        const scoreLabel = document.createElement('span');
-        scoreLabel.textContent = 'Portada';
-        const scoreValue = document.createElement('span');
-        scoreValue.className = 'out-album-cover-score-val';
-        scoreValue.textContent = coverScore.toFixed(1);
-        scoreLine.append(scoreLabel, scoreValue);
-        hdr.appendChild(scoreLine);
-      }
-      content.appendChild(hdr);
+    // ── Dynamic blurred background from album cover ──
+    if (currentAlbum?.coverUrl) {
+      const bg = document.createElement('div');
+      bg.className = 'out-card-bg';
+      bg.style.backgroundImage = `url(${currentAlbum.coverUrl})`;
+      card.appendChild(bg);
     }
 
+    // ── Album header ──
+    if (currentAlbum) {
+      const hdr = document.createElement('div');
+      hdr.className = 'out-album-header';
+      if (currentAlbum.coverUrl) {
+        const img = document.createElement('img');
+        img.className = 'out-album-cover';
+        img.src = currentAlbum.coverUrl;
+        img.alt = currentAlbum.title;
+        hdr.appendChild(img);
+      } else {
+        const ph = document.createElement('div');
+        ph.className = 'out-album-cover-placeholder';
+        ph.textContent = '🎵';
+        hdr.appendChild(ph);
+      }
+      const meta = document.createElement('div');
+      meta.className = 'out-album-meta';
+      const coverVal2 = parseFloat(document.getElementById('cover-score').value);
+      meta.innerHTML = `
+        <div class="out-album-name">${currentAlbum.title}</div>
+        <div class="out-album-artist">${currentAlbum.artist}</div>
+        ${currentAlbum.year ? `<div class="out-album-year">${currentAlbum.year}</div>` : ''}
+        ${currentAlbum.genre ? `<div class="out-album-genre">${currentAlbum.genre}</div>` : ''}
+        ${!isNaN(coverVal2) ? `<div class="out-album-cover-score"><span>📀 Portada</span><span class="out-album-cover-score-val">${coverVal2.toFixed(1)}</span></div>` : ''}
+      `;
+      hdr.appendChild(meta);
+      card.appendChild(hdr);
+    }
+
+    // ── Gradient separator ──
     const sep1 = document.createElement('div');
     sep1.className = 'out-separator';
-    content.appendChild(sep1);
+    card.appendChild(sep1);
 
     // ── Track list with bars ──
     let rescoreSum = 0;
@@ -2994,32 +2878,37 @@
       const row    = document.createElement('div');
       row.className = 'out-track' + (isBest ? ' best' : '') + (is11 ? ' score-11' : '');
 
-      // Re-score delta remains available even though score bars are gone.
+      const scoreText  = isNaN(e.score) ? '—' : e.score.toFixed(1);
+      const barPct     = isNaN(e.score) ? 0 : Math.min(100, (e.score / 11) * 100);
+      const colorData  = isNaN(e.score) ? { color: '#2a2a38', glow: null } : trackBarColor(e.score);
+      const bgStyle    = colorData.gradient ? colorData.gradient : colorData.color;
+      const shadowStyle = colorData.glow ? `box-shadow:${colorData.glow};` : '';
+
+      // Re-score delta
       let deltaHTML = '';
       if (rescoreActive) {
         const deltaInput = document.getElementById(`rscore-${e.index}`);
-        const deltaVal = deltaInput ? parseFloat(deltaInput.value) : NaN;
+        const deltaVal   = deltaInput ? parseFloat(deltaInput.value) : NaN;
         if (!isNaN(deltaVal) && deltaVal !== 0) {
           rescoreSum += deltaVal;
           deltaHTML = `<span class="out-track-delta${deltaVal < 0 ? ' negative' : ''}">${formatRescoreDelta(deltaVal)}</span>`;
         } else {
-          deltaHTML = '<span class="out-track-delta" style="opacity:0.3">—</span>';
+          deltaHTML = `<span class="out-track-delta" style="opacity:0.3">—</span>`;
         }
       }
 
-      const scoreText = isNaN(e.score) ? '—' : e.score.toFixed(1);
-      const numEl = document.createElement('span');
-      numEl.className = 'out-track-num';
-      numEl.textContent = String(e.index).padStart(2, '0');
-      const nameEl = document.createElement('span');
-      nameEl.className = 'out-track-name';
-      nameEl.textContent = e.name;
-      const scoreEl = document.createElement('span');
-      scoreEl.className = 'out-track-score';
-      scoreEl.textContent = scoreText;
-      row.append(numEl, nameEl, scoreEl);
-      if (deltaHTML) row.insertAdjacentHTML('beforeend', deltaHTML);
-      content.appendChild(row);
+      row.innerHTML = `
+        <span class="out-track-num">${e.index}</span>
+        <div class="out-track-bar-wrap">
+          <div class="out-track-bar-bg">
+            <div class="out-track-bar-fill" style="width:${barPct}%;background:${bgStyle};${shadowStyle}"></div>
+          </div>
+        </div>
+        <span class="out-track-name">${e.name}</span>
+        <span class="out-track-score">${scoreText}</span>
+        ${deltaHTML}
+      `;
+      card.appendChild(row);
     });
 
     // Cover score moved to album header meta
@@ -3033,7 +2922,7 @@
         <span class="out-best-name">${bestEntry.name}</span>
         <span class="out-best-score">${bestEntry.score.toFixed(1)}</span>
       `;
-      content.appendChild(bt);
+      card.appendChild(bt);
     }
 
     // ── Re-score total in output ──
@@ -3044,7 +2933,7 @@
         <span class="out-rescore-total-label">⚡ Re-score Total</span>
         <span class="out-rescore-total-val${rescoreSum < 0 ? ' negative' : ''}">${formatRescoreDelta(rescoreSum)}</span>
       `;
-      content.appendChild(rt);
+      card.appendChild(rt);
     }
 
     // ── Comment ──
@@ -3053,7 +2942,7 @@
       const cm = document.createElement('div');
       cm.className = 'out-comment';
       cm.textContent = commentText;
-      content.appendChild(cm);
+      card.appendChild(cm);
     }
 
     // ── Penalty notice ──
@@ -3061,7 +2950,7 @@
       const pen = document.createElement('div');
       pen.className = 'out-penalty';
       pen.innerHTML = `<span>−0.25 &lt;5 tracks Reduction</span><span class="out-penalty-val">−0.25</span>`;
-      content.appendChild(pen);
+      card.appendChild(pen);
     }
 
     // ── Final score + rank ──
@@ -3077,9 +2966,7 @@
         <span class="out-final-rank ${rank.cls}">${rank.label}</span>
       </div>
     `;
-    content.appendChild(finalDiv);
-
-    card.appendChild(content);
+    card.appendChild(finalDiv);
 
     // ── Re-score badge (top-right, added last so it layers above all content) ──
     if (rescoreActive) {
@@ -3218,10 +3105,39 @@
       // Restore original styles
       savedStyles.forEach(({ el, style }) => el.setAttribute('style', style));
 
-      // Use the card itself as the final image; its cover gradient is part of the layout.
-      const finalCanvas = cardCanvas;
+      // Final canvas with blurred bg
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width  = cardCanvas.width;
+      finalCanvas.height = cardCanvas.height;
+      const ctx = finalCanvas.getContext('2d');
 
-            // Restore PC mode styles
+      ctx.fillStyle = '#15151a';
+      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+
+      if (currentAlbum?.coverUrl) {
+        await new Promise(resolve => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            ctx.save();
+            const size = Math.max(finalCanvas.width, finalCanvas.height) * 1.2;
+            const x = (finalCanvas.width  - size) / 2;
+            const y = (finalCanvas.height - size) / 2;
+            ctx.filter = 'blur(40px) saturate(1.4)';
+            ctx.globalAlpha = 0.38;
+            ctx.drawImage(img, x, y, size, size);
+            ctx.restore();
+            resolve();
+          };
+          img.onerror = resolve;
+          img.src = currentAlbum.coverUrl;
+        });
+      }
+
+      ctx.globalAlpha = 1;
+      ctx.drawImage(cardCanvas, 0, 0);
+
+      // Restore PC mode styles
       if (pcMode) {
         card.style.width    = savedWidth;
         card.style.maxWidth = savedMaxWidth;
@@ -5241,9 +5157,38 @@
       card.style.maxWidth = savedMaxWidth;
       card.classList.add('previewing');
 
-      const blob = await new Promise(resolve => cardCanvas.toBlob(resolve, 'image/png'));
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width  = cardCanvas.width;
+      finalCanvas.height = cardCanvas.height;
+      const ctx = finalCanvas.getContext('2d');
+      ctx.fillStyle = '#15151a';
+      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
 
-            const albumTitle  = (currentAlbum?.title  || 'Álbum').toUpperCase();
+      if (currentAlbum?.coverUrl) {
+        await new Promise(resolve => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            ctx.save();
+            const size = Math.max(finalCanvas.width, finalCanvas.height) * 1.2;
+            const x = (finalCanvas.width  - size) / 2;
+            const y = (finalCanvas.height - size) / 2;
+            ctx.filter = 'blur(40px) saturate(1.4)';
+            ctx.globalAlpha = 0.22;
+            ctx.drawImage(img, x, y, size, size);
+            ctx.restore();
+            resolve();
+          };
+          img.onerror = resolve;
+          img.src = currentAlbum.coverUrl;
+        });
+      }
+      ctx.globalAlpha = 1;
+      ctx.drawImage(cardCanvas, 0, 0);
+
+      const blob = await new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
+
+      const albumTitle  = (currentAlbum?.title  || 'Álbum').toUpperCase();
       const albumArtist = (currentAlbum?.artist || '').toUpperCase();
       const title = albumArtist ? `- ${albumTitle} [${albumArtist}]` : `- ${albumTitle}`;
 
@@ -5534,9 +5479,39 @@
       card.style.maxWidth = savedMaxWidth;
       card.classList.add('previewing');
 
-      const blob = await new Promise(resolve => cardCanvas.toBlob(resolve, 'image/png'));
+      // Compose final canvas with blurred album bg
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width  = cardCanvas.width;
+      finalCanvas.height = cardCanvas.height;
+      const ctx = finalCanvas.getContext('2d');
+      ctx.fillStyle = '#15151a';
+      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
 
-            // Build title: - BLONDE [FRANK OCEAN]
+      if (currentAlbum?.coverUrl) {
+        await new Promise(resolve => {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            ctx.save();
+            const size = Math.max(finalCanvas.width, finalCanvas.height) * 1.2;
+            const x = (finalCanvas.width  - size) / 2;
+            const y = (finalCanvas.height - size) / 2;
+            ctx.filter = 'blur(40px) saturate(1.4)';
+            ctx.globalAlpha = 0.22;
+            ctx.drawImage(img, x, y, size, size);
+            ctx.restore();
+            resolve();
+          };
+          img.onerror = resolve;
+          img.src = currentAlbum.coverUrl;
+        });
+      }
+      ctx.globalAlpha = 1;
+      ctx.drawImage(cardCanvas, 0, 0);
+
+      const blob = await new Promise(resolve => finalCanvas.toBlob(resolve, 'image/png'));
+
+      // Build title: - BLONDE [FRANK OCEAN]
       const albumTitle  = (currentAlbum?.title  || 'Álbum').toUpperCase();
       const albumArtist = (currentAlbum?.artist || '').toUpperCase();
       const title = albumArtist ? `- ${albumTitle} [${albumArtist}]` : `- ${albumTitle}`;
