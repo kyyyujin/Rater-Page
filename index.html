@@ -782,112 +782,309 @@
     white-space: nowrap;
   }
 
-  /* ── EXPORT CARD: COVER + AMBIENCE ── */
+  /* ── EXPORT CARD: EDITORIAL REVIEW ── */
   .out-card {
+    --export-glass:rgba(9,13,18,0.54);
+    --export-border:rgba(255,255,255,0.19);
     display:block; position:relative; overflow:hidden; isolation:isolate;
-    padding:0; background:#101116; border:1px solid rgba(255,255,255,0.10);
+    width:100%; padding:0; color:#f4f5f1;
+    background:#0c1015; border:1px solid rgba(255,255,255,0.10);
   }
-  .out-card.no-cover { background:#101116; }
+  .out-card.no-cover { background:linear-gradient(145deg,#111720,#090b0f); }
   .out-card-bg {
-    display:block; position:absolute; inset:-28px; z-index:0;
+    display:block; position:absolute; inset:-42px; z-index:0;
     background-size:cover; background-position:center;
-    filter:blur(22px) saturate(1.12) brightness(0.72);
-    transform:scale(1.07); opacity:1; pointer-events:none;
+    filter:blur(34px) saturate(1.28) brightness(0.52);
+    transform:scale(1.09); opacity:1; pointer-events:none;
+  }
+  .out-card::before {
+    content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:
+      radial-gradient(circle at 18% 8%,rgba(255,255,255,0.08),transparent 34%),
+      linear-gradient(180deg,rgba(5,8,12,0.13),rgba(5,8,12,0.48));
   }
   .out-card::after {
     content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
-    background:linear-gradient(90deg, rgba(6,8,13,0.02) 0%, rgba(6,8,13,0.28) 51%, rgba(6,8,13,0.52) 100%);
+    background:linear-gradient(115deg,rgba(4,7,10,0.08),rgba(4,7,10,0.22) 46%,rgba(4,7,10,0.44));
   }
   .out-card > *:not(.out-card-bg) { position:relative; z-index:2; }
-  .out-card > .out-cover-foreground {
-    position:absolute; z-index:2; inset:0 auto 0 0; width:50%;
-    overflow:hidden; box-shadow:18px 0 38px rgba(0,0,0,0.18);
+  .out-card > .out-export-content {
+    min-width:0; padding:38px;
+    display:flex; flex-direction:column; gap:24px;
+    background:transparent; border:0; box-shadow:none;
   }
-  .out-cover-foreground img {
+
+  /* Hero */
+  .out-hero {
+    display:grid; grid-template-columns:minmax(0,0.96fr) minmax(0,1.04fr);
+    gap:38px; align-items:stretch;
+  }
+  .out-hero-cover {
+    position:relative; min-width:0; aspect-ratio:1;
+    overflow:hidden; border-radius:24px;
+    border:1px solid rgba(255,255,255,0.26);
+    background:rgba(7,10,14,0.55);
+    box-shadow:0 24px 64px rgba(0,0,0,0.36),inset 0 1px 0 rgba(255,255,255,0.12);
+  }
+  .out-hero-cover img {
     display:block; width:100%; height:100%; object-fit:cover; object-position:center;
   }
-  .out-card > .out-export-content {
-    position:relative; z-index:3; min-width:0; margin-left:50%; padding:44px 40px 36px;
-    display:flex; flex-direction:column;
-    background:rgba(8,10,16,0.18);
-    border:0; box-shadow:none;
-    backdrop-filter:blur(16px) saturate(1.06);
-    -webkit-backdrop-filter:blur(16px) saturate(1.06);
+  .out-hero-cover::after {
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:linear-gradient(145deg,rgba(255,255,255,0.08),transparent 32%,rgba(0,0,0,0.12));
   }
-  .out-album-header {
-    display:flex; flex-direction:column; align-items:flex-start; gap:5px;
-    min-height:146px; margin:0 0 22px;
+  .out-hero-cover-placeholder {
+    width:100%; height:100%; display:grid; place-items:center;
+    font-size:62px; color:rgba(255,255,255,0.28);
+  }
+  .out-hero-info {
+    min-width:0; padding:18px 0 12px;
+    display:flex; flex-direction:column; align-items:flex-start;
+  }
+  .out-hero-kicker {
+    width:100%; display:flex; justify-content:space-between; gap:18px;
+    font-family:'DM Mono',monospace; font-size:11px;
+    letter-spacing:0.36em; text-transform:uppercase; color:rgba(255,255,255,0.62);
   }
   .out-album-name {
-    max-width:none; font-size:38px; line-height:1.02;
-    letter-spacing:-0.055em; text-shadow:0 2px 18px rgba(0,0,0,0.35);
+    max-width:none; margin-top:30px;
+    font-family:'Syne',sans-serif; font-size:50px; line-height:0.98; font-weight:800;
+    letter-spacing:-0.055em; color:#fff;
+    text-shadow:0 4px 26px rgba(0,0,0,0.32);
   }
-  .out-album-artist { font-size:15px; color:rgba(255,255,255,0.72); }
-  .out-album-facts {
-    margin-top:7px; color:rgba(255,255,255,0.6);
-    font-size:10px; letter-spacing:0.12em; text-transform:uppercase;
+  .out-album-artist {
+    margin-top:10px; font-family:'DM Mono',monospace;
+    font-size:16px; color:rgba(255,255,255,0.78);
   }
+  .out-album-badges {
+    display:flex; flex-wrap:wrap; gap:9px; margin-top:22px;
+  }
+  .out-album-badge {
+    padding:8px 14px; border-radius:999px;
+    border:1px solid rgba(255,255,255,0.22);
+    background:rgba(255,255,255,0.09);
+    font-family:'DM Mono',monospace; font-size:11px;
+    letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.82);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+  }
+  .out-album-badge.genre {
+    color:#83dbff; border-color:rgba(96,212,240,0.44);
+    background:rgba(36,90,145,0.30);
+  }
+  .out-album-description {
+    position:relative; margin-top:28px; padding-top:22px;
+    max-width:430px; font-family:'DM Mono',monospace;
+    font-size:13px; line-height:1.62; color:rgba(255,255,255,0.74);
+  }
+  .out-album-description::before {
+    content:''; position:absolute; left:0; top:0; width:38px; height:1px;
+    background:rgba(255,255,255,0.52);
+  }
+  .out-album-description::first-letter { color:#fff; }
   .out-album-cover-score {
-    margin-top:auto; padding-top:12px; gap:9px;
-    text-transform:uppercase; letter-spacing:0.12em; font-size:9px;
+    margin-top:auto; padding:13px 17px; gap:11px;
+    display:inline-flex; align-items:center;
+    border:1px solid rgba(255,255,255,0.26); border-radius:14px;
+    background:rgba(7,11,16,0.34);
+    backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
   }
-  .out-album-cover-score-val { font-size:16px; color:var(--accent); }
-  .out-separator {
-    height:1px; margin:0 0 14px;
-    background:linear-gradient(90deg, rgba(255,255,255,0.35), rgba(255,255,255,0.06));
-    opacity:1;
+  .out-cover-score-star {
+    font-size:20px; color:#ffd968; text-shadow:0 0 16px rgba(255,217,104,0.58);
   }
+  .out-cover-score-copy { display:flex; flex-direction:column; gap:2px; }
+  .out-album-cover-score-val {
+    font-family:'Syne',sans-serif; font-size:24px; line-height:1; font-weight:800; color:#f5f5f1;
+  }
+  .out-album-cover-score-label {
+    font-family:'DM Mono',monospace; font-size:8px;
+    letter-spacing:0.18em; text-transform:uppercase; color:rgba(255,255,255,0.55);
+  }
+
+  /* Tracklist glass panel */
+  .out-track-panel {
+    padding:22px 24px; overflow:hidden;
+    border:1px solid var(--export-border); border-radius:22px;
+    background:var(--export-glass);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.07),0 18px 50px rgba(0,0,0,0.18);
+    backdrop-filter:blur(22px) saturate(1.12); -webkit-backdrop-filter:blur(22px) saturate(1.12);
+  }
+  .out-track-panel-layout { min-width:0; }
+  .out-track-panel.with-decor .out-track-panel-layout {
+    display:grid; grid-template-columns:minmax(0,1fr) 220px; gap:22px;
+  }
+  .out-track-list { min-width:0; }
   .out-track {
-    display:grid; grid-template-columns:34px minmax(0,1fr) auto;
-    gap:12px; align-items:baseline; padding:10px 0;
-    border-bottom:1px solid rgba(255,255,255,0.13); border-radius:0;
+    display:grid; grid-template-columns:42px minmax(0,1fr) auto;
+    gap:14px; align-items:center; min-width:0;
+    border-bottom:1px solid rgba(255,255,255,0.12); border-radius:0;
   }
-  .out-track-bar-wrap, .out-track-bar-bg, .out-track-bar-fill { display:none !important; }
-  .out-track-num { min-width:0; font-size:10px; letter-spacing:0.1em; color:rgba(255,255,255,0.48); }
+  .out-track:last-child { border-bottom:0; }
+  .out-track-num {
+    min-width:0; font-family:'DM Mono',monospace;
+    font-size:12px; letter-spacing:0.08em; color:rgba(255,255,255,0.47);
+  }
   .out-track-name {
     min-width:0; white-space:normal; overflow:visible; text-overflow:clip;
-    font-size:14px; line-height:1.35; color:rgba(255,255,255,0.95);
+    font-family:'DM Mono',monospace; font-size:15px; line-height:1.35;
+    color:rgba(255,255,255,0.91);
   }
   .out-track-score {
-    min-width:42px; font-family:'Syne',sans-serif; font-size:16px; font-weight:800;
-    color:rgba(255,255,255,0.9); text-shadow:0 1px 10px rgba(0,0,0,0.25);
+    min-width:62px; padding:8px 12px; border-radius:12px;
+    border:1px solid rgba(255,255,255,0.20);
+    background:rgba(255,255,255,0.10);
+    font-family:'DM Mono',monospace; font-size:15px; line-height:1; font-weight:700;
+    text-align:center; color:rgba(255,255,255,0.94);
   }
-  .out-track.best .out-track-name, .out-track.best .out-track-score { color:var(--accent); }
-  .out-track-delta { grid-column:3; font-size:10px; min-width:0; margin-top:-7px; }
+  .out-track.best .out-track-name { color:#d7ff71; font-weight:700; }
+  .out-track.best .out-track-score {
+    color:#d7ff71; border-color:rgba(200,240,96,0.38);
+    background:rgba(121,164,38,0.22); text-shadow:0 0 12px rgba(200,240,96,0.28);
+  }
+  .out-track.score-11 .out-track-score { border-color:rgba(96,212,240,0.42); }
+  .out-track-delta {
+    grid-column:3; justify-self:center; min-width:0; margin:-7px 0 4px;
+    font-family:'DM Mono',monospace; font-size:9px;
+  }
+  .out-track-bar-wrap,.out-track-bar-bg,.out-track-bar-fill { display:none !important; }
+
+  .out-card.density-spacious .out-track { min-height:58px; padding:8px 0; }
+  .out-card.density-balanced .out-track { min-height:48px; padding:6px 0; }
+  .out-card.density-balanced .out-track-name { font-size:14px; }
+  .out-card.density-balanced .out-track-score { padding:7px 11px; }
+  .out-card.density-compact .out-track-panel { padding-top:18px; padding-bottom:18px; }
+  .out-card.density-compact .out-track { min-height:42px; padding:4px 0; }
+  .out-card.density-compact .out-track-name { font-size:13px; }
+  .out-card.density-compact .out-track-score { min-width:58px; padding:6px 10px; font-size:14px; }
+
+  /* Optional cover fragments for short releases */
+  .out-track-art {
+    min-width:0; padding-left:18px;
+    display:grid; grid-template-rows:repeat(3,minmax(0,1fr)); gap:5px;
+    border-left:1px solid rgba(255,255,255,0.15);
+  }
+  .out-art-fragment {
+    position:relative; min-height:88px; overflow:hidden; border-radius:10px;
+    border:1px solid rgba(255,255,255,0.12);
+  }
+  .out-art-fragment img { width:100%; height:100%; object-fit:cover; transform:scale(1.14); }
+  .out-art-fragment:nth-child(1) img { object-position:50% 18%; }
+  .out-art-fragment:nth-child(2) img { object-position:50% 52%; }
+  .out-art-fragment:nth-child(3) img { object-position:50% 84%; }
+  .out-art-fragment::after {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(135deg,transparent,rgba(4,7,10,0.20));
+  }
+
+  /* Editorial footer */
+  .out-footer {
+    display:grid; grid-template-columns:minmax(0,1fr) auto; gap:30px; align-items:center;
+    padding:25px 28px; min-height:154px;
+    border:1px solid var(--export-border); border-radius:22px;
+    background:rgba(8,12,17,0.58);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.07),0 18px 50px rgba(0,0,0,0.18);
+    backdrop-filter:blur(24px) saturate(1.1); -webkit-backdrop-filter:blur(24px) saturate(1.1);
+  }
+  .out-footer-copy { min-width:0; }
   .out-best-track {
-    margin-top:18px; padding:12px 14px; border-radius:0;
-    background:rgba(12,16,11,0.32); border-color:rgba(200,240,96,0.34);
-    backdrop-filter:blur(10px);
+    margin:0; padding:0; display:grid;
+    grid-template-columns:auto minmax(0,1fr); gap:4px 14px; align-items:center;
+    border:0; border-radius:0; background:transparent; backdrop-filter:none;
   }
+  .out-best-star {
+    grid-row:1 / span 2; font-size:30px; color:#d7ff71;
+    text-shadow:0 0 18px rgba(200,240,96,0.55);
+  }
+  .out-best-label {
+    font-family:'DM Mono',monospace; font-size:9px;
+    letter-spacing:0.18em; text-transform:uppercase; color:#d7ff71;
+  }
+  .out-best-name {
+    min-width:0; font-family:'Syne',sans-serif;
+    font-size:24px; line-height:1.05; font-weight:700; color:#d7ff71;
+  }
+  .out-best-score { display:none; }
   .out-comment {
-    margin:18px 0 0; padding:14px 15px; border-left-color:rgba(200,240,96,0.7);
-    font-size:13px; line-height:1.7; color:rgba(255,255,255,0.72);
-    background:rgba(6,8,13,0.14);
+    margin:14px 0 0 44px; padding:0;
+    border:0; background:transparent;
+    font-family:'DM Mono',monospace; font-size:12px; line-height:1.55;
+    font-style:italic; color:rgba(255,255,255,0.62); white-space:pre-wrap;
   }
-  .out-penalty { margin-top:16px; border-radius:0; background:rgba(65,16,25,0.36); }
+  .out-footer-meta {
+    margin:14px 0 0 44px; display:flex; flex-wrap:wrap; gap:8px;
+  }
+  .out-rescore-total,.out-penalty {
+    margin:0; padding:7px 10px; min-height:0;
+    border-radius:999px; font-family:'DM Mono',monospace; font-size:9px;
+  }
+  .out-score-lockup {
+    display:flex; align-items:center; justify-content:flex-end; gap:18px;
+  }
   .out-final {
-    justify-content:flex-end;
-    margin-top:28px; padding-top:22px; border-top-color:rgba(255,255,255,0.2);
+    margin:0; padding:0; border:0; display:block;
   }
-  .out-final-right { width:100%; justify-content:flex-end; gap:24px; }
-  .out-final-avg { font-size:4.5rem; text-shadow:0 4px 24px rgba(0,0,0,0.3); }
-  .out-final-rank { font-size:3rem; padding:10px 20px; border-radius:6px; background:rgba(3,5,8,0.26); }
-  .out-rescore-badge { z-index:3; }
-  .out-card.no-cover .out-export-content { margin-left:0; }
-  .out-card.previewing { padding:0; }
-  .out-card.previewing .out-cover-foreground { width:48%; }
-  .out-card.previewing .out-export-content { margin-left:48%; padding:22px 16px; }
-  .out-card.previewing .out-album-header { min-height:108px; margin-bottom:15px; }
-  .out-card.previewing .out-album-name { font-size:clamp(17px,5vw,28px); }
-  .out-card.previewing .out-album-artist { font-size:11px; }
-  .out-card.previewing .out-album-facts { font-size:8px; margin-top:3px; }
-  .out-card.previewing .out-album-cover-score { padding-top:6px; }
-  .out-card.previewing .out-track { grid-template-columns:26px minmax(0,1fr) auto; gap:7px; padding:7px 0; }
-  .out-card.previewing .out-track-name { font-size:11px; }
-  .out-card.previewing .out-track-score { font-size:12px; min-width:31px; }
-  .out-card.previewing .out-final-right { gap:13px; }
-  .out-card.previewing .out-final-avg { font-size:2.8rem; }
-  .out-card.previewing .out-final-rank { font-size:2.2rem; padding:6px 11px; }
+  .out-final-right { width:auto; display:flex; align-items:center; justify-content:flex-end; gap:18px; }
+  .out-final-avg {
+    font-family:'Syne',sans-serif; font-size:82px; line-height:0.82; font-weight:800;
+    letter-spacing:-0.065em; color:#d7ff71;
+    text-shadow:0 0 24px rgba(200,240,96,0.24); box-shadow:none !important;
+  }
+  .out-final-rank {
+    min-width:108px; padding:18px 20px; border-radius:16px;
+    display:grid; place-items:center;
+    border:1px solid currentColor; background:rgba(5,8,12,0.34);
+    font-family:'Syne',sans-serif; font-size:46px; line-height:1; font-weight:800;
+    box-shadow:none;
+  }
+  .out-final-avg.rank-ss { color:#fff; text-shadow:0 0 25px rgba(255,255,255,0.38); }
+  .out-final-avg.rank-s { color:#f5c842; text-shadow:0 0 25px rgba(245,200,66,0.30); }
+  .out-final-avg.rank-a { color:#9af06f; text-shadow:0 0 25px rgba(124,219,110,0.30); }
+  .out-final-avg.rank-b { color:#f0a24b; text-shadow:0 0 25px rgba(240,146,58,0.30); }
+  .out-final-avg.rank-c { color:#f06b79; text-shadow:0 0 25px rgba(240,96,112,0.30); }
+  .out-final-avg.rank-none { color:rgba(255,255,255,0.58); text-shadow:none; }
+  .out-rescore-badge { z-index:4; }
+
+  /* Preview adapts the same composition to the narrow page column. */
+  .out-card.previewing > .out-export-content { padding:14px; gap:12px; }
+  .out-card.previewing .out-hero { grid-template-columns:42% minmax(0,1fr); gap:13px; }
+  .out-card.previewing .out-hero-cover { border-radius:13px; }
+  .out-card.previewing .out-hero-info { padding:3px 0; }
+  .out-card.previewing .out-hero-kicker { font-size:6px; letter-spacing:0.16em; gap:6px; }
+  .out-card.previewing .out-album-name { margin-top:10px; font-size:clamp(18px,5vw,27px); }
+  .out-card.previewing .out-album-artist { margin-top:4px; font-size:8px; }
+  .out-card.previewing .out-album-badges { margin-top:8px; gap:4px; }
+  .out-card.previewing .out-album-badge { padding:4px 7px; font-size:6px; }
+  .out-card.previewing .out-album-description {
+    margin-top:9px; padding-top:8px; font-size:7px; line-height:1.4;
+    display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;
+  }
+  .out-card.previewing .out-album-description::before { width:18px; }
+  .out-card.previewing .out-album-cover-score {
+    margin-top:auto; padding:5px 7px; gap:5px; border-radius:7px;
+  }
+  .out-card.previewing .out-cover-score-star { font-size:10px; }
+  .out-card.previewing .out-album-cover-score-val { font-size:12px; }
+  .out-card.previewing .out-album-cover-score-label { font-size:5px; }
+  .out-card.previewing .out-track-panel { padding:8px 10px; border-radius:12px; }
+  .out-card.previewing .out-track-panel.with-decor .out-track-panel-layout { display:block; }
+  .out-card.previewing .out-track-art { display:none; }
+  .out-card.previewing .out-track {
+    grid-template-columns:24px minmax(0,1fr) auto; gap:6px; min-height:31px !important; padding:3px 0 !important;
+  }
+  .out-card.previewing .out-track-num { font-size:7px; }
+  .out-card.previewing .out-track-name { font-size:9px; }
+  .out-card.previewing .out-track-score { min-width:35px; padding:4px 5px; border-radius:6px; font-size:9px; }
+  .out-card.previewing .out-track-delta { grid-column:3; font-size:6px; margin:-4px 0 2px; }
+  .out-card.previewing .out-footer { min-height:0; padding:11px 12px; gap:10px; border-radius:12px; }
+  .out-card.previewing .out-best-track { gap:2px 6px; }
+  .out-card.previewing .out-best-star { font-size:16px; }
+  .out-card.previewing .out-best-label { font-size:6px; }
+  .out-card.previewing .out-best-name { font-size:13px; }
+  .out-card.previewing .out-comment { margin:6px 0 0 22px; font-size:7px; line-height:1.35; }
+  .out-card.previewing .out-footer-meta { margin:6px 0 0 22px; gap:4px; }
+  .out-card.previewing .out-rescore-total,.out-card.previewing .out-penalty { padding:3px 5px; font-size:5px; }
+  .out-card.previewing .out-final-right { gap:7px; }
+  .out-card.previewing .out-final-avg { font-size:36px; }
+  .out-card.previewing .out-final-rank { min-width:48px; padding:7px 8px; border-radius:8px; font-size:22px; }
 
   /* Best-track pin switch */
   .pin-btn {
@@ -2549,7 +2746,7 @@
     }
 
     // Step 1: generate image WITH rescore active (shows deltas and total)
-    generate();
+    await generate();
     await new Promise(r => setTimeout(r, 200));
 
     // Step 2: apply deltas permanently to inputs
@@ -2894,199 +3091,368 @@
     rankEl.className    = `rank-badge ${rank.cls}`;
   }
 
+  /* ── EDITORIAL EXPORT METADATA ── */
+  const _albumDescriptionPromises = new Map();
+
+  function resolveReleaseType(album, trackCount = 0) {
+    const raw = String(album?.type || album?.releaseType || '').trim();
+    if (raw) {
+      const normalized = raw.toLowerCase();
+      if (normalized.includes('ep')) return 'EP';
+      if (normalized.includes('single')) return 'Single';
+      if (normalized.includes('compilation')) return 'Compilation';
+      if (normalized.includes('live')) return 'Live';
+      if (normalized.includes('album')) return 'Album';
+      return raw;
+    }
+    const title = String(album?.title || '').toLowerCase();
+    if (/\bep\b/.test(title)) return 'EP';
+    if (/\bsingle\b/.test(title)) return 'Single';
+    if (trackCount > 0 && trackCount <= 3) return 'Single';
+    if (trackCount > 0 && trackCount <= 7) return 'EP';
+    return 'Album';
+  }
+
+  function cleanAlbumDescription(raw, maxLength = 265) {
+    if (!raw) return '';
+    const decoder = document.createElement('div');
+    decoder.innerHTML = String(raw);
+    let text = (decoder.textContent || decoder.innerText || '')
+      .replace(/Read more on Last\.fm.*$/i, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!text) return '';
+
+    // Keep the export editorial: one or two short sentences, never a full article.
+    const sentenceMatches = text.match(/[^.!?]+[.!?]+/g);
+    if (sentenceMatches?.length) {
+      let short = '';
+      for (const sentence of sentenceMatches.slice(0, 2)) {
+        if ((short + ' ' + sentence).trim().length > maxLength) break;
+        short = (short + ' ' + sentence).trim();
+      }
+      if (short.length >= 60) text = short;
+    }
+    if (text.length > maxLength) {
+      const cut = text.slice(0, maxLength - 1);
+      text = cut.slice(0, Math.max(cut.lastIndexOf(' '), maxLength - 28)).trimEnd() + '…';
+    }
+    return text;
+  }
+
+  async function fetchJsonWithTimeout(url, timeoutMs = 4500) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) return null;
+      return await response.json();
+    } catch {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function fetchLastfmDescription(album) {
+    const url = 'https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist='
+      + encodeURIComponent(album.artist || '') + '&album='
+      + encodeURIComponent(album.title || '') + '&api_key=' + LASTFM_KEY + '&format=json&autocorrect=1';
+    const data = await fetchJsonWithTimeout(url);
+    return cleanAlbumDescription(data?.album?.wiki?.summary || data?.album?.wiki?.content || '');
+  }
+
+  async function fetchWikipediaDescription(album) {
+    const query = [album.title, album.artist, 'album'].filter(Boolean).join(' ');
+    const url = 'https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch='
+      + encodeURIComponent(query)
+      + '&gsrlimit=4&prop=extracts&exintro=1&explaintext=1&exsentences=2&redirects=1&origin=*&format=json';
+    const data = await fetchJsonWithTimeout(url);
+    const pages = Object.values(data?.query?.pages || {}).sort((a, b) => (a.index || 99) - (b.index || 99));
+    if (!pages.length) return '';
+    const albumTitle = String(album.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const best = pages.find(page => String(page.title || '').toLowerCase().replace(/[^a-z0-9]/g, '').includes(albumTitle))
+      || pages[0];
+    return cleanAlbumDescription(best?.extract || '');
+  }
+
+  function buildAlbumDescriptionFallback(album, trackCount) {
+    const title = album?.title || 'This release';
+    const artist = album?.artist || 'the artist';
+    const year = album?.year ? String(album.year) + ' ' : '';
+    const type = resolveReleaseType(album, trackCount);
+    const genre = album?.genre ? ', catalogued within ' + album.genre : '';
+    return cleanAlbumDescription(title + ' is a ' + year + type + ' by ' + artist + genre + '.');
+  }
+
+  async function ensureAlbumDescription(album, trackCount) {
+    if (!album) return '';
+    if (album.description) return cleanAlbumDescription(album.description);
+    const key = [album.artist, album.title].map(value => String(value || '').trim().toLowerCase()).join('|');
+    if (!key.replace('|', '')) return '';
+
+    if (!_albumDescriptionPromises.has(key)) {
+      _albumDescriptionPromises.set(key, (async () => {
+        const [lastfm, wikipedia] = await Promise.all([
+          fetchLastfmDescription(album),
+          fetchWikipediaDescription(album)
+        ]);
+        if (lastfm) return { text:lastfm, source:'Last.fm' };
+        if (wikipedia) return { text:wikipedia, source:'Wikipedia' };
+        return { text:buildAlbumDescriptionFallback(album, trackCount), source:'metadata' };
+      })());
+    }
+
+    const result = await _albumDescriptionPromises.get(key);
+    album.description = result.text;
+    album.descriptionSource = result.source;
+    album.descriptionChecked = true;
+    album.type = resolveReleaseType(album, trackCount);
+    return result.text;
+  }
+
+  function warmAlbumDescription(album, trackCount) {
+    if (!album) return;
+    ensureAlbumDescription(album, trackCount).then(() => {
+      if (currentAlbum === album) saveData();
+    }).catch(() => {});
+  }
+
   /* ── GENERATE ── */
-  function generate() {
-    syncAlbumMeta(); // pick up any manual edits to title/artist/year
+  async function generate() {
+    syncAlbumMeta();
     const rows = document.querySelectorAll('#rows-body .row');
-    if (!rows.length) { showToast('No hay datos', 'warning'); return; }
+    if (!rows.length) { showToast('No hay datos', 'warning'); return false; }
 
     let entries = [], sum = 0, count = 0;
-    rows.forEach((r, i) => {
-      const name      = r.querySelector('input[type="text"]').value.trim() || `Track ${i + 1}`;
-      const baseScore = parseFloat(r.querySelector('input[type="number"]:not(.rescore-input)').value);
-      const deltaInput = r.querySelector('.rescore-input');
-      const delta      = (rescoreActive && deltaInput) ? parseFloat(deltaInput.value) : NaN;
-      const score      = !isNaN(baseScore)
+    rows.forEach((row, index) => {
+      const name = row.querySelector('input[type="text"]').value.trim() || 'Track ' + (index + 1);
+      const baseScore = parseFloat(row.querySelector('input[type="number"]:not(.rescore-input)').value);
+      const deltaInput = row.querySelector('.rescore-input');
+      const delta = (rescoreActive && deltaInput) ? parseFloat(deltaInput.value) : NaN;
+      const score = !isNaN(baseScore)
         ? Math.min(getMaxScore(), Math.max(0, baseScore + (isNaN(delta) ? 0 : delta)))
         : NaN;
       if (!isNaN(score)) { sum += score; count++; }
-      entries.push({ index: i + 1, name, score, baseScore, delta: isNaN(delta) ? 0 : delta });
+      entries.push({ index:index + 1, name, score, baseScore, delta:isNaN(delta) ? 0 : delta });
     });
 
-    const coverVal  = parseFloat(document.getElementById('cover-score').value);
-    const maxScore  = count > 0 ? Math.max(...entries.filter(e => !isNaN(e.score)).map(e => e.score)) : null;
-
-    // Check for manually pinned best track
+    const maxScore = count > 0 ? Math.max(...entries.filter(entry => !isNaN(entry.score)).map(entry => entry.score)) : null;
     let pinnedIndex = -1;
-    document.querySelectorAll('.pin-btn').forEach((btn, i) => {
-      if (btn.dataset.pinned === 'true') pinnedIndex = i;
+    document.querySelectorAll('.pin-btn').forEach((button, index) => {
+      if (button.dataset.pinned === 'true') pinnedIndex = index;
     });
-    const bestEntry = pinnedIndex >= 0 ? entries[pinnedIndex] : entries.find(e => e.score === maxScore);
-    const rawAvg    = count > 0 ? sum / count : null;
-
-    // Keep the exported card aligned with the live score, saved history and database.
-    const { penaltyApplied, penalty, finalAvg } = finalizeTrackAverage(rawAvg, count);
+    const bestEntry = pinnedIndex >= 0 ? entries[pinnedIndex] : entries.find(entry => entry.score === maxScore);
+    const rawAvg = count > 0 ? sum / count : null;
+    const { penaltyApplied, finalAvg } = finalizeTrackAverage(rawAvg, count);
     const rank = getRank(finalAvg);
+    const density = entries.length <= 7 ? 'spacious' : entries.length <= 14 ? 'balanced' : 'compact';
+
+    const albumAtStart = currentAlbum;
+    let albumDescription = '';
+    if (albumAtStart) {
+      if (!albumAtStart.description) showToast('Preparando la ficha editorial…', 'info');
+      albumDescription = await ensureAlbumDescription(albumAtStart, entries.length);
+      if (albumAtStart !== currentAlbum) return false;
+      saveData();
+    }
 
     const outputEl = document.getElementById('output-text');
     outputEl.innerHTML = '';
 
+    const makeText = (tag, className, text) => {
+      const element = document.createElement(tag);
+      element.className = className;
+      element.textContent = text;
+      return element;
+    };
+
     const card = document.createElement('div');
-    card.className = 'out-card' + (currentAlbum ? '' : ' no-cover');
+    card.className = 'out-card density-' + density + (currentAlbum?.coverUrl ? '' : ' no-cover');
 
     if (currentAlbum?.coverUrl) {
-      const bg = document.createElement('div');
-      bg.className = 'out-card-bg';
-      bg.style.backgroundImage = `url("${currentAlbum.coverUrl}")`;
-      card.appendChild(bg);
-
-      // Keep a crisp version of the cover on the left, above the blurred ambience.
-      const cover = document.createElement('div');
-      cover.className = 'out-cover-foreground';
-      const coverImage = document.createElement('img');
-      coverImage.src = currentAlbum.coverUrl;
-      coverImage.alt = currentAlbum.title || 'Portada del álbum';
-      cover.appendChild(coverImage);
-      card.appendChild(cover);
+      const background = document.createElement('div');
+      background.className = 'out-card-bg';
+      background.style.backgroundImage = 'url("' + currentAlbum.coverUrl + '")';
+      card.appendChild(background);
     }
 
     const content = document.createElement('div');
     content.className = 'out-export-content';
 
     if (currentAlbum) {
-      const hdr = document.createElement('div');
-      hdr.className = 'out-album-header';
-      const title = document.createElement('div');
-      title.className = 'out-album-name';
-      title.textContent = currentAlbum.title || 'Álbum';
-      const artist = document.createElement('div');
-      artist.className = 'out-album-artist';
-      artist.textContent = currentAlbum.artist || '';
-      hdr.append(title, artist);
+      currentAlbum.type = resolveReleaseType(currentAlbum, entries.length);
+      const hero = document.createElement('section');
+      hero.className = 'out-hero';
 
-      const facts = [currentAlbum.year, currentAlbum.genre].filter(Boolean).join(' · ');
-      if (facts) {
-        const factsEl = document.createElement('div');
-        factsEl.className = 'out-album-facts';
-        factsEl.textContent = facts;
-        hdr.appendChild(factsEl);
+      const cover = document.createElement('div');
+      cover.className = 'out-hero-cover';
+      if (currentAlbum.coverUrl) {
+        const coverImage = document.createElement('img');
+        coverImage.crossOrigin = 'anonymous';
+        coverImage.src = currentAlbum.coverUrl;
+        coverImage.alt = currentAlbum.title || 'Portada del álbum';
+        cover.appendChild(coverImage);
+      } else {
+        cover.appendChild(makeText('div', 'out-hero-cover-placeholder', '♪'));
+      }
+
+      const info = document.createElement('div');
+      info.className = 'out-hero-info';
+
+      const kicker = document.createElement('div');
+      kicker.className = 'out-hero-kicker';
+      kicker.append(
+        makeText('span', 'out-hero-kicker-artist', currentAlbum.artist || 'Unknown artist'),
+        makeText('span', 'out-hero-kicker-year', currentAlbum.year || '—')
+      );
+      info.appendChild(kicker);
+      info.appendChild(makeText('h2', 'out-album-name', currentAlbum.title || 'Álbum'));
+      info.appendChild(makeText('div', 'out-album-artist', currentAlbum.artist || ''));
+
+      const badges = document.createElement('div');
+      badges.className = 'out-album-badges';
+      if (currentAlbum.genre) badges.appendChild(makeText('span', 'out-album-badge genre', currentAlbum.genre));
+      badges.appendChild(makeText('span', 'out-album-badge release', currentAlbum.type));
+      info.appendChild(badges);
+
+      if (albumDescription) {
+        const description = makeText('div', 'out-album-description', '“' + albumDescription + '”');
+        description.dataset.source = currentAlbum.descriptionSource || '';
+        info.appendChild(description);
       }
 
       const coverScore = parseFloat(document.getElementById('cover-score').value);
       if (!isNaN(coverScore)) {
         const scoreLine = document.createElement('div');
         scoreLine.className = 'out-album-cover-score';
-        const scoreLabel = document.createElement('span');
-        scoreLabel.textContent = 'Portada';
-        const scoreValue = document.createElement('span');
-        scoreValue.className = 'out-album-cover-score-val';
-        scoreValue.textContent = coverScore.toFixed(1);
-        scoreLine.append(scoreLabel, scoreValue);
-        hdr.appendChild(scoreLine);
+        scoreLine.appendChild(makeText('span', 'out-cover-score-star', '★'));
+        const scoreCopy = document.createElement('span');
+        scoreCopy.className = 'out-cover-score-copy';
+        scoreCopy.append(
+          makeText('span', 'out-album-cover-score-val', coverScore.toFixed(1)),
+          makeText('span', 'out-album-cover-score-label', 'Portada')
+        );
+        scoreLine.appendChild(scoreCopy);
+        info.appendChild(scoreLine);
       }
-      content.appendChild(hdr);
+
+      hero.append(cover, info);
+      content.appendChild(hero);
     }
 
-    const sep1 = document.createElement('div');
-    sep1.className = 'out-separator';
-    content.appendChild(sep1);
+    const trackPanel = document.createElement('section');
+    const useDecor = Boolean(currentAlbum?.coverUrl && entries.length > 0 && entries.length <= 7);
+    trackPanel.className = 'out-track-panel' + (useDecor ? ' with-decor' : '');
+    const trackPanelLayout = document.createElement('div');
+    trackPanelLayout.className = 'out-track-panel-layout';
+    const trackList = document.createElement('div');
+    trackList.className = 'out-track-list';
 
-    // ── Track list with bars ──
     let rescoreSum = 0;
-    entries.forEach(e => {
-      const is11   = !isNaN(e.score) && e.score >= 11;
-      const isBest = e.score === maxScore && maxScore !== null;
-      const row    = document.createElement('div');
-      row.className = 'out-track' + (isBest ? ' best' : '') + (is11 ? ' score-11' : '');
+    entries.forEach(entry => {
+      const is11 = !isNaN(entry.score) && entry.score >= 11;
+      const isBest = entry === bestEntry;
+      const track = document.createElement('div');
+      track.className = 'out-track' + (isBest ? ' best' : '') + (is11 ? ' score-11' : '');
+      track.append(
+        makeText('span', 'out-track-num', String(entry.index).padStart(2, '0')),
+        makeText('span', 'out-track-name', entry.name),
+        makeText('span', 'out-track-score', isNaN(entry.score) ? '—' : entry.score.toFixed(1))
+      );
 
-      // Re-score delta remains available even though score bars are gone.
-      let deltaHTML = '';
       if (rescoreActive) {
-        const deltaInput = document.getElementById(`rscore-${e.index}`);
-        const deltaVal = deltaInput ? parseFloat(deltaInput.value) : NaN;
-        if (!isNaN(deltaVal) && deltaVal !== 0) {
-          rescoreSum += deltaVal;
-          deltaHTML = `<span class="out-track-delta${deltaVal < 0 ? ' negative' : ''}">${formatRescoreDelta(deltaVal)}</span>`;
-        } else {
-          deltaHTML = '<span class="out-track-delta" style="opacity:0.3">—</span>';
-        }
+        const deltaInput = document.getElementById('rscore-' + entry.index);
+        const deltaValue = deltaInput ? parseFloat(deltaInput.value) : NaN;
+        const delta = makeText(
+          'span',
+          'out-track-delta' + (!isNaN(deltaValue) && deltaValue < 0 ? ' negative' : ''),
+          !isNaN(deltaValue) && deltaValue !== 0 ? formatRescoreDelta(deltaValue) : '—'
+        );
+        if (!isNaN(deltaValue) && deltaValue !== 0) rescoreSum += deltaValue;
+        else delta.style.opacity = '0.3';
+        track.appendChild(delta);
       }
-
-      const scoreText = isNaN(e.score) ? '—' : e.score.toFixed(1);
-      const numEl = document.createElement('span');
-      numEl.className = 'out-track-num';
-      numEl.textContent = String(e.index).padStart(2, '0');
-      const nameEl = document.createElement('span');
-      nameEl.className = 'out-track-name';
-      nameEl.textContent = e.name;
-      const scoreEl = document.createElement('span');
-      scoreEl.className = 'out-track-score';
-      scoreEl.textContent = scoreText;
-      row.append(numEl, nameEl, scoreEl);
-      if (deltaHTML) row.insertAdjacentHTML('beforeend', deltaHTML);
-      content.appendChild(row);
+      trackList.appendChild(track);
     });
+    trackPanelLayout.appendChild(trackList);
 
-    // Cover score moved to album header meta
+    if (useDecor) {
+      const art = document.createElement('aside');
+      art.className = 'out-track-art';
+      for (let index = 0; index < 3; index++) {
+        const fragment = document.createElement('div');
+        fragment.className = 'out-art-fragment';
+        const image = document.createElement('img');
+        image.crossOrigin = 'anonymous';
+        image.src = currentAlbum.coverUrl;
+        image.alt = '';
+        fragment.appendChild(image);
+        art.appendChild(fragment);
+      }
+      trackPanelLayout.appendChild(art);
+    }
+    trackPanel.appendChild(trackPanelLayout);
+    content.appendChild(trackPanel);
 
-    // ── Best track callout ──
+    const footer = document.createElement('footer');
+    footer.className = 'out-footer';
+    const footerCopy = document.createElement('div');
+    footerCopy.className = 'out-footer-copy';
+
     if (bestEntry && !isNaN(bestEntry.score)) {
-      const bt = document.createElement('div');
-      bt.className = 'out-best-track';
-      bt.innerHTML = `
-        <span class="out-best-label">★ Best Track</span>
-        <span class="out-best-name">${bestEntry.name}</span>
-        <span class="out-best-score">${bestEntry.score.toFixed(1)}</span>
-      `;
-      content.appendChild(bt);
+      const best = document.createElement('div');
+      best.className = 'out-best-track';
+      best.append(
+        makeText('span', 'out-best-star', '★'),
+        makeText('span', 'out-best-label', 'Best Track'),
+        makeText('span', 'out-best-name', bestEntry.name)
+      );
+      footerCopy.appendChild(best);
     }
 
-    // ── Re-score total in output ──
-    if (rescoreActive && rescoreSum !== 0) {
-      const rt = document.createElement('div');
-      rt.className = 'out-rescore-total';
-      rt.innerHTML = `
-        <span class="out-rescore-total-label">⚡ Re-score Total</span>
-        <span class="out-rescore-total-val${rescoreSum < 0 ? ' negative' : ''}">${formatRescoreDelta(rescoreSum)}</span>
-      `;
-      content.appendChild(rt);
-    }
-
-    // ── Comment ──
     const commentText = document.getElementById('comment-input').value.trim();
-    if (commentText) {
-      const cm = document.createElement('div');
-      cm.className = 'out-comment';
-      cm.textContent = commentText;
-      content.appendChild(cm);
+    if (commentText) footerCopy.appendChild(makeText('div', 'out-comment', commentText));
+
+    if ((rescoreActive && rescoreSum !== 0) || penaltyApplied) {
+      const footerMeta = document.createElement('div');
+      footerMeta.className = 'out-footer-meta';
+      if (rescoreActive && rescoreSum !== 0) {
+        const total = document.createElement('div');
+        total.className = 'out-rescore-total';
+        total.append(
+          makeText('span', 'out-rescore-total-label', '⚡ Re-score'),
+          makeText('span', 'out-rescore-total-val' + (rescoreSum < 0 ? ' negative' : ''), formatRescoreDelta(rescoreSum))
+        );
+        footerMeta.appendChild(total);
+      }
+      if (penaltyApplied) {
+        const penalty = document.createElement('div');
+        penalty.className = 'out-penalty';
+        penalty.append(
+          makeText('span', '', '−0.25 <5 tracks'),
+          makeText('span', 'out-penalty-val', '−0.25')
+        );
+        footerMeta.appendChild(penalty);
+      }
+      footerCopy.appendChild(footerMeta);
     }
 
-    // ── Penalty notice ──
-    if (penaltyApplied) {
-      const pen = document.createElement('div');
-      pen.className = 'out-penalty';
-      pen.innerHTML = `<span>−0.25 &lt;5 tracks Reduction</span><span class="out-penalty-val">−0.25</span>`;
-      content.appendChild(pen);
-    }
-
-    // ── Final score + rank ──
-    const finalDiv = document.createElement('div');
-    finalDiv.className = 'out-final';
-    finalDiv.innerHTML = `
-      <div class="out-final-right">
-        <span class="out-final-avg">${finalAvg !== null ? finalAvg.toFixed(2) : '—'}</span>
-        <span class="out-final-rank ${rank.cls}">${rank.label}</span>
-      </div>
-    `;
-    content.appendChild(finalDiv);
-
+    const final = document.createElement('div');
+    final.className = 'out-final';
+    const finalRight = document.createElement('div');
+    finalRight.className = 'out-final-right';
+    finalRight.append(
+      makeText('span', 'out-final-avg ' + rank.cls, finalAvg !== null ? finalAvg.toFixed(2) : '—'),
+      makeText('span', 'out-final-rank ' + rank.cls, rank.label)
+    );
+    final.appendChild(finalRight);
+    footer.append(footerCopy, final);
+    content.appendChild(footer);
     card.appendChild(content);
 
-    // ── Re-score badge (top-right, added last so it layers above all content) ──
     if (rescoreActive) {
-      const badge = document.createElement('div');
-      badge.className = 'out-rescore-badge';
-      badge.textContent = 'Re-score';
+      const badge = makeText('div', 'out-rescore-badge', 'Re-score');
       card.appendChild(badge);
     }
 
@@ -3098,10 +3464,9 @@
     scaler.appendChild(card);
     outputEl.appendChild(scaler);
 
-    outputEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    outputEl.scrollIntoView({ behavior:'smooth', block:'nearest' });
     showToast('✓ Resultado generado');
 
-    // Enable the Guardar button now that result is generated
     const btnSaveDb = document.getElementById('btn-save-db');
     if (btnSaveDb) {
       btnSaveDb.disabled = false;
@@ -3109,6 +3474,7 @@
       btnSaveDb.style.cursor = 'pointer';
       btnSaveDb.title = 'Guardar en la base de datos';
     }
+    return true;
   }
 
   /* ── COPY (plain text) ── */
@@ -3303,7 +3669,11 @@
       artist:   document.getElementById('album-art-artist').value,
       year:     document.getElementById('album-art-year').value,
       genre:    document.getElementById('album-art-genre').value,
-      coverUrl: currentAlbum.coverUrl || null
+      coverUrl: currentAlbum.coverUrl || null,
+      type: currentAlbum.type || '',
+      description: currentAlbum.description || '',
+      descriptionSource: currentAlbum.descriptionSource || '',
+      descriptionChecked: Boolean(currentAlbum.descriptionChecked)
     } : null;
     return { rows, cover, comment, album };
   }
@@ -3837,7 +4207,8 @@
         addRow(trackName, savedScore);
       });
 
-      currentAlbum = { title: albumTitle, artist, year, genre, coverUrl: highResCover };
+      currentAlbum = { title: albumTitle, artist, year, genre, coverUrl: highResCover, type: resolveReleaseType({ title:albumTitle }, tracks.length) };
+      warmAlbumDescription(currentAlbum, tracks.length);
       showAlbumBanner(currentAlbum);
       status.textContent = `✓ ${tracks.length} tracks de ${artist} — ${albumTitle} cargados`;
       document.getElementById('search-input').value = '';
@@ -4187,7 +4558,8 @@
         highResCover = coverPayload.replace('100x100bb', '1200x1200bb').replace('100x100', '1200x1200');
       }
 
-      currentAlbum = { title: albumTitle, artist, year: resolvedYear, genre: resolvedGenre, coverUrl: highResCover };
+      currentAlbum = { title: albumTitle, artist, year: resolvedYear, genre: resolvedGenre, coverUrl: highResCover, type: data['release-group']?.['primary-type'] || data['release-group']?.['secondary-types']?.[0] || '' };
+      warmAlbumDescription(currentAlbum, tracks.length);
       showAlbumBanner(currentAlbum);
       status.textContent = `✓ ${tracks.length} tracks de ${artist} — ${albumTitle} cargados`;
       document.getElementById('search-input').value = ''; document.getElementById('search-artist').value = '';
@@ -5173,7 +5545,8 @@
         addRow(trackName, savedScore);
       });
 
-      currentAlbum = { title: albumTitle, artist, year: year || '', genre: genre || '', coverUrl: coverUrl || null };
+      currentAlbum = { title: albumTitle, artist, year: year || '', genre: genre || '', coverUrl: coverUrl || null, type: resolveReleaseType({ title:albumTitle }, tracks.length) };
+      warmAlbumDescription(currentAlbum, tracks.length);
       showAlbumBanner(currentAlbum);
       status.textContent = `✓ ${tracks.length} tracks de ${artist} — ${albumTitle} cargados`;
       document.getElementById('search-input').value  = '';
