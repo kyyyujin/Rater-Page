@@ -3193,8 +3193,8 @@
     if (pcMode) {
       savedWidth    = card.style.width;
       savedMaxWidth = card.style.maxWidth;
-      card.style.width    = '640px';
-      card.style.maxWidth = '640px';
+      card.style.width    = '960px';
+      card.style.maxWidth = '960px';
       card.getBoundingClientRect();
     }
     try {
@@ -5221,8 +5221,8 @@
       // Generar imagen igual que Discord
       const savedWidth    = card.style.width;
       const savedMaxWidth = card.style.maxWidth;
-      card.style.width    = '640px';
-      card.style.maxWidth = '640px';
+      card.style.width    = '960px';
+      card.style.maxWidth = '960px';
       card.getBoundingClientRect();
 
       const score11Els = card.querySelectorAll('.score-11 .out-track-num, .score-11 .out-track-name, .score-11 .out-track-score');
@@ -5506,11 +5506,11 @@
       card.classList.remove('previewing');
       await new Promise(r => setTimeout(r, 30));
 
-      // PC fixed mode (640px, scale 2x) — same as "Tamaño PC fijo"
+      // PC fixed mode (960px, scale 2x) — same as "Tamaño PC fijo"
       const savedWidth    = card.style.width;
       const savedMaxWidth = card.style.maxWidth;
-      card.style.width    = '640px';
-      card.style.maxWidth = '640px';
+      card.style.width    = '960px';
+      card.style.maxWidth = '960px';
       card.getBoundingClientRect();
 
       // Convert score-11 gradient text to solid for canvas
