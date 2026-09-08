@@ -782,38 +782,37 @@
     white-space: nowrap;
   }
 
-  /* ── EXPORT CARD: ALBUM GLASS ── */
+  /* ── EXPORT CARD: COVER + AMBIENCE ── */
   .out-card {
     display:block; position:relative; overflow:hidden; isolation:isolate;
-    padding:26px; background:#101116; border:1px solid rgba(255,255,255,0.12);
+    padding:0; background:#101116; border:1px solid rgba(255,255,255,0.10);
   }
   .out-card.no-cover { background:#101116; }
   .out-card-bg {
-    display:block; position:absolute; inset:-24px; z-index:0;
+    display:block; position:absolute; inset:-28px; z-index:0;
     background-size:cover; background-position:center;
-    filter:blur(16px) saturate(1.18) brightness(0.78);
-    transform:scale(1.05); opacity:0.98; pointer-events:none;
+    filter:blur(22px) saturate(1.12) brightness(0.72);
+    transform:scale(1.07); opacity:1; pointer-events:none;
   }
   .out-card::after {
     content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
-    background:linear-gradient(135deg, rgba(6,8,13,0.12), rgba(6,8,13,0.38));
+    background:linear-gradient(90deg, rgba(6,8,13,0.02) 0%, rgba(6,8,13,0.28) 51%, rgba(6,8,13,0.52) 100%);
   }
   .out-card > *:not(.out-card-bg) { position:relative; z-index:2; }
   .out-card > .out-cover-foreground {
-    position:absolute; z-index:2; inset:0 auto 0 0; width:39%;
-    overflow:hidden; box-shadow:20px 0 44px rgba(0,0,0,0.28);
+    position:absolute; z-index:2; inset:0 auto 0 0; width:50%;
+    overflow:hidden; box-shadow:18px 0 38px rgba(0,0,0,0.18);
   }
   .out-cover-foreground img {
     display:block; width:100%; height:100%; object-fit:cover; object-position:center;
   }
   .out-card > .out-export-content {
-    position:relative; z-index:3; min-width:0; margin-left:35%; padding:34px 36px 30px;
+    position:relative; z-index:3; min-width:0; margin-left:50%; padding:44px 40px 36px;
     display:flex; flex-direction:column;
-    background:rgba(8,10,16,0.56);
-    border:1px solid rgba(255,255,255,0.16);
-    box-shadow:0 22px 60px rgba(0,0,0,0.34), inset 0 1px 0 rgba(255,255,255,0.08);
-    backdrop-filter:blur(22px) saturate(1.2);
-    -webkit-backdrop-filter:blur(22px) saturate(1.2);
+    background:rgba(8,10,16,0.18);
+    border:0; box-shadow:none;
+    backdrop-filter:blur(16px) saturate(1.06);
+    -webkit-backdrop-filter:blur(16px) saturate(1.06);
   }
   .out-album-header {
     display:flex; flex-direction:column; align-items:flex-start; gap:5px;
@@ -857,27 +856,27 @@
   .out-track-delta { grid-column:3; font-size:10px; min-width:0; margin-top:-7px; }
   .out-best-track {
     margin-top:18px; padding:12px 14px; border-radius:0;
-    background:rgba(12,16,11,0.45); border-color:rgba(200,240,96,0.34);
+    background:rgba(12,16,11,0.32); border-color:rgba(200,240,96,0.34);
     backdrop-filter:blur(10px);
   }
   .out-comment {
     margin:18px 0 0; padding:14px 15px; border-left-color:rgba(200,240,96,0.7);
     font-size:13px; line-height:1.7; color:rgba(255,255,255,0.72);
-    background:rgba(6,8,13,0.18);
+    background:rgba(6,8,13,0.14);
   }
-  .out-penalty { margin-top:16px; border-radius:0; background:rgba(65,16,25,0.42); }
+  .out-penalty { margin-top:16px; border-radius:0; background:rgba(65,16,25,0.36); }
   .out-final {
     justify-content:flex-end;
     margin-top:28px; padding-top:22px; border-top-color:rgba(255,255,255,0.2);
   }
   .out-final-right { width:100%; justify-content:flex-end; gap:24px; }
   .out-final-avg { font-size:4.5rem; text-shadow:0 4px 24px rgba(0,0,0,0.3); }
-  .out-final-rank { font-size:3rem; padding:10px 20px; border-radius:6px; background:rgba(3,5,8,0.34); }
+  .out-final-rank { font-size:3rem; padding:10px 20px; border-radius:6px; background:rgba(3,5,8,0.26); }
   .out-rescore-badge { z-index:3; }
   .out-card.no-cover .out-export-content { margin-left:0; }
-  .out-card.previewing { padding:12px; }
-  .out-card.previewing .out-cover-foreground { width:33%; }
-  .out-card.previewing .out-export-content { margin-left:28%; padding:20px 18px; }
+  .out-card.previewing { padding:0; }
+  .out-card.previewing .out-cover-foreground { width:48%; }
+  .out-card.previewing .out-export-content { margin-left:48%; padding:22px 16px; }
   .out-card.previewing .out-album-header { min-height:108px; margin-bottom:15px; }
   .out-card.previewing .out-album-name { font-size:clamp(17px,5vw,28px); }
   .out-card.previewing .out-album-artist { font-size:11px; }
