@@ -799,14 +799,14 @@
     background:linear-gradient(135deg, rgba(6,8,13,0.12), rgba(6,8,13,0.38));
   }
   .out-card > *:not(.out-card-bg) { position:relative; z-index:2; }
-  .out-cover-foreground {
+  .out-card > .out-cover-foreground {
     position:absolute; z-index:2; inset:0 auto 0 0; width:39%;
     overflow:hidden; box-shadow:20px 0 44px rgba(0,0,0,0.28);
   }
   .out-cover-foreground img {
     display:block; width:100%; height:100%; object-fit:cover; object-position:center;
   }
-  .out-export-content {
+  .out-card > .out-export-content {
     position:relative; z-index:3; min-width:0; margin-left:35%; padding:34px 36px 30px;
     display:flex; flex-direction:column;
     background:rgba(8,10,16,0.56);
