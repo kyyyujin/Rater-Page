@@ -794,18 +794,21 @@
   .out-card-bg {
     display:block; position:absolute; inset:-42px; z-index:0;
     background-size:cover; background-position:center;
-    filter:blur(34px) saturate(1.28) brightness(0.52);
+    filter:blur(34px) saturate(1.18) brightness(0.56);
     transform:scale(1.09); opacity:1; pointer-events:none;
+  }
+  .out-card-bg.rasterized {
+    inset:0; filter:none; transform:scale(1.035);
   }
   .out-card::before {
     content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
     background:
       radial-gradient(circle at 18% 8%,rgba(255,255,255,0.08),transparent 34%),
-      linear-gradient(180deg,rgba(5,8,12,0.13),rgba(5,8,12,0.48));
+      linear-gradient(180deg,rgba(5,8,12,0.34),rgba(5,8,12,0.58));
   }
   .out-card::after {
     content:''; position:absolute; inset:0; z-index:1; pointer-events:none;
-    background:linear-gradient(115deg,rgba(4,7,10,0.08),rgba(4,7,10,0.22) 46%,rgba(4,7,10,0.44));
+    background:linear-gradient(115deg,rgba(4,7,10,0.16),rgba(4,7,10,0.30) 46%,rgba(4,7,10,0.52));
   }
   .out-card > *:not(.out-card-bg) { position:relative; z-index:2; }
   .out-card > .out-export-content {
@@ -816,7 +819,7 @@
 
   /* Hero */
   .out-hero {
-    display:grid; grid-template-columns:minmax(0,0.96fr) minmax(0,1.04fr);
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
     gap:38px; align-items:stretch;
   }
   .out-hero-cover {
@@ -903,15 +906,12 @@
   /* Tracklist glass panel */
   .out-track-panel {
     padding:22px 24px; overflow:hidden;
-    border:1px solid var(--export-border); border-radius:22px;
+    border:1px solid rgba(126,218,194,0.42); border-radius:22px;
     background:var(--export-glass);
     box-shadow:inset 0 1px 0 rgba(255,255,255,0.07),0 18px 50px rgba(0,0,0,0.18);
     backdrop-filter:blur(22px) saturate(1.12); -webkit-backdrop-filter:blur(22px) saturate(1.12);
   }
   .out-track-panel-layout { min-width:0; }
-  .out-track-panel.with-decor .out-track-panel-layout {
-    display:grid; grid-template-columns:minmax(0,1fr) 220px; gap:22px;
-  }
   .out-track-list { min-width:0; }
   .out-track {
     display:grid; grid-template-columns:42px minmax(0,1fr) auto;
@@ -956,30 +956,11 @@
   .out-card.density-compact .out-track-name { font-size:13px; }
   .out-card.density-compact .out-track-score { min-width:58px; padding:6px 10px; font-size:14px; }
 
-  /* Optional cover fragments for short releases */
-  .out-track-art {
-    min-width:0; padding-left:18px;
-    display:grid; grid-template-rows:repeat(3,minmax(0,1fr)); gap:5px;
-    border-left:1px solid rgba(255,255,255,0.15);
-  }
-  .out-art-fragment {
-    position:relative; min-height:88px; overflow:hidden; border-radius:10px;
-    border:1px solid rgba(255,255,255,0.12);
-  }
-  .out-art-fragment img { width:100%; height:100%; object-fit:cover; transform:scale(1.14); }
-  .out-art-fragment:nth-child(1) img { object-position:50% 18%; }
-  .out-art-fragment:nth-child(2) img { object-position:50% 52%; }
-  .out-art-fragment:nth-child(3) img { object-position:50% 84%; }
-  .out-art-fragment::after {
-    content:''; position:absolute; inset:0;
-    background:linear-gradient(135deg,transparent,rgba(4,7,10,0.20));
-  }
-
   /* Editorial footer */
   .out-footer {
     display:grid; grid-template-columns:minmax(0,1fr) auto; gap:30px; align-items:center;
     padding:25px 28px; min-height:154px;
-    border:1px solid var(--export-border); border-radius:22px;
+    border:1px solid rgba(126,218,194,0.42); border-radius:22px;
     background:rgba(8,12,17,0.58);
     box-shadow:inset 0 1px 0 rgba(255,255,255,0.07),0 18px 50px rgba(0,0,0,0.18);
     backdrop-filter:blur(24px) saturate(1.1); -webkit-backdrop-filter:blur(24px) saturate(1.1);
@@ -1024,15 +1005,15 @@
   }
   .out-final-right { width:auto; display:flex; align-items:center; justify-content:flex-end; gap:18px; }
   .out-final-avg {
-    font-family:'Syne',sans-serif; font-size:82px; line-height:0.82; font-weight:800;
+    font-family:'Syne',sans-serif; font-size:72px; line-height:0.82; font-weight:800;
     letter-spacing:-0.065em; color:#d7ff71;
     text-shadow:0 0 24px rgba(200,240,96,0.24); box-shadow:none !important;
   }
   .out-final-rank {
-    min-width:108px; padding:18px 20px; border-radius:16px;
+    min-width:96px; padding:15px 18px; border-radius:15px;
     display:grid; place-items:center;
     border:1px solid currentColor; background:rgba(5,8,12,0.34);
-    font-family:'Syne',sans-serif; font-size:46px; line-height:1; font-weight:800;
+    font-family:'Syne',sans-serif; font-size:42px; line-height:1; font-weight:800;
     box-shadow:none;
   }
   .out-final-avg.rank-ss { color:#fff; text-shadow:0 0 25px rgba(255,255,255,0.38); }
@@ -1065,8 +1046,6 @@
   .out-card.previewing .out-album-cover-score-val { font-size:12px; }
   .out-card.previewing .out-album-cover-score-label { font-size:5px; }
   .out-card.previewing .out-track-panel { padding:8px 10px; border-radius:12px; }
-  .out-card.previewing .out-track-panel.with-decor .out-track-panel-layout { display:block; }
-  .out-card.previewing .out-track-art { display:none; }
   .out-card.previewing .out-track {
     grid-template-columns:24px minmax(0,1fr) auto; gap:6px; min-height:31px !important; padding:3px 0 !important;
   }
@@ -3093,6 +3072,55 @@
 
   /* ── EDITORIAL EXPORT METADATA ── */
   const _albumDescriptionPromises = new Map();
+  const _blurredAlbumBackgrounds = new Map();
+
+  async function createBlurredAlbumBackground(source) {
+    if (!source) return '';
+    if (_blurredAlbumBackgrounds.has(source)) return _blurredAlbumBackgrounds.get(source);
+
+    const task = new Promise(resolve => {
+      const image = new Image();
+      if (!String(source).startsWith('data:')) image.crossOrigin = 'anonymous';
+      image.decoding = 'async';
+
+      image.onload = () => {
+        try {
+          const size = 720;
+          const overscan = 86;
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const context = canvas.getContext('2d');
+          context.fillStyle = '#0a0e13';
+          context.fillRect(0, 0, size, size);
+
+          const sourceWidth = image.naturalWidth || image.width;
+          const sourceHeight = image.naturalHeight || image.height;
+          const targetSize = size + overscan * 2;
+          const scale = Math.max(targetSize / sourceWidth, targetSize / sourceHeight);
+          const drawWidth = sourceWidth * scale;
+          const drawHeight = sourceHeight * scale;
+          const drawX = (size - drawWidth) / 2;
+          const drawY = (size - drawHeight) / 2;
+
+          context.filter = 'blur(32px) saturate(1.18) brightness(0.60)';
+          context.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+          context.filter = 'none';
+          context.fillStyle = 'rgba(4,7,11,0.18)';
+          context.fillRect(0, 0, size, size);
+          resolve(canvas.toDataURL('image/jpeg', 0.88));
+        } catch {
+          resolve(source);
+        }
+      };
+      image.onerror = () => resolve(source);
+      image.src = source;
+    });
+
+    _blurredAlbumBackgrounds.set(source, task);
+    return task;
+  }
+
 
   function resolveReleaseType(album, trackCount = 0) {
     const raw = String(album?.type || album?.releaseType || '').trim();
@@ -3113,13 +3141,15 @@
     return 'Album';
   }
 
-  function cleanAlbumDescription(raw, maxLength = 265) {
+  function cleanAlbumDescription(raw, maxLength = 190) {
     if (!raw) return '';
     const decoder = document.createElement('div');
     decoder.innerHTML = String(raw);
     let text = (decoder.textContent || decoder.innerText || '')
       .replace(/Read more on Last\.fm.*$/i, '')
       .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/^[\"“”]+|[\"“”]+$/g, '')
       .trim();
     if (!text) return '';
 
@@ -3213,7 +3243,10 @@
 
   function warmAlbumDescription(album, trackCount) {
     if (!album) return;
-    ensureAlbumDescription(album, trackCount).then(() => {
+    Promise.all([
+      ensureAlbumDescription(album, trackCount),
+      createBlurredAlbumBackground(album.coverUrl || '')
+    ]).then(() => {
       if (currentAlbum === album) saveData();
     }).catch(() => {});
   }
@@ -3250,9 +3283,13 @@
 
     const albumAtStart = currentAlbum;
     let albumDescription = '';
+    let blurredCoverUrl = '';
     if (albumAtStart) {
       if (!albumAtStart.description) showToast('Preparando la ficha editorial…', 'info');
-      albumDescription = await ensureAlbumDescription(albumAtStart, entries.length);
+      [albumDescription, blurredCoverUrl] = await Promise.all([
+        ensureAlbumDescription(albumAtStart, entries.length),
+        createBlurredAlbumBackground(albumAtStart.coverUrl || '')
+      ]);
       if (albumAtStart !== currentAlbum) return false;
       saveData();
     }
@@ -3273,7 +3310,9 @@
     if (currentAlbum?.coverUrl) {
       const background = document.createElement('div');
       background.className = 'out-card-bg';
-      background.style.backgroundImage = 'url("' + currentAlbum.coverUrl + '")';
+      const backgroundSource = blurredCoverUrl || currentAlbum.coverUrl;
+      if (backgroundSource !== currentAlbum.coverUrl) background.classList.add('rasterized');
+      background.style.backgroundImage = 'url("' + backgroundSource + '")';
       card.appendChild(background);
     }
 
@@ -3307,7 +3346,12 @@
         makeText('span', 'out-hero-kicker-year', currentAlbum.year || '—')
       );
       info.appendChild(kicker);
-      info.appendChild(makeText('h2', 'out-album-name', currentAlbum.title || 'Álbum'));
+      const rawTitle = currentAlbum.title || 'Álbum';
+      const releaseSuffix = currentAlbum.type && currentAlbum.type !== 'Album'
+        && !rawTitle.toLowerCase().endsWith(currentAlbum.type.toLowerCase())
+        ? ' - ' + currentAlbum.type
+        : '';
+      info.appendChild(makeText('h2', 'out-album-name', rawTitle + releaseSuffix));
       info.appendChild(makeText('div', 'out-album-artist', currentAlbum.artist || ''));
 
       const badges = document.createElement('div');
@@ -3342,8 +3386,7 @@
     }
 
     const trackPanel = document.createElement('section');
-    const useDecor = Boolean(currentAlbum?.coverUrl && entries.length > 0 && entries.length <= 7);
-    trackPanel.className = 'out-track-panel' + (useDecor ? ' with-decor' : '');
+    trackPanel.className = 'out-track-panel';
     const trackPanelLayout = document.createElement('div');
     trackPanelLayout.className = 'out-track-panel-layout';
     const trackList = document.createElement('div');
@@ -3377,21 +3420,6 @@
     });
     trackPanelLayout.appendChild(trackList);
 
-    if (useDecor) {
-      const art = document.createElement('aside');
-      art.className = 'out-track-art';
-      for (let index = 0; index < 3; index++) {
-        const fragment = document.createElement('div');
-        fragment.className = 'out-art-fragment';
-        const image = document.createElement('img');
-        image.crossOrigin = 'anonymous';
-        image.src = currentAlbum.coverUrl;
-        image.alt = '';
-        fragment.appendChild(image);
-        art.appendChild(fragment);
-      }
-      trackPanelLayout.appendChild(art);
-    }
     trackPanel.appendChild(trackPanelLayout);
     content.appendChild(trackPanel);
 
