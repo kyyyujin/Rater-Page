@@ -799,8 +799,15 @@
     background:linear-gradient(135deg, rgba(6,8,13,0.12), rgba(6,8,13,0.38));
   }
   .out-card > *:not(.out-card-bg) { position:relative; z-index:2; }
+  .out-cover-foreground {
+    position:absolute; z-index:2; inset:0 auto 0 0; width:39%;
+    overflow:hidden; box-shadow:20px 0 44px rgba(0,0,0,0.28);
+  }
+  .out-cover-foreground img {
+    display:block; width:100%; height:100%; object-fit:cover; object-position:center;
+  }
   .out-export-content {
-    min-width:0; padding:34px 36px 30px;
+    position:relative; z-index:3; min-width:0; margin-left:35%; padding:34px 36px 30px;
     display:flex; flex-direction:column;
     background:rgba(8,10,16,0.56);
     border:1px solid rgba(255,255,255,0.16);
@@ -867,8 +874,10 @@
   .out-final-avg { font-size:4.5rem; text-shadow:0 4px 24px rgba(0,0,0,0.3); }
   .out-final-rank { font-size:3rem; padding:10px 20px; border-radius:6px; background:rgba(3,5,8,0.34); }
   .out-rescore-badge { z-index:3; }
+  .out-card.no-cover .out-export-content { margin-left:0; }
   .out-card.previewing { padding:12px; }
-  .out-card.previewing .out-export-content { padding:20px 18px; }
+  .out-card.previewing .out-cover-foreground { width:33%; }
+  .out-card.previewing .out-export-content { margin-left:28%; padding:20px 18px; }
   .out-card.previewing .out-album-header { min-height:108px; margin-bottom:15px; }
   .out-card.previewing .out-album-name { font-size:clamp(17px,5vw,28px); }
   .out-card.previewing .out-album-artist { font-size:11px; }
@@ -2931,6 +2940,15 @@
       bg.className = 'out-card-bg';
       bg.style.backgroundImage = `url("${currentAlbum.coverUrl}")`;
       card.appendChild(bg);
+
+      // Keep a crisp version of the cover on the left, above the blurred ambience.
+      const cover = document.createElement('div');
+      cover.className = 'out-cover-foreground';
+      const coverImage = document.createElement('img');
+      coverImage.src = currentAlbum.coverUrl;
+      coverImage.alt = currentAlbum.title || 'Portada del álbum';
+      cover.appendChild(coverImage);
+      card.appendChild(cover);
     }
 
     const content = document.createElement('div');
