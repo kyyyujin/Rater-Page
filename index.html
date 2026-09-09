@@ -3184,6 +3184,8 @@
 
   /* ── EDITORIAL EXPORT METADATA ── */
   const _albumDescriptionPromises = new Map();
+  // Sube la ficha editorial a una versión nueva para refrescar descripciones cortas ya guardadas.
+  const ALBUM_DESCRIPTION_VERSION = 2;
   const _blurredAlbumBackgrounds = new Map();
   const _abstractAlbumBackgrounds = new Map();
   // Rollback seguro: cambiar 'abstract' por 'blurred' restaura el fondo anterior.
@@ -3311,12 +3313,12 @@
           canvas.height = size;
           const context = canvas.getContext('2d');
           const night = [5, 10, 14];
-          context.fillStyle = rgba(blendColor(night, palette[0], 0.20), 1);
+          context.fillStyle = rgba(blendColor(night, palette[0], 0.25), 1);
           context.fillRect(0, 0, size, size);
 
           const positions = [[0.12, 0.16, 0.72], [0.84, 0.15, 0.66], [0.36, 0.72, 0.76], [0.89, 0.82, 0.56]];
           positions.forEach((position, index) => {
-            const color = blendColor(palette[index % palette.length], night, 0.16);
+            const color = blendColor(palette[index % palette.length], night, 0.12);
             const centerX = position[0] * size;
             const centerY = position[1] * size;
             const radius = position[2] * size;
@@ -3337,9 +3339,9 @@
           context.fillRect(0, 0, size, size);
 
           const vignette = context.createRadialGradient(size * 0.48, size * 0.42, size * 0.05, size * 0.50, size * 0.50, size * 0.78);
-          vignette.addColorStop(0, 'rgba(3,7,10,0.10)');
-          vignette.addColorStop(0.62, 'rgba(3,7,10,0.34)');
-          vignette.addColorStop(1, 'rgba(2,5,8,0.68)');
+          vignette.addColorStop(0, 'rgba(3,7,10,0.06)');
+          vignette.addColorStop(0.62, 'rgba(3,7,10,0.26)');
+          vignette.addColorStop(1, 'rgba(2,5,8,0.56)');
           context.fillStyle = vignette;
           context.fillRect(0, 0, size, size);
           resolve(canvas.toDataURL('image/jpeg', 0.90));
@@ -3381,7 +3383,7 @@
     return 'Album';
   }
 
-  function cleanAlbumDescription(raw, maxLength = 190) {
+  function cleanAlbumDescription(raw, maxLength = 260) {
     if (!raw) return '';
     const decoder = document.createElement('div');
     decoder.innerHTML = String(raw);
@@ -3393,11 +3395,11 @@
       .trim();
     if (!text) return '';
 
-    // Keep the export editorial: one or two short sentences, never a full article.
+    // Mantiene una ficha breve, pero con suficiente contexto editorial.
     const sentenceMatches = text.match(/[^.!?]+[.!?]+/g);
     if (sentenceMatches?.length) {
       let short = '';
-      for (const sentence of sentenceMatches.slice(0, 2)) {
+      for (const sentence of sentenceMatches.slice(0, 3)) {
         if ((short + ' ' + sentence).trim().length > maxLength) break;
         short = (short + ' ' + sentence).trim();
       }
@@ -3429,14 +3431,14 @@
       + encodeURIComponent(album.artist || '') + '&album='
       + encodeURIComponent(album.title || '') + '&api_key=' + LASTFM_KEY + '&format=json&autocorrect=1';
     const data = await fetchJsonWithTimeout(url);
-    return cleanAlbumDescription(data?.album?.wiki?.summary || data?.album?.wiki?.content || '');
+    return cleanAlbumDescription(data?.album?.wiki?.content || data?.album?.wiki?.summary || '');
   }
 
   async function fetchWikipediaDescription(album) {
     const query = [album.title, album.artist, 'album'].filter(Boolean).join(' ');
     const url = 'https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch='
       + encodeURIComponent(query)
-      + '&gsrlimit=4&prop=extracts&exintro=1&explaintext=1&exsentences=2&redirects=1&origin=*&format=json';
+      + '&gsrlimit=4&prop=extracts&exintro=1&explaintext=1&exsentences=3&redirects=1&origin=*&format=json';
     const data = await fetchJsonWithTimeout(url);
     const pages = Object.values(data?.query?.pages || {}).sort((a, b) => (a.index || 99) - (b.index || 99));
     if (!pages.length) return '';
@@ -3457,7 +3459,9 @@
 
   async function ensureAlbumDescription(album, trackCount) {
     if (!album) return '';
-    if (album.description) return cleanAlbumDescription(album.description);
+    if (album.description && album.descriptionVersion === ALBUM_DESCRIPTION_VERSION) {
+      return cleanAlbumDescription(album.description);
+    }
     const key = [album.artist, album.title].map(value => String(value || '').trim().toLowerCase()).join('|');
     if (!key.replace('|', '')) return '';
 
@@ -3475,6 +3479,7 @@
 
     const result = await _albumDescriptionPromises.get(key);
     album.description = result.text;
+    album.descriptionVersion = ALBUM_DESCRIPTION_VERSION;
     album.descriptionSource = result.source;
     album.descriptionChecked = true;
     album.type = resolveReleaseType(album, trackCount);
