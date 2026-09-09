@@ -859,19 +859,19 @@
     display:flex; flex-direction:column; align-items:flex-start;
   }
   .out-hero-kicker {
-    width:100%; display:flex; justify-content:space-between; align-items:center; gap:18px;
+    width:100%; display:flex; justify-content:flex-end; align-items:center; gap:18px;
     font-family:'DM Mono',monospace; font-size:11px; font-weight:400;
     letter-spacing:0.34em; text-transform:uppercase; color:rgba(255,255,255,0.63);
   }
   .out-album-name {
     max-width:none; margin-top:30px;
-    font-family:'Inter',sans-serif; font-size:52px; line-height:1.01; font-weight:700;
+    font-family:'Inter',sans-serif; font-size:56px; line-height:1.01; font-weight:700;
     letter-spacing:-0.048em; color:#f7f7f4;
     white-space:nowrap; text-shadow:0 4px 24px rgba(0,0,0,0.27);
   }
-  .out-album-name.long { font-size:43px; }
+  .out-album-name.long { font-size:47px; }
   .out-album-name.very-long {
-    font-size:35px; line-height:1.06; white-space:normal; text-wrap:balance;
+    font-size:38px; line-height:1.06; white-space:normal; text-wrap:balance;
   }
   .out-album-artist {
     margin-top:12px; font-family:'DM Mono',monospace;
@@ -894,7 +894,7 @@
   .out-album-description {
     position:relative; margin-top:28px; padding-top:25px;
     max-width:400px; font-family:'DM Mono',monospace;
-    font-size:13px; line-height:1.64; font-weight:400;
+    font-size:14px; line-height:1.64; font-weight:400;
     color:rgba(255,255,255,0.67);
   }
   .out-album-description::before {
@@ -903,7 +903,7 @@
   }
   .out-album-cover-score {
     /* Estrella a la izquierda y puntuación centrada con el mismo aire a ambos lados. */
-    margin-top:22px; width:210px; min-width:0; padding:12px 16px;
+    margin-top:22px; width:196px; min-width:0; padding:12px 15px;
     display:grid; grid-template-columns:24px minmax(0,1fr) 24px; column-gap:10px;
     align-items:center; position:relative; flex:0 0 auto;
     border:1px solid rgba(166,218,228,0.34); border-radius:var(--export-radius-medium);
@@ -3448,7 +3448,6 @@
       const kicker = document.createElement('div');
       kicker.className = 'out-hero-kicker';
       kicker.append(
-        makeText('span', 'out-hero-kicker-artist', currentAlbum.artist || 'Unknown artist'),
         makeText('span', 'out-hero-kicker-year', currentAlbum.year || '—')
       );
       info.appendChild(kicker);
