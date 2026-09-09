@@ -20,7 +20,6 @@
 <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png">
 <link rel="icon" type="image/png" href="https://cdn.discordapp.com/attachments/875147002583875607/1501420653168033812/resized.force.36e010e8.png?ex=69fc0272&is=69fab0f2&hm=3510df2408ac257e0311d87ff2baffe7fb7c982934b5ba99353280af05f8a2a6&">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;800&family=DM+Mono:wght@300;400;500&family=Inter:wght@300;400;500;600;700&family=Caveat:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -605,11 +604,6 @@
     overflow:visible;
   }
   .out-card-scaler > .out-card { height:auto; min-height:0; }
-  .out-card-preview-image {
-    display:block; width:100%; height:auto; border:0;
-    background:#0b1115; animation:fadeIn .28s ease both;
-  }
-  .out-card.preview-source-hidden { display:none !important; }
 
   /* Album header */
   .out-album-header {
@@ -1086,50 +1080,6 @@
   .out-final-avg.rank-c { color:#f06b79; text-shadow:0 0 24px rgba(240,96,112,0.28); }
   .out-final-avg.rank-none { color:rgba(255,255,255,0.58); text-shadow:none; }
   .out-rescore-badge { z-index:4; }
-
-  /* html2canvas does not composite backdrop-filter reliably. During image capture,
-     use one continuous translucent surface over the already blurred album background. */
-  .out-card.html2canvas-capture .out-track-panel,
-  .out-card.html2canvas-capture .out-footer,
-  .out-card.html2canvas-capture .out-album-cover-score {
-    -webkit-backdrop-filter:none !important;
-    backdrop-filter:none !important;
-    overflow:hidden;
-  }
-  .out-card.html2canvas-capture .out-track-panel {
-    background-color:rgba(30,43,47,0.24) !important;
-    background-image:linear-gradient(128deg,rgba(133,174,179,0.16),rgba(34,47,50,0.20) 46%,rgba(111,91,59,0.13)) !important;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.13),0 18px 42px rgba(0,0,0,0.10) !important;
-  }
-  .out-card.html2canvas-capture .out-footer {
-    background-color:rgba(25,38,42,0.24) !important;
-    background-image:linear-gradient(132deg,rgba(121,160,166,0.16),rgba(32,44,47,0.20) 50%,rgba(70,111,101,0.13)) !important;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.13),0 18px 42px rgba(0,0,0,0.10) !important;
-  }
-  .out-card.html2canvas-capture .out-album-cover-score {
-    background-color:rgba(30,44,50,0.25) !important;
-    background-image:linear-gradient(135deg,rgba(145,187,197,0.17),rgba(41,55,61,0.20) 58%,rgba(83,91,119,0.13)) !important;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.12),0 12px 26px rgba(0,0,0,0.08) !important;
-  }
-  .out-card.html2canvas-capture .out-track-score {
-    background-image:none !important;
-    background-color:rgba(108,132,141,0.27) !important;
-    filter:none !important;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,0.08) !important;
-  }
-  .out-card.html2canvas-capture .out-track-score.tone-high,
-  .out-card.html2canvas-capture .out-track.best .out-track-score {
-    background-color:rgba(101,137,57,0.31) !important;
-  }
-  .out-card.html2canvas-capture .out-track-score.tone-good {
-    background-color:rgba(88,119,141,0.29) !important;
-  }
-  .out-card.html2canvas-capture .out-final-rank {
-    -webkit-backdrop-filter:none !important;
-    backdrop-filter:none !important;
-    background-image:none !important;
-    background-color:rgba(25,44,38,0.28) !important;
-  }
 
   /* Preview keeps the same hierarchy at mobile scale. */
   .out-card.previewing > .out-export-content { padding:14px; gap:13px; }
@@ -3630,14 +3580,10 @@
     scaler.appendChild(card);
     outputEl.appendChild(scaler);
 
-    showToast('Preparando preview final…', 'info');
-    try {
-      await ensureCachedPcExport(card, scaler);
-      showToast('✓ Resultado generado');
-    } catch (error) {
-      console.error('[preview export]', error);
-      showToast('Preview visible; no se pudo preparar la descarga directa', 'warning');
-    }
+    showToast('✓ Resultado generado');
+    ensureCachedPcExport(card).catch(error => {
+      console.error('[background export]', error);
+    });
 
     outputEl.scrollIntoView({ behavior:'smooth', block:'nearest' });
 
@@ -3716,13 +3662,15 @@
   const MASTER_EXPORT_SCALE = 2;
   let cachedPcExportBlob = null;
   let cachedPcExportUrl = '';
+  let cachedPcExportPromise = null;
+  let cachedPcExportVersion = 0;
 
   function clearCachedPcExport() {
     if (cachedPcExportUrl) URL.revokeObjectURL(cachedPcExportUrl);
     cachedPcExportBlob = null;
     cachedPcExportUrl = '';
-    document.querySelector('.out-card-preview-image')?.remove();
-    document.querySelector('.out-card')?.classList.remove('preview-source-hidden');
+    cachedPcExportPromise = null;
+    cachedPcExportVersion += 1;
   }
 
   function canvasToPngBlob(canvas) {
@@ -3734,65 +3682,62 @@
     });
   }
 
-  function getExportCaptureOptions(scale) {
-    return {
-      backgroundColor: null,
-      scale,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      ignoreElements: () => false
-    };
+  function collectRatingExportCss() {
+    return Array.from(document.querySelectorAll('style'))
+      .map(style => style.textContent || '')
+      .join('\n');
   }
 
-  async function captureRatingCard(card, scale = 2, pcMode = true) {
-    const scaler = card.closest('.out-card-scaler');
-    const state = {
-      previewing: card.classList.contains('previewing'),
-      captureReady: card.classList.contains('html2canvas-capture'),
-      width: card.style.width,
-      maxWidth: card.style.maxWidth,
-      animation: card.style.animation,
-      scalerTransform: scaler ? scaler.style.transform : '',
-      scalerHeight: scaler ? scaler.style.height : ''
-    };
+  function collectRatingExportFonts() {
+    return Array.from(document.querySelectorAll('link[rel="stylesheet"]'))
+      .map(link => link.href)
+      .filter(href => href && href.startsWith('https://fonts.googleapis.com/'));
+  }
 
-    card.classList.remove('previewing', 'preview-source-hidden');
-    // Apply the final capture surface before html2canvas clones the DOM. The
-    // master preview and every downloaded variant therefore share one style state.
-    card.classList.add('html2canvas-capture');
-    card.style.animation = 'none';
-    if (scaler) {
-      scaler.style.transform = 'none';
-      scaler.style.height = 'auto';
-    }
-    if (pcMode) {
-      card.style.width = '960px';
-      card.style.maxWidth = '960px';
-    }
+  async function captureRatingCardWithChromium(card) {
+    const token = localStorage.getItem('auth_token');
+    if (!token) throw new Error('Sesión inválida o expirada');
 
-    const score11Els = card.querySelectorAll('.score-11 .out-track-num, .score-11 .out-track-name, .score-11 .out-track-score');
-    const savedStyles = [];
-    score11Els.forEach(el => {
-      savedStyles.push({ el, style: el.getAttribute('style') || '' });
-      el.style.cssText = 'color:#60d4f0; -webkit-text-fill-color:#60d4f0; background:none; -webkit-background-clip:unset; background-clip:unset; filter:none; font-weight:700; text-shadow:0 0 8px #60d4f0,0 0 20px #b060f0;';
-    });
+    const bounds = card.getBoundingClientRect();
+    if (!bounds.width || !bounds.height) throw new Error('La preview no tiene dimensiones válidas');
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 75_000);
     try {
-      card.getBoundingClientRect();
-      await new Promise(resolve => setTimeout(resolve, 30));
-      return await html2canvas(card, getExportCaptureOptions(scale));
-    } finally {
-      savedStyles.forEach(({ el, style }) => el.setAttribute('style', style));
-      card.style.width = state.width;
-      card.style.maxWidth = state.maxWidth;
-      card.style.animation = state.animation;
-      if (state.previewing) card.classList.add('previewing');
-      if (!state.captureReady) card.classList.remove('html2canvas-capture');
-      if (scaler) {
-        scaler.style.transform = state.scalerTransform;
-        scaler.style.height = state.scalerHeight;
+      const response = await fetch(BOT_SERVER + '/render-rating', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          token,
+          cardHtml: card.outerHTML,
+          cssText: collectRatingExportCss(),
+          fontUrls: collectRatingExportFonts(),
+          viewportWidth: window.innerWidth,
+          viewportHeight: window.innerHeight,
+          cardWidth: bounds.width
+        })
+      });
+
+      if (!response.ok) {
+        let message = 'No se pudo renderizar la imagen';
+        try {
+          const data = await response.json();
+          if (data?.error) message = data.error;
+        } catch (_) {}
+        throw new Error(message);
       }
+      if (response.headers.get('X-Rating-Renderer') !== 'chromium') {
+        throw new Error('El servidor no confirmó el compositor Chromium');
+      }
+
+      const blob = await response.blob();
+      if (!blob.type.includes('png') || blob.size < 1000) {
+        throw new Error('El servidor devolvió una imagen inválida');
+      }
+      return blob;
+    } finally {
+      clearTimeout(timeout);
     }
   }
 
@@ -3802,14 +3747,23 @@
     cachedPcExportUrl = URL.createObjectURL(blob);
   }
 
-  async function ensureCachedPcExport(card = document.querySelector('.out-card'), scaler = document.querySelector('.out-card-scaler')) {
+  async function ensureCachedPcExport(card = document.querySelector('.out-card')) {
     if (cachedPcExportBlob) return cachedPcExportBlob;
-    if (!card || !scaler) throw new Error('Genera primero el resultado');
+    if (cachedPcExportPromise) return cachedPcExportPromise;
+    if (!card) throw new Error('Genera primero el resultado');
 
-    const canvas = await captureRatingCard(card, MASTER_EXPORT_SCALE, true);
-    const blob = await canvasToPngBlob(canvas);
-    cachePcExportBlob(blob);
-    return blob;
+    const version = cachedPcExportVersion;
+    const request = captureRatingCardWithChromium(card).then(blob => {
+      if (version !== cachedPcExportVersion) throw new Error('La preview cambió durante la exportación');
+      cachePcExportBlob(blob);
+      return blob;
+    });
+    cachedPcExportPromise = request;
+    try {
+      return await request;
+    } finally {
+      if (cachedPcExportPromise === request) cachedPcExportPromise = null;
+    }
   }
 
   async function resizeMasterExportBlob(masterBlob, exportScale) {
