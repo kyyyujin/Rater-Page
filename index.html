@@ -3742,7 +3742,6 @@
     const scaler = card.closest('.out-card-scaler');
     const state = {
       previewing: card.classList.contains('previewing'),
-      hidden: card.classList.contains('preview-source-hidden'),
       captureReady: card.classList.contains('html2canvas-capture'),
       width: card.style.width,
       maxWidth: card.style.maxWidth,
@@ -3782,7 +3781,6 @@
       card.style.maxWidth = state.maxWidth;
       card.style.animation = state.animation;
       if (state.previewing) card.classList.add('previewing');
-      if (state.hidden) card.classList.add('preview-source-hidden');
       if (!state.captureReady) card.classList.remove('html2canvas-capture');
       if (scaler) {
         scaler.style.transform = state.scalerTransform;
@@ -3791,23 +3789,10 @@
     }
   }
 
-  async function installCachedPcPreview(blob, card, scaler) {
+  function cachePcExportBlob(blob) {
     if (cachedPcExportUrl) URL.revokeObjectURL(cachedPcExportUrl);
     cachedPcExportBlob = blob;
     cachedPcExportUrl = URL.createObjectURL(blob);
-
-    let preview = scaler.querySelector('.out-card-preview-image');
-    if (!preview) {
-      preview = document.createElement('img');
-      preview.className = 'out-card-preview-image';
-      preview.alt = 'Preview exacta de la imagen exportada';
-      scaler.appendChild(preview);
-    }
-    preview.src = cachedPcExportUrl;
-    if (typeof preview.decode === 'function') {
-      try { await preview.decode(); } catch (error) {}
-    }
-    card.classList.add('preview-source-hidden');
   }
 
   async function ensureCachedPcExport(card = document.querySelector('.out-card'), scaler = document.querySelector('.out-card-scaler')) {
@@ -3816,7 +3801,7 @@
 
     const canvas = await captureRatingCard(card, MASTER_EXPORT_SCALE, true);
     const blob = await canvasToPngBlob(canvas);
-    await installCachedPcPreview(blob, card, scaler);
+    cachePcExportBlob(blob);
     return blob;
   }
 
@@ -5872,7 +5857,7 @@
     btn.innerHTML = '⏳ Guardando…';
 
     try {
-      // Reutiliza exactamente el PNG mostrado en la preview.
+      // Reutiliza el PNG maestro generado silenciosamente en segundo plano.
       const blob = await ensureCachedPcExport(card);
 
             const albumTitle  = (currentAlbum?.title  || 'Álbum').toUpperCase();
@@ -6134,7 +6119,7 @@
     btnText.textContent = 'Enviando…';
 
     try {
-      // Discord recibe exactamente el PNG mostrado en la preview.
+      // Discord recibe el PNG maestro generado silenciosamente en segundo plano.
       const blob = await ensureCachedPcExport(card);
 
             // Build title: - BLONDE [FRANK OCEAN]
