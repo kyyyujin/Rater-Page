@@ -902,8 +902,9 @@
     background:rgba(255,255,255,0.47);
   }
   .out-album-cover-score {
-    margin-top:auto; min-width:146px; padding:15px 18px; gap:13px;
-    display:inline-flex; align-items:center; position:relative;
+    /* La ficha queda justo después de la descripción y se ajusta a su contenido. */
+    margin-top:22px; width:fit-content; min-width:0; padding:11px 13px; gap:9px;
+    display:inline-flex; align-items:center; position:relative; flex:0 0 auto;
     border:1px solid rgba(166,218,228,0.34); border-radius:var(--export-radius-medium);
     background:
       linear-gradient(135deg,rgba(150,196,205,0.12),rgba(12,22,27,0.17) 58%,rgba(74,83,109,0.11));
