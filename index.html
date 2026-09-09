@@ -1,4 +1,4 @@
-<!-- Album Rater v2.8.3 -->
+<!-- Album Rater v2.8.4 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -3547,8 +3547,8 @@
       footerCopy.appendChild(best);
     }
 
-    const commentText = document.getElementById('comment-input').value.trim();
-    if (commentText) footerCopy.appendChild(makeText('div', 'out-comment', commentText));
+    // La reseña se conserva como `notes` al guardar/postear para que el Vault la muestre,
+    // pero no forma parte de la tarjeta visual que se exporta como PNG.
 
     if ((rescoreActive && rescoreSum !== 0) || penaltyApplied) {
       const footerMeta = document.createElement('div');
@@ -3636,8 +3636,8 @@
     const best = document.querySelector('.out-best-name');
     const bestRow = document.querySelector('.out-track.best .out-track-score');
     if (best) lines.push('', `★ Best Track: ${best.textContent}${bestRow ? ' — ' + bestRow.textContent : ''}`);
-    const commentEl = document.querySelector('.out-comment');
-    if (commentEl) lines.push('', commentEl.textContent);
+    const commentText = document.getElementById('comment-input')?.value.trim();
+    if (commentText) lines.push('', commentText);
     const penaltyEl = document.querySelector('.out-penalty');
     if (penaltyEl) lines.push('', '−0.25 <5 tracks Reduction');
     const avg  = document.querySelector('.out-final-avg')?.textContent;
