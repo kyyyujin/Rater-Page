@@ -1,4 +1,4 @@
-<!-- Album Rater v2.8.2 -->
+<!-- Album Rater v2.8.3 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -580,7 +580,11 @@
   .btn-add:hover { background: rgba(200,240,96,0.14); }
 
   /* OUTPUT SECTION */
-  .output-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .output-section {
+    width:100%; max-width:680px; margin-left:auto; margin-right:auto;
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--radius); overflow:hidden;
+  }
   .output-header { display: flex; flex-direction: column; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border); background: var(--surface2); gap: 10px; }
   .output-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
   .output-actions { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: nowrap; width: 100%; }
