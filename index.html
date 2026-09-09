@@ -1007,7 +1007,14 @@
     color:#d7ff71; border-color:rgba(184,232,105,0.34);
     background:linear-gradient(145deg,rgba(137,183,72,0.22),rgba(69,104,38,0.15)); text-shadow:0 0 10px rgba(200,240,96,0.24);
   }
-  .out-track.score-11 .out-track-score { border-color:rgba(96,212,240,0.42); }
+  /* El 11.0 necesita un color de relleno explícito: también puede ser Best Track. */
+  .out-track.score-11 .out-track-score {
+    color:#e8fbff; -webkit-text-fill-color:#e8fbff;
+    border-color:rgba(125,214,255,0.62);
+    background:linear-gradient(145deg,rgba(74,170,211,0.30),rgba(128,79,191,0.23));
+    text-shadow:0 0 10px rgba(115,216,255,0.56),0 0 18px rgba(176,96,240,0.34);
+    filter:none;
+  }
   .out-track-delta {
     grid-column:3; justify-self:center; min-width:0; margin:-7px 0 4px;
     font-family:'DM Mono',monospace; font-size:9px;
