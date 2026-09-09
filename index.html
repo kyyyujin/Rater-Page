@@ -3674,6 +3674,11 @@
   let cachedPcExportUrl = '';
   let cachedPcExportPromise = null;
   let cachedPcExportVersion = 0;
+  // Contrato canónico de escritorio. Nunca se deriva del navegador cliente.
+  const PC_EXPORT_VIEWPORT_WIDTH = 1440;
+  const PC_EXPORT_VIEWPORT_HEIGHT = 2600;
+  const PC_EXPORT_CARD_WIDTH = 1280;
+  const PC_EXPORT_IMAGE_WIDTH = 1920;
 
   function clearCachedPcExport() {
     if (cachedPcExportUrl) URL.revokeObjectURL(cachedPcExportUrl);
@@ -3695,6 +3700,14 @@
       .filter(href => href && href.startsWith('https://fonts.googleapis.com/'));
   }
 
+  function buildPcExportCardHtml(card) {
+    const exportCard = card.cloneNode(true);
+    exportCard.classList.remove('previewing');
+    exportCard.classList.add('exporting-pc');
+    exportCard.style.removeProperty('animation');
+    return exportCard.outerHTML;
+  }
+
   async function captureRatingCardWithChromium(card) {
     const token = localStorage.getItem('auth_token');
     if (!token) throw new Error('Sesión inválida o expirada');
@@ -3711,12 +3724,12 @@
         signal: controller.signal,
         body: JSON.stringify({
           token,
-          cardHtml: card.outerHTML,
+          cardHtml: buildPcExportCardHtml(card),
           cssText: collectRatingExportCss(),
           fontUrls: collectRatingExportFonts(),
-          viewportWidth: window.innerWidth,
-          viewportHeight: window.innerHeight,
-          cardWidth: bounds.width
+          viewportWidth: PC_EXPORT_VIEWPORT_WIDTH,
+          viewportHeight: PC_EXPORT_VIEWPORT_HEIGHT,
+          cardWidth: PC_EXPORT_CARD_WIDTH
         })
       });
 
@@ -3730,6 +3743,10 @@
       }
       if (response.headers.get('X-Rating-Renderer') !== 'chromium') {
         throw new Error('El servidor no confirmó el compositor Chromium');
+      }
+      const renderedWidth = Number(response.headers.get('X-Rating-Image-Width'));
+      if (renderedWidth && renderedWidth !== PC_EXPORT_IMAGE_WIDTH) {
+        throw new Error('El servidor no usó la resolución fija de escritorio');
       }
 
       const blob = await response.blob();
