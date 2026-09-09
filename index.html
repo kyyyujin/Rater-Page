@@ -3676,14 +3676,14 @@
       );
 
       if (rescoreActive) {
-        const deltaInput = document.getElementById('rscore-' + entry.index);
-        const deltaValue = deltaInput ? parseFloat(deltaInput.value) : NaN;
+        // Usar el delta capturado al iniciar la exportación evita depender de IDs de filas.
+        const deltaValue = Number.isFinite(entry.delta) ? entry.delta : 0;
         const delta = makeText(
           'span',
-          'out-track-delta' + (!isNaN(deltaValue) && deltaValue < 0 ? ' negative' : ''),
-          !isNaN(deltaValue) && deltaValue !== 0 ? formatRescoreDelta(deltaValue) : '—'
+          'out-track-delta' + (deltaValue < 0 ? ' negative' : ''),
+          deltaValue !== 0 ? formatRescoreDelta(deltaValue) : '—'
         );
-        if (!isNaN(deltaValue) && deltaValue !== 0) rescoreSum += deltaValue;
+        if (deltaValue !== 0) rescoreSum += deltaValue;
         else delta.style.opacity = '0.3';
         track.appendChild(delta);
       }
