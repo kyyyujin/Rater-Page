@@ -3276,7 +3276,7 @@
 
     const candidates = [...buckets.entries()]
       .sort((left, right) => right[1] - left[1])
-      .map(([key]) => [((key >> 16) & 255) + 8, ((key >> 8) & 255) + 8, (key & 255) + 8]);
+      .map(([key]) => [((key >> 16) & 15) * 16 + 8, ((key >> 8) & 15) * 16 + 8, (key & 15) * 16 + 8]);
 
     const palette = [];
     for (const color of candidates) {
@@ -3314,48 +3314,27 @@
             const centerY = position[1] * size;
             const radius = position[2] * size;
             const gradient = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
-            gradient.addColorStop(0, rgba(color, 0.74));
-            gradient.addColorStop(0.42, rgba(color, 0.31));
+            gradient.addColorStop(0, rgba(color, 0.62));
+            gradient.addColorStop(0.45, rgba(color, 0.25));
             gradient.addColorStop(1, rgba(color, 0));
             context.fillStyle = gradient;
             context.fillRect(0, 0, size, size);
           });
 
-          context.save();
-          context.globalCompositeOperation = 'screen';
-          context.globalAlpha = 0.16;
-          context.filter = 'blur(22px)';
-          palette.slice(0, 3).forEach((color, index) => {
-            context.strokeStyle = rgba(color, 0.72);
-            context.lineWidth = 46 + index * 14;
-            context.beginPath();
-            context.moveTo(-80, size * (0.25 + index * 0.20));
-            context.bezierCurveTo(size * 0.23, size * (0.02 + index * 0.14), size * 0.70, size * (0.70 - index * 0.08), size + 80, size * (0.45 + index * 0.12));
-            context.stroke();
-          });
-          context.restore();
-
-          const vignette = context.createRadialGradient(size * 0.48, size * 0.42, size * 0.05, size * 0.50, size * 0.50, size * 0.78);
-          vignette.addColorStop(0, 'rgba(3,7,10,0.18)');
-          vignette.addColorStop(0.62, 'rgba(3,7,10,0.48)');
-          vignette.addColorStop(1, 'rgba(2,5,8,0.84)');
-          context.fillStyle = vignette;
+          // Una capa suave une los colores, parecida al fondo de letras de Apple Music.
+          const wash = context.createLinearGradient(0, 0, size, size);
+          wash.addColorStop(0, rgba(blendColor(palette[0], night, 0.42), 0.18));
+          wash.addColorStop(0.52, 'rgba(5,10,14,0.06)');
+          wash.addColorStop(1, rgba(blendColor(palette[palette.length - 1], night, 0.42), 0.16));
+          context.fillStyle = wash;
           context.fillRect(0, 0, size, size);
 
-          let seed = palette.flat().reduce((total, channel) => ((total * 31) + channel) >>> 0, 2166136261);
-          const random = () => {
-            seed = (seed * 1664525 + 1013904223) >>> 0;
-            return seed / 4294967296;
-          };
-          context.globalCompositeOperation = 'soft-light';
-          context.globalAlpha = 0.16;
-          for (let dot = 0; dot < 6200; dot += 1) {
-            const shade = random() > 0.5 ? 255 : 0;
-            context.fillStyle = 'rgb(' + shade + ',' + shade + ',' + shade + ')';
-            context.fillRect(random() * size, random() * size, 1, 1);
-          }
-          context.globalCompositeOperation = 'source-over';
-          context.globalAlpha = 1;
+          const vignette = context.createRadialGradient(size * 0.48, size * 0.42, size * 0.05, size * 0.50, size * 0.50, size * 0.78);
+          vignette.addColorStop(0, 'rgba(3,7,10,0.10)');
+          vignette.addColorStop(0.62, 'rgba(3,7,10,0.34)');
+          vignette.addColorStop(1, 'rgba(2,5,8,0.68)');
+          context.fillStyle = vignette;
+          context.fillRect(0, 0, size, size);
           resolve(canvas.toDataURL('image/jpeg', 0.90));
         } catch {
           resolve('');
