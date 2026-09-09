@@ -591,13 +591,20 @@
   .btn-export { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
   .btn-export:hover { border-color: var(--accent2); color: var(--accent2); background: rgba(96,212,240,0.08); }
 
-  #output-text { padding: 0; }
+  #output-text { padding:0; height:auto; min-height:0; }
   #output-text:empty { padding: 18px; }
   #output-text:empty::before { content: 'Haz clic en "Generar" para ver el resultado...'; color: var(--muted); font-style: italic; font-size: 14px; }
 
   /* ── BEAUTIFUL OUTPUT CARD ── */
   .out-card { padding: 28px; }
-  .out-card-scaler { display: block; transform-origin: top left; }
+  .out-card-scaler {
+    display:flow-root;
+    width:100%;
+    height:auto;
+    min-height:0;
+    overflow:visible;
+  }
+  .out-card-scaler > .out-card { height:auto; min-height:0; }
   .out-card-preview-image {
     display:block; width:100%; height:auto; border:0;
     background:#0b1115; animation:fadeIn .28s ease both;
