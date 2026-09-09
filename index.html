@@ -1075,6 +1075,50 @@
   .out-final-avg.rank-none { color:rgba(255,255,255,0.58); text-shadow:none; }
   .out-rescore-badge { z-index:4; }
 
+  /* html2canvas does not composite backdrop-filter reliably. During image capture,
+     use one continuous translucent surface over the already blurred album background. */
+  .out-card.html2canvas-capture .out-track-panel,
+  .out-card.html2canvas-capture .out-footer,
+  .out-card.html2canvas-capture .out-album-cover-score {
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+    overflow:hidden;
+  }
+  .out-card.html2canvas-capture .out-track-panel {
+    background-color:rgba(30,43,47,0.24) !important;
+    background-image:linear-gradient(128deg,rgba(133,174,179,0.16),rgba(34,47,50,0.20) 46%,rgba(111,91,59,0.13)) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.13),0 18px 42px rgba(0,0,0,0.10) !important;
+  }
+  .out-card.html2canvas-capture .out-footer {
+    background-color:rgba(25,38,42,0.24) !important;
+    background-image:linear-gradient(132deg,rgba(121,160,166,0.16),rgba(32,44,47,0.20) 50%,rgba(70,111,101,0.13)) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.13),0 18px 42px rgba(0,0,0,0.10) !important;
+  }
+  .out-card.html2canvas-capture .out-album-cover-score {
+    background-color:rgba(30,44,50,0.25) !important;
+    background-image:linear-gradient(135deg,rgba(145,187,197,0.17),rgba(41,55,61,0.20) 58%,rgba(83,91,119,0.13)) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.12),0 12px 26px rgba(0,0,0,0.08) !important;
+  }
+  .out-card.html2canvas-capture .out-track-score {
+    background-image:none !important;
+    background-color:rgba(108,132,141,0.27) !important;
+    filter:none !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.08) !important;
+  }
+  .out-card.html2canvas-capture .out-track-score.tone-high,
+  .out-card.html2canvas-capture .out-track.best .out-track-score {
+    background-color:rgba(101,137,57,0.31) !important;
+  }
+  .out-card.html2canvas-capture .out-track-score.tone-good {
+    background-color:rgba(88,119,141,0.29) !important;
+  }
+  .out-card.html2canvas-capture .out-final-rank {
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+    background-image:none !important;
+    background-color:rgba(25,44,38,0.28) !important;
+  }
+
   /* Preview keeps the same hierarchy at mobile scale. */
   .out-card.previewing > .out-export-content { padding:14px; gap:13px; }
   .out-card.previewing .out-hero { grid-template-columns:43% minmax(0,1fr); gap:12px; }
@@ -3648,6 +3692,21 @@
   }
 
   /* ── EXPORT AS IMAGE ── */
+  function getExportCaptureOptions(scale) {
+    return {
+      backgroundColor: null,
+      scale,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      ignoreElements: () => false,
+      onclone: clonedDocument => {
+        const clonedCard = clonedDocument.querySelector('.out-card');
+        if (clonedCard) clonedCard.classList.add('html2canvas-capture');
+      }
+    };
+  }
+
   async function exportImage(scale = 3, pcMode = false) {
     const card = document.querySelector('.out-card');
     if (!card) { showToast('Genera primero', 'warning'); return; }
@@ -3683,14 +3742,7 @@
         el.style.cssText = 'color:#60d4f0; -webkit-text-fill-color:#60d4f0; background:none; -webkit-background-clip:unset; background-clip:unset; filter:none; font-weight:700; text-shadow: 0 0 8px #60d4f0, 0 0 20px #b060f0;';
       });
 
-      const cardCanvas = await html2canvas(card, {
-        backgroundColor: null,
-        scale,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        ignoreElements: () => false
-      });
+      const cardCanvas = await html2canvas(card, getExportCaptureOptions(scale));
 
       // Restore original styles
       savedStyles.forEach(({ el, style }) => el.setAttribute('style', style));
@@ -5715,10 +5767,7 @@
         el.style.cssText = 'color:#60d4f0; -webkit-text-fill-color:#60d4f0; background:none; -webkit-background-clip:unset; background-clip:unset; filter:none; font-weight:700; text-shadow: 0 0 8px #60d4f0, 0 0 20px #b060f0;';
       });
 
-      const cardCanvas = await html2canvas(card, {
-        backgroundColor: null, scale: 2, useCORS: true, allowTaint: true,
-        logging: false, ignoreElements: () => false
-      });
+      const cardCanvas = await html2canvas(card, getExportCaptureOptions(2));
 
       savedStyles.forEach(({ el, style }) => el.setAttribute('style', style));
       card.style.width    = savedWidth;
@@ -6004,14 +6053,7 @@
         el.style.cssText = 'color:#60d4f0; -webkit-text-fill-color:#60d4f0; background:none; -webkit-background-clip:unset; background-clip:unset; filter:none; font-weight:700; text-shadow: 0 0 8px #60d4f0, 0 0 20px #b060f0;';
       });
 
-      const cardCanvas = await html2canvas(card, {
-        backgroundColor: null,
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        ignoreElements: () => false
-      });
+      const cardCanvas = await html2canvas(card, getExportCaptureOptions(2));
 
       savedStyles.forEach(({ el, style }) => el.setAttribute('style', style));
       card.style.width    = savedWidth;
