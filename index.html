@@ -598,6 +598,11 @@
   /* ── BEAUTIFUL OUTPUT CARD ── */
   .out-card { padding: 28px; }
   .out-card-scaler { display: block; transform-origin: top left; }
+  .out-card-preview-image {
+    display:block; width:100%; height:auto; border:0;
+    background:#0b1115; animation:fadeIn .28s ease both;
+  }
+  .out-card.preview-source-hidden { display:none !important; }
 
   /* Album header */
   .out-album-header {
@@ -3399,6 +3404,7 @@
     }
 
     const outputEl = document.getElementById('output-text');
+    clearCachedPcExport();
     outputEl.innerHTML = '';
 
     const makeText = (tag, className, text) => {
@@ -3617,8 +3623,16 @@
     scaler.appendChild(card);
     outputEl.appendChild(scaler);
 
+    showToast('Preparando preview final…', 'info');
+    try {
+      await ensureCachedPcExport(card, scaler);
+      showToast('✓ Resultado generado');
+    } catch (error) {
+      console.error('[preview export]', error);
+      showToast('Preview visible; no se pudo preparar la descarga directa', 'warning');
+    }
+
     outputEl.scrollIntoView({ behavior:'smooth', block:'nearest' });
-    showToast('✓ Resultado generado');
 
     const btnSaveDb = document.getElementById('btn-save-db');
     if (btnSaveDb) {
@@ -3692,6 +3706,26 @@
   }
 
   /* ── EXPORT AS IMAGE ── */
+  let cachedPcExportBlob = null;
+  let cachedPcExportUrl = '';
+
+  function clearCachedPcExport() {
+    if (cachedPcExportUrl) URL.revokeObjectURL(cachedPcExportUrl);
+    cachedPcExportBlob = null;
+    cachedPcExportUrl = '';
+    document.querySelector('.out-card-preview-image')?.remove();
+    document.querySelector('.out-card')?.classList.remove('preview-source-hidden');
+  }
+
+  function canvasToPngBlob(canvas) {
+    return new Promise((resolve, reject) => {
+      canvas.toBlob(blob => {
+        if (blob) resolve(blob);
+        else reject(new Error('No se pudo crear el PNG'));
+      }, 'image/png');
+    });
+  }
+
   function getExportCaptureOptions(scale) {
     return {
       backgroundColor: null,
@@ -3707,68 +3741,114 @@
     };
   }
 
+  async function captureRatingCard(card, scale = 2, pcMode = true) {
+    const scaler = card.closest('.out-card-scaler');
+    const state = {
+      previewing: card.classList.contains('previewing'),
+      hidden: card.classList.contains('preview-source-hidden'),
+      width: card.style.width,
+      maxWidth: card.style.maxWidth,
+      animation: card.style.animation,
+      scalerTransform: scaler ? scaler.style.transform : '',
+      scalerHeight: scaler ? scaler.style.height : ''
+    };
+
+    card.classList.remove('previewing', 'preview-source-hidden');
+    card.style.animation = 'none';
+    if (scaler) {
+      scaler.style.transform = 'none';
+      scaler.style.height = 'auto';
+    }
+    if (pcMode) {
+      card.style.width = '960px';
+      card.style.maxWidth = '960px';
+    }
+
+    const score11Els = card.querySelectorAll('.score-11 .out-track-num, .score-11 .out-track-name, .score-11 .out-track-score');
+    const savedStyles = [];
+    score11Els.forEach(el => {
+      savedStyles.push({ el, style: el.getAttribute('style') || '' });
+      el.style.cssText = 'color:#60d4f0; -webkit-text-fill-color:#60d4f0; background:none; -webkit-background-clip:unset; background-clip:unset; filter:none; font-weight:700; text-shadow:0 0 8px #60d4f0,0 0 20px #b060f0;';
+    });
+
+    try {
+      card.getBoundingClientRect();
+      await new Promise(resolve => setTimeout(resolve, 30));
+      return await html2canvas(card, getExportCaptureOptions(scale));
+    } finally {
+      savedStyles.forEach(({ el, style }) => el.setAttribute('style', style));
+      card.style.width = state.width;
+      card.style.maxWidth = state.maxWidth;
+      card.style.animation = state.animation;
+      if (state.previewing) card.classList.add('previewing');
+      if (state.hidden) card.classList.add('preview-source-hidden');
+      if (scaler) {
+        scaler.style.transform = state.scalerTransform;
+        scaler.style.height = state.scalerHeight;
+      }
+    }
+  }
+
+  async function installCachedPcPreview(blob, card, scaler) {
+    if (cachedPcExportUrl) URL.revokeObjectURL(cachedPcExportUrl);
+    cachedPcExportBlob = blob;
+    cachedPcExportUrl = URL.createObjectURL(blob);
+
+    let preview = scaler.querySelector('.out-card-preview-image');
+    if (!preview) {
+      preview = document.createElement('img');
+      preview.className = 'out-card-preview-image';
+      preview.alt = 'Preview exacta de la imagen exportada';
+      scaler.appendChild(preview);
+    }
+    preview.src = cachedPcExportUrl;
+    if (typeof preview.decode === 'function') {
+      try { await preview.decode(); } catch (error) {}
+    }
+    card.classList.add('preview-source-hidden');
+  }
+
+  async function ensureCachedPcExport(card = document.querySelector('.out-card'), scaler = document.querySelector('.out-card-scaler')) {
+    if (cachedPcExportBlob) return cachedPcExportBlob;
+    if (!card || !scaler) throw new Error('Genera primero el resultado');
+
+    const canvas = await captureRatingCard(card, 2, true);
+    const blob = await canvasToPngBlob(canvas);
+    await installCachedPcPreview(blob, card, scaler);
+    return blob;
+  }
+
+  function downloadRatingBlob(blob) {
+    const temporaryUrl = blob === cachedPcExportBlob && cachedPcExportUrl
+      ? cachedPcExportUrl
+      : URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const albumName = currentAlbum ? currentAlbum.title.replace(/[^a-z0-9]/gi, '_') : 'resultado';
+    link.download = `${albumName}_rating.png`;
+    link.href = temporaryUrl;
+    link.click();
+    if (temporaryUrl !== cachedPcExportUrl) {
+      setTimeout(() => URL.revokeObjectURL(temporaryUrl), 1000);
+    }
+  }
+
   async function exportImage(scale = 3, pcMode = false) {
     const card = document.querySelector('.out-card');
     if (!card) { showToast('Genera primero', 'warning'); return; }
-    showToast('Generando imagen…', 'info');
 
-    // Remove preview class before capture so export uses full fixed layout
-    card.classList.remove('previewing');
-    await new Promise(r => setTimeout(r, 30));
-
-    // Reset scale before capture
-    const scaler = document.querySelector('.out-card-scaler');
-    const prevTransform = scaler ? scaler.style.transform : '';
-    const prevHeight    = scaler ? scaler.style.height : '';
-    if (scaler) { scaler.style.transform = 'none'; scaler.style.height = 'auto'; }
-
-    // PC mode: temporarily set card to fixed 680px width
-    let savedWidth = null;
-    let savedMaxWidth = null;
-    if (pcMode) {
-      savedWidth    = card.style.width;
-      savedMaxWidth = card.style.maxWidth;
-      card.style.width    = '960px';
-      card.style.maxWidth = '960px';
-      card.getBoundingClientRect();
-    }
     try {
-
-      // Temporarily convert score-11 gradient text to solid color for canvas rendering
-      const score11Els = card.querySelectorAll('.score-11 .out-track-num, .score-11 .out-track-name, .score-11 .out-track-score');
-      const savedStyles = [];
-      score11Els.forEach(el => {
-        savedStyles.push({ el, style: el.getAttribute('style') || '' });
-        el.style.cssText = 'color:#60d4f0; -webkit-text-fill-color:#60d4f0; background:none; -webkit-background-clip:unset; background-clip:unset; filter:none; font-weight:700; text-shadow: 0 0 8px #60d4f0, 0 0 20px #b060f0;';
-      });
-
-      const cardCanvas = await html2canvas(card, getExportCaptureOptions(scale));
-
-      // Restore original styles
-      savedStyles.forEach(({ el, style }) => el.setAttribute('style', style));
-
-      // Use the card itself as the final image; its cover gradient is part of the layout.
-      const finalCanvas = cardCanvas;
-
-            // Restore PC mode styles
       if (pcMode) {
-        card.style.width    = savedWidth;
-        card.style.maxWidth = savedMaxWidth;
+        const blob = await ensureCachedPcExport(card);
+        downloadRatingBlob(blob);
+      } else {
+        showToast('Generando imagen…', 'info');
+        const canvas = await captureRatingCard(card, scale, false);
+        downloadRatingBlob(await canvasToPngBlob(canvas));
       }
-
-      const link = document.createElement('a');
-      const albumName = currentAlbum ? currentAlbum.title.replace(/[^a-z0-9]/gi, '_') : 'resultado';
-      link.download = `${albumName}_rating.png`;
-      link.href = finalCanvas.toDataURL('image/png');
-      link.click();
       showToast('Imagen guardada', 'success');
-    } catch(e) {
-      if (pcMode) { card.style.width = savedWidth; card.style.maxWidth = savedMaxWidth; }
-      console.error(e);
+    } catch (error) {
+      console.error(error);
       showToast('Error al exportar', 'error');
-    } finally {
-      card.classList.add('previewing');
-      if (scaler) { scaler.style.transform = prevTransform; scaler.style.height = prevHeight; }
     }
   }
 
@@ -3776,6 +3856,7 @@
   function clearAll() {
     showConfirm({ album: { title: '¿Limpiar todo?', artist: 'Se perderá la sesión actual', coverUrl: null } }, () => {
       document.getElementById('rows-body').innerHTML = '';
+    clearCachedPcExport();
     document.getElementById('output-text').innerHTML = '';
     document.getElementById('cover-score').value = '';
     document.getElementById('dot-cover').className = 'score-dot';
@@ -5750,31 +5831,8 @@
     btn.innerHTML = '⏳ Guardando…';
 
     try {
-      card.classList.remove('previewing');
-      await new Promise(r => setTimeout(r, 30));
-
-      // Generar imagen igual que Discord
-      const savedWidth    = card.style.width;
-      const savedMaxWidth = card.style.maxWidth;
-      card.style.width    = '960px';
-      card.style.maxWidth = '960px';
-      card.getBoundingClientRect();
-
-      const score11Els = card.querySelectorAll('.score-11 .out-track-num, .score-11 .out-track-name, .score-11 .out-track-score');
-      const savedStyles = [];
-      score11Els.forEach(el => {
-        savedStyles.push({ el, style: el.getAttribute('style') || '' });
-        el.style.cssText = 'color:#60d4f0; -webkit-text-fill-color:#60d4f0; background:none; -webkit-background-clip:unset; background-clip:unset; filter:none; font-weight:700; text-shadow: 0 0 8px #60d4f0, 0 0 20px #b060f0;';
-      });
-
-      const cardCanvas = await html2canvas(card, getExportCaptureOptions(2));
-
-      savedStyles.forEach(({ el, style }) => el.setAttribute('style', style));
-      card.style.width    = savedWidth;
-      card.style.maxWidth = savedMaxWidth;
-      card.classList.add('previewing');
-
-      const blob = await new Promise(resolve => cardCanvas.toBlob(resolve, 'image/png'));
+      // Reutiliza exactamente el PNG mostrado en la preview.
+      const blob = await ensureCachedPcExport(card);
 
             const albumTitle  = (currentAlbum?.title  || 'Álbum').toUpperCase();
       const albumArtist = (currentAlbum?.artist || '').toUpperCase();
@@ -6035,32 +6093,8 @@
     btnText.textContent = 'Enviando…';
 
     try {
-      card.classList.remove('previewing');
-      await new Promise(r => setTimeout(r, 30));
-
-      // PC fixed mode (960px, scale 2x) — same as "Tamaño PC fijo"
-      const savedWidth    = card.style.width;
-      const savedMaxWidth = card.style.maxWidth;
-      card.style.width    = '960px';
-      card.style.maxWidth = '960px';
-      card.getBoundingClientRect();
-
-      // Convert score-11 gradient text to solid for canvas
-      const score11Els = card.querySelectorAll('.score-11 .out-track-num, .score-11 .out-track-name, .score-11 .out-track-score');
-      const savedStyles = [];
-      score11Els.forEach(el => {
-        savedStyles.push({ el, style: el.getAttribute('style') || '' });
-        el.style.cssText = 'color:#60d4f0; -webkit-text-fill-color:#60d4f0; background:none; -webkit-background-clip:unset; background-clip:unset; filter:none; font-weight:700; text-shadow: 0 0 8px #60d4f0, 0 0 20px #b060f0;';
-      });
-
-      const cardCanvas = await html2canvas(card, getExportCaptureOptions(2));
-
-      savedStyles.forEach(({ el, style }) => el.setAttribute('style', style));
-      card.style.width    = savedWidth;
-      card.style.maxWidth = savedMaxWidth;
-      card.classList.add('previewing');
-
-      const blob = await new Promise(resolve => cardCanvas.toBlob(resolve, 'image/png'));
+      // Discord recibe exactamente el PNG mostrado en la preview.
+      const blob = await ensureCachedPcExport(card);
 
             // Build title: - BLONDE [FRANK OCEAN]
       const albumTitle  = (currentAlbum?.title  || 'Álbum').toUpperCase();
