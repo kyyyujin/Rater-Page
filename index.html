@@ -3178,6 +3178,9 @@
   /* ── EDITORIAL EXPORT METADATA ── */
   const _albumDescriptionPromises = new Map();
   const _blurredAlbumBackgrounds = new Map();
+  const _abstractAlbumBackgrounds = new Map();
+  // Rollback seguro: cambiar 'abstract' por 'blurred' restaura el fondo anterior.
+  const RATING_EXPORT_BACKGROUND_MODE = 'abstract';
 
   async function createBlurredAlbumBackground(source) {
     if (!source) return '';
@@ -3224,6 +3227,152 @@
 
     _blurredAlbumBackgrounds.set(source, task);
     return task;
+  }
+
+  function clampColor(value) {
+    return Math.max(0, Math.min(255, Math.round(value)));
+  }
+
+  function rgba(color, alpha) {
+    return 'rgba(' + clampColor(color[0]) + ',' + clampColor(color[1]) + ',' + clampColor(color[2]) + ',' + alpha + ')';
+  }
+
+  function blendColor(first, second, amount) {
+    return [
+      first[0] + (second[0] - first[0]) * amount,
+      first[1] + (second[1] - first[1]) * amount,
+      first[2] + (second[2] - first[2]) * amount
+    ];
+  }
+
+  function extractCoverPalette(image) {
+    const sampleSize = 48;
+    const canvas = document.createElement('canvas');
+    canvas.width = sampleSize;
+    canvas.height = sampleSize;
+    const context = canvas.getContext('2d', { willReadFrequently:true });
+    const sourceWidth = image.naturalWidth || image.width;
+    const sourceHeight = image.naturalHeight || image.height;
+    const scale = Math.max(sampleSize / sourceWidth, sampleSize / sourceHeight);
+    const drawWidth = sourceWidth * scale;
+    const drawHeight = sourceHeight * scale;
+    context.drawImage(image, (sampleSize - drawWidth) / 2, (sampleSize - drawHeight) / 2, drawWidth, drawHeight);
+
+    const pixels = context.getImageData(0, 0, sampleSize, sampleSize).data;
+    const buckets = new Map();
+    for (let index = 0; index < pixels.length; index += 16) {
+      const red = pixels[index];
+      const green = pixels[index + 1];
+      const blue = pixels[index + 2];
+      const alpha = pixels[index + 3];
+      const highest = Math.max(red, green, blue);
+      const lowest = Math.min(red, green, blue);
+      const saturation = highest - lowest;
+      if (alpha < 140 || highest < 28 || saturation < 16) continue;
+      const key = ((red >> 4) << 16) | ((green >> 4) << 8) | (blue >> 4);
+      const weight = 1 + saturation / 56 + highest / 510;
+      buckets.set(key, (buckets.get(key) || 0) + weight);
+    }
+
+    const candidates = [...buckets.entries()]
+      .sort((left, right) => right[1] - left[1])
+      .map(([key]) => [((key >> 16) & 255) + 8, ((key >> 8) & 255) + 8, (key & 255) + 8]);
+
+    const palette = [];
+    for (const color of candidates) {
+      const distinct = palette.every(saved => Math.hypot(color[0] - saved[0], color[1] - saved[1], color[2] - saved[2]) > 62);
+      if (distinct) palette.push(color);
+      if (palette.length === 4) break;
+    }
+    return palette.length ? palette : [[44, 84, 94], [88, 57, 80], [74, 102, 62]];
+  }
+
+  function createAbstractAlbumBackground(source) {
+    if (!source) return Promise.resolve('');
+    if (_abstractAlbumBackgrounds.has(source)) return _abstractAlbumBackgrounds.get(source);
+
+    const task = new Promise(resolve => {
+      const image = new Image();
+      if (!String(source).startsWith('data:')) image.crossOrigin = 'anonymous';
+      image.decoding = 'async';
+      image.onload = () => {
+        try {
+          const palette = extractCoverPalette(image);
+          const size = 720;
+          const canvas = document.createElement('canvas');
+          canvas.width = size;
+          canvas.height = size;
+          const context = canvas.getContext('2d');
+          const night = [5, 10, 14];
+          context.fillStyle = rgba(blendColor(night, palette[0], 0.20), 1);
+          context.fillRect(0, 0, size, size);
+
+          const positions = [[0.12, 0.16, 0.72], [0.84, 0.15, 0.66], [0.36, 0.72, 0.76], [0.89, 0.82, 0.56]];
+          positions.forEach((position, index) => {
+            const color = blendColor(palette[index % palette.length], night, 0.16);
+            const centerX = position[0] * size;
+            const centerY = position[1] * size;
+            const radius = position[2] * size;
+            const gradient = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+            gradient.addColorStop(0, rgba(color, 0.74));
+            gradient.addColorStop(0.42, rgba(color, 0.31));
+            gradient.addColorStop(1, rgba(color, 0));
+            context.fillStyle = gradient;
+            context.fillRect(0, 0, size, size);
+          });
+
+          context.save();
+          context.globalCompositeOperation = 'screen';
+          context.globalAlpha = 0.16;
+          context.filter = 'blur(22px)';
+          palette.slice(0, 3).forEach((color, index) => {
+            context.strokeStyle = rgba(color, 0.72);
+            context.lineWidth = 46 + index * 14;
+            context.beginPath();
+            context.moveTo(-80, size * (0.25 + index * 0.20));
+            context.bezierCurveTo(size * 0.23, size * (0.02 + index * 0.14), size * 0.70, size * (0.70 - index * 0.08), size + 80, size * (0.45 + index * 0.12));
+            context.stroke();
+          });
+          context.restore();
+
+          const vignette = context.createRadialGradient(size * 0.48, size * 0.42, size * 0.05, size * 0.50, size * 0.50, size * 0.78);
+          vignette.addColorStop(0, 'rgba(3,7,10,0.18)');
+          vignette.addColorStop(0.62, 'rgba(3,7,10,0.48)');
+          vignette.addColorStop(1, 'rgba(2,5,8,0.84)');
+          context.fillStyle = vignette;
+          context.fillRect(0, 0, size, size);
+
+          let seed = palette.flat().reduce((total, channel) => ((total * 31) + channel) >>> 0, 2166136261);
+          const random = () => {
+            seed = (seed * 1664525 + 1013904223) >>> 0;
+            return seed / 4294967296;
+          };
+          context.globalCompositeOperation = 'soft-light';
+          context.globalAlpha = 0.16;
+          for (let dot = 0; dot < 6200; dot += 1) {
+            const shade = random() > 0.5 ? 255 : 0;
+            context.fillStyle = 'rgb(' + shade + ',' + shade + ',' + shade + ')';
+            context.fillRect(random() * size, random() * size, 1, 1);
+          }
+          context.globalCompositeOperation = 'source-over';
+          context.globalAlpha = 1;
+          resolve(canvas.toDataURL('image/jpeg', 0.90));
+        } catch {
+          resolve('');
+        }
+      };
+      image.onerror = () => resolve('');
+      image.src = source;
+    });
+
+    _abstractAlbumBackgrounds.set(source, task);
+    return task;
+  }
+
+  async function createRatingBackground(source) {
+    if (RATING_EXPORT_BACKGROUND_MODE === 'blurred') return createBlurredAlbumBackground(source);
+    const abstract = await createAbstractAlbumBackground(source);
+    return abstract || createBlurredAlbumBackground(source);
   }
 
 
@@ -3350,7 +3499,7 @@
     if (!album) return;
     Promise.all([
       ensureAlbumDescription(album, trackCount),
-      createBlurredAlbumBackground(album.coverUrl || '')
+      createRatingBackground(album.coverUrl || '')
     ]).then(() => {
       if (currentAlbum === album) saveData();
     }).catch(() => {});
@@ -3393,7 +3542,7 @@
       if (!albumAtStart.description) showToast('Preparando la ficha editorial…', 'info');
       [albumDescription, blurredCoverUrl] = await Promise.all([
         ensureAlbumDescription(albumAtStart, entries.length),
-        createBlurredAlbumBackground(albumAtStart.coverUrl || '')
+        createRatingBackground(albumAtStart.coverUrl || '')
       ]);
       if (albumAtStart !== currentAlbum) return false;
       saveData();
