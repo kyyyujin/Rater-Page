@@ -587,10 +587,17 @@
   }
   .output-header { display: flex; flex-direction: column; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border); background: var(--surface2); gap: 10px; }
   .output-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
-  .output-actions { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: nowrap; width: 100%; }
-  .btn-export { display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
-  .copy-feedback { font-size: 12px; color: var(--accent); opacity: 0; transition: opacity 0.3s; }
-  .copy-feedback.show { opacity: 1; }
+  .output-actions { display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:nowrap; width:100%; max-width:100%; position:relative; }
+  .btn-export { display:inline-flex; align-items:center; justify-content:center; gap:5px; padding:6px 10px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:'DM Mono',monospace; font-size:11px; cursor:pointer; transition:all 0.2s; white-space:nowrap; flex:0 1 auto; min-width:0; }
+  /* El aviso no debe ocupar ancho ni mover los botones cuando está oculto. */
+  .copy-feedback { position:absolute; left:50%; top:calc(100% + 5px); transform:translateX(-50%); font-size:12px; color:var(--accent); opacity:0; pointer-events:none; white-space:nowrap; transition:opacity 0.3s; }
+  .copy-feedback.show { opacity:1; }
+
+  @media (max-width:600px) {
+    .output-header { padding:14px 12px; }
+    .output-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; }
+    .btn-export { width:100%; padding:8px 5px; gap:4px; font-size:10px; }
+  }
   .btn-export { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
   .btn-export:hover { border-color: var(--accent2); color: var(--accent2); background: rgba(96,212,240,0.08); }
 
