@@ -881,10 +881,10 @@
     display:flex; flex-wrap:wrap; gap:10px; margin-top:26px;
   }
   .out-album-badge {
-    padding:9px 16px; border-radius:999px;
+    padding:10px 18px; border-radius:999px;
     border:1px solid rgba(255,255,255,0.22);
     background:rgba(255,255,255,0.09);
-    font-family:'DM Mono',monospace; font-size:11px; font-weight:500;
+    font-family:'DM Mono',monospace; font-size:13px; font-weight:550;
     letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.75);
   }
   .out-album-badge.genre {
@@ -903,8 +903,8 @@
   }
   .out-album-cover-score {
     /* Estrella a la izquierda y puntuación centrada con el mismo aire a ambos lados. */
-    margin-top:16px; width:196px; min-width:0; padding:12px 15px;
-    display:grid; grid-template-columns:24px minmax(0,1fr) 24px; column-gap:10px;
+    margin-top:16px; width:180px; min-width:0; padding:12px 11px;
+    display:grid; grid-template-columns:30px minmax(0,1fr) 30px; column-gap:6px;
     align-items:center; position:relative; flex:0 0 auto;
     border:1px solid rgba(166,218,228,0.34); border-radius:var(--export-radius-medium);
     background:
@@ -914,14 +914,14 @@
     box-shadow:inset 0 1px 0 rgba(255,255,255,0.12),inset 0 -1px 0 rgba(255,255,255,0.025),0 14px 30px rgba(0,0,0,0.10);
   }
   .out-album-cover-score::before { content:none !important; }
-  .out-album-cover-score::after { content:''; width:24px; height:24px; grid-column:3; }
+  .out-album-cover-score::after { content:''; width:30px; height:30px; grid-column:3; }
   .out-cover-score-copy {
     grid-column:2; display:flex; flex-direction:column; align-items:center; gap:4px;
     background:transparent !important; box-shadow:none !important;
   }
   .out-cover-score-star {
     grid-column:1; justify-self:center;
-    font-size:24px; color:#ffd568; text-shadow:0 0 17px rgba(255,207,89,0.64);
+    font-size:30px; color:#ffd568; text-shadow:0 0 20px rgba(255,207,89,0.72);
   }
   .out-album-cover-score-val {
     font-family:'Inter',sans-serif; font-size:27px; line-height:1; font-weight:750; color:#f5f5f2;
@@ -970,7 +970,7 @@
     break-inside:avoid; page-break-inside:avoid;
   }
   .out-track {
-    display:grid; grid-template-columns:56px minmax(0,1fr) auto;
+    display:grid; grid-template-columns:68px minmax(0,1fr) auto;
     gap:14px; align-items:center; min-width:0;
     border-bottom:1px solid rgba(255,255,255,0.115); border-radius:0;
     background:transparent !important; box-shadow:none !important;
@@ -978,7 +978,7 @@
   .out-track:last-child { border-bottom:0; }
   .out-track-num {
     min-width:0; font-family:'DM Mono',monospace;
-    font-size:12px; letter-spacing:0.07em; color:rgba(255,255,255,0.46);
+    font-size:19px; letter-spacing:0.05em; color:rgba(255,255,255,0.64);
     text-align:center;
   }
   .out-track-name {
@@ -1061,17 +1061,18 @@
     border:0; border-radius:0; background:transparent; backdrop-filter:none;
   }
   .out-best-star {
-    grid-row:1 / span 2; font-size:37px; color:#d7ff71;
-    text-shadow:0 0 17px rgba(200,240,96,0.54);
+    grid-row:1 / span 2; font-size:42px; color:#ffffff;
+    text-shadow:0 0 18px rgba(255,255,255,0.62);
   }
   .out-best-label {
-    font-family:'DM Mono',monospace; font-size:11px; font-weight:500;
-    letter-spacing:0.16em; text-transform:uppercase; color:#d7ff71;
+    font-family:'DM Mono',monospace; font-size:16px; font-weight:650;
+    letter-spacing:0.15em; text-transform:uppercase; color:#ffffff;
+    text-shadow:0 0 14px rgba(255,255,255,0.50);
   }
   .out-best-name {
     min-width:0; font-family:'Inter',sans-serif;
-    font-size:36px; line-height:1.08; font-weight:700; letter-spacing:-0.03em;
-    color:#d7ff71;
+    font-size:48px; line-height:1.04; font-weight:750; letter-spacing:-0.04em;
+    color:#ffffff; text-shadow:0 0 19px rgba(255,255,255,0.56);
   }
   .out-best-score { display:none; }
   .out-comment {
