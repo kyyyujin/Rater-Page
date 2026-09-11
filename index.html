@@ -587,17 +587,10 @@
   }
   .output-header { display: flex; flex-direction: column; align-items: center; padding: 14px 18px; border-bottom: 1px solid var(--border); background: var(--surface2); gap: 10px; }
   .output-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
-  .output-actions { display:flex; align-items:center; justify-content:center; gap:8px; flex-wrap:nowrap; width:100%; max-width:100%; position:relative; }
-  .btn-export { display:inline-flex; align-items:center; justify-content:center; gap:5px; padding:6px 10px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:'DM Mono',monospace; font-size:11px; cursor:pointer; transition:all 0.2s; white-space:nowrap; flex:0 1 auto; min-width:0; }
-  /* El aviso no debe ocupar ancho ni mover los botones cuando está oculto. */
-  .copy-feedback { position:absolute; left:50%; top:calc(100% + 5px); transform:translateX(-50%); font-size:12px; color:var(--accent); opacity:0; pointer-events:none; white-space:nowrap; transition:opacity 0.3s; }
-  .copy-feedback.show { opacity:1; }
-
-  @media (max-width:600px) {
-    .output-header { padding:14px 12px; }
-    .output-actions { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; }
-    .btn-export { width:100%; padding:8px 5px; gap:4px; font-size:10px; }
-  }
+  .output-actions { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: nowrap; width: 100%; }
+  .btn-export { display: inline-flex; align-items: center; gap: 5px; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+  .copy-feedback { font-size: 12px; color: var(--accent); opacity: 0; transition: opacity 0.3s; }
+  .copy-feedback.show { opacity: 1; }
   .btn-export { display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
   .btn-export:hover { border-color: var(--accent2); color: var(--accent2); background: rgba(96,212,240,0.08); }
 
@@ -866,32 +859,33 @@
     display:flex; flex-direction:column; align-items:flex-start;
   }
   .out-hero-kicker {
-    width:100%; display:flex; justify-content:flex-end; align-items:center; gap:18px;
+    width:100%; display:flex; justify-content:space-between; align-items:center; gap:18px;
     font-family:'DM Mono',monospace; font-size:11px; font-weight:400;
     letter-spacing:0.34em; text-transform:uppercase; color:rgba(255,255,255,0.63);
   }
   .out-album-name {
     max-width:none; margin-top:30px;
-    font-family:'Inter',sans-serif; font-size:64px; line-height:1.01; font-weight:700;
+    font-family:'Inter',sans-serif; font-size:52px; line-height:1.01; font-weight:700;
     letter-spacing:-0.048em; color:#f7f7f4;
-    white-space:nowrap; text-shadow:0 4px 24px rgba(0,0,0,0.27);
+    max-width:100%; white-space:nowrap; overflow-wrap:anywhere;
+    text-shadow:0 4px 24px rgba(0,0,0,0.27);
   }
-  .out-album-name.long { font-size:54px; }
+  .out-album-name.long { font-size:43px; line-height:1.04; white-space:normal; text-wrap:balance; }
   .out-album-name.very-long {
-    font-size:44px; line-height:1.06; white-space:normal; text-wrap:balance;
+    font-size:35px; line-height:1.06; white-space:normal; text-wrap:balance;
   }
   .out-album-artist {
     margin-top:12px; font-family:'DM Mono',monospace;
-    font-size:19px; color:rgba(255,255,255,0.78);
+    font-size:16px; color:rgba(255,255,255,0.73);
   }
   .out-album-badges {
     display:flex; flex-wrap:wrap; gap:10px; margin-top:26px;
   }
   .out-album-badge {
-    padding:10px 18px; border-radius:999px;
+    padding:9px 16px; border-radius:999px;
     border:1px solid rgba(255,255,255,0.22);
     background:rgba(255,255,255,0.09);
-    font-family:'DM Mono',monospace; font-size:13px; font-weight:550;
+    font-family:'DM Mono',monospace; font-size:11px; font-weight:500;
     letter-spacing:0.08em; text-transform:uppercase; color:rgba(255,255,255,0.75);
   }
   .out-album-badge.genre {
@@ -899,20 +893,18 @@
     background:rgba(49,72,178,0.38);
   }
   .out-album-description {
-    position:relative; margin-top:26px; padding-top:23px;
-    max-width:420px; font-family:'DM Mono',monospace;
-    font-size:16px; line-height:1.58; font-weight:400;
-    color:rgba(255,255,255,0.72);
+    position:relative; margin-top:28px; padding-top:25px;
+    max-width:400px; font-family:'DM Mono',monospace;
+    font-size:13px; line-height:1.64; font-weight:400;
+    color:rgba(255,255,255,0.67);
   }
   .out-album-description::before {
     content:''; position:absolute; left:0; top:0; width:42px; height:1px;
     background:rgba(255,255,255,0.47);
   }
   .out-album-cover-score {
-    /* Estrella a la izquierda y puntuación centrada con el mismo aire a ambos lados. */
-    margin-top:16px; width:180px; min-width:0; padding:12px 11px;
-    display:grid; grid-template-columns:30px minmax(0,1fr) 30px; column-gap:6px;
-    align-items:center; position:relative; flex:0 0 auto;
+    margin-top:auto; min-width:146px; padding:15px 18px; gap:13px;
+    display:inline-flex; align-items:center; position:relative;
     border:1px solid rgba(166,218,228,0.34); border-radius:var(--export-radius-medium);
     background:
       linear-gradient(135deg,rgba(150,196,205,0.12),rgba(12,22,27,0.17) 58%,rgba(74,83,109,0.11));
@@ -920,16 +912,12 @@
     backdrop-filter:blur(16px) saturate(1.16);
     box-shadow:inset 0 1px 0 rgba(255,255,255,0.12),inset 0 -1px 0 rgba(255,255,255,0.025),0 14px 30px rgba(0,0,0,0.10);
   }
-  .out-album-cover-score::before { content:none !important; }
-  .out-album-cover-score::after { content:''; width:30px; height:30px; grid-column:3; }
-  .out-cover-score-copy {
-    grid-column:2; display:flex; flex-direction:column; align-items:center; gap:4px;
-    background:transparent !important; box-shadow:none !important;
-  }
+  .out-album-cover-score::before,.out-album-cover-score::after { content:none !important; }
+  .out-cover-score-copy { background:transparent !important; box-shadow:none !important; }
   .out-cover-score-star {
-    grid-column:1; justify-self:center;
-    font-size:30px; color:#ffd568; text-shadow:0 0 20px rgba(255,207,89,0.72);
+    font-size:24px; color:#ffd568; text-shadow:0 0 17px rgba(255,207,89,0.64);
   }
+  .out-cover-score-copy { display:flex; flex-direction:column; align-items:center; gap:4px; }
   .out-album-cover-score-val {
     font-family:'Inter',sans-serif; font-size:27px; line-height:1; font-weight:750; color:#f5f5f2;
   }
@@ -970,14 +958,8 @@
     min-width:0; width:100%;
     background:transparent !important; border:0 !important; box-shadow:none !important;
   }
-  .out-track-list.two-columns {
-    column-count:2; column-gap:34px;
-  }
-  .out-track-list.two-columns .out-track {
-    break-inside:avoid; page-break-inside:avoid;
-  }
   .out-track {
-    display:grid; grid-template-columns:68px minmax(0,1fr) auto;
+    display:grid; grid-template-columns:56px minmax(0,1fr) auto;
     gap:14px; align-items:center; min-width:0;
     border-bottom:1px solid rgba(255,255,255,0.115); border-radius:0;
     background:transparent !important; box-shadow:none !important;
@@ -985,19 +967,19 @@
   .out-track:last-child { border-bottom:0; }
   .out-track-num {
     min-width:0; font-family:'DM Mono',monospace;
-    font-size:19px; letter-spacing:0.05em; color:rgba(255,255,255,0.64);
+    font-size:12px; letter-spacing:0.07em; color:rgba(255,255,255,0.46);
     text-align:center;
   }
   .out-track-name {
     min-width:0; white-space:normal; overflow:visible; text-overflow:clip;
-    font-family:'DM Mono',monospace; font-size:24px; line-height:1.3; font-weight:450;
-    color:#ffffff;
+    font-family:'DM Mono',monospace; font-size:15px; line-height:1.35; font-weight:400;
+    color:rgba(255,255,255,0.88);
   }
   .out-track-score {
-    min-width:72px; padding:10px 13px; border-radius:var(--export-radius-small);
+    min-width:58px; padding:8px 10px; border-radius:var(--export-radius-small);
     border:1px solid rgba(177,210,222,0.23);
     background:linear-gradient(145deg,rgba(171,200,211,0.14),rgba(76,100,111,0.10));
-    font-family:'DM Mono',monospace; font-size:22px; line-height:1; font-weight:700;
+    font-family:'DM Mono',monospace; font-size:15px; line-height:1; font-weight:600;
     text-align:center; color:rgba(236,243,246,0.92);
     box-shadow:inset 0 1px 0 rgba(255,255,255,0.09),0 5px 14px rgba(0,0,0,0.055);
   }
@@ -1014,72 +996,56 @@
     color:#d7ff71; border-color:rgba(184,232,105,0.34);
     background:linear-gradient(145deg,rgba(137,183,72,0.22),rgba(69,104,38,0.15)); text-shadow:0 0 10px rgba(200,240,96,0.24);
   }
-  /* El 11.0 necesita un color de relleno explícito: también puede ser Best Track. */
-  .out-track.score-11 .out-track-score {
-    color:#e8fbff; -webkit-text-fill-color:#e8fbff;
-    border-color:rgba(125,214,255,0.62);
-    background:linear-gradient(145deg,rgba(74,170,211,0.30),rgba(128,79,191,0.23));
-    text-shadow:0 0 10px rgba(115,216,255,0.56),0 0 18px rgba(176,96,240,0.34);
-    filter:none;
-  }
+  .out-track.score-11 .out-track-score { border-color:rgba(96,212,240,0.42); }
   .out-track-delta {
-    grid-column:3; justify-self:center; min-width:0; margin:-8px 0 5px;
-    font-family:'DM Mono',monospace; font-size:16px; line-height:1; font-weight:700;
-    letter-spacing:-0.035em;
+    grid-column:3; justify-self:center; min-width:0; margin:-7px 0 4px;
+    font-family:'DM Mono',monospace; font-size:9px;
   }
   .out-track-bar-wrap,.out-track-bar-bg,.out-track-bar-fill { display:none !important; }
 
-  .out-card.density-spacious .out-track { min-height:86px; padding:8px 0; }
-  .out-card.density-balanced .out-track { min-height:66px; padding:6px 0; }
-  .out-card.density-balanced .out-track-name { font-size:22px; }
-  .out-card.density-balanced .out-track-score { min-width:68px; padding:9px 11px; font-size:20px; }
-  .out-card.density-compact .out-track-panel { padding-top:21px; padding-bottom:21px; }
-  .out-card.density-compact .out-track { min-height:55px; padding:5px 0; }
-  .out-card.density-compact .out-track-name { font-size:20px; }
-  .out-card.density-compact .out-track-score { min-width:64px; padding:8px 10px; font-size:18px; }
+  .out-card.density-spacious .out-track { min-height:72px; padding:7px 0; }
+  .out-card.density-balanced .out-track { min-height:55px; padding:5px 0; }
+  .out-card.density-balanced .out-track-name { font-size:14px; }
+  .out-card.density-balanced .out-track-score { padding:7px 10px; }
+  .out-card.density-compact .out-track-panel { padding-top:19px; padding-bottom:19px; }
+  .out-card.density-compact .out-track { min-height:46px; padding:4px 0; }
+  .out-card.density-compact .out-track-name { font-size:13px; }
+  .out-card.density-compact .out-track-score { min-width:54px; padding:6px 9px; font-size:14px; }
 
   /* Integrated footer */
   .out-footer {
     display:grid; grid-template-columns:minmax(0,1fr) auto; gap:42px; align-items:center;
-    padding:27px 30px; min-height:184px; position:relative; overflow:hidden; isolation:isolate;
+    padding:25px 28px; min-height:166px; position:relative; overflow:visible;
     border:1px solid var(--export-border); border-radius:var(--export-radius-large);
-    background:rgba(8,15,18,0.74);
+    background-color:rgba(16,27,31,0.17);
+    background-image:
+      linear-gradient(132deg,rgba(128,172,178,0.115),rgba(24,34,37,0.14) 48%,rgba(56,93,86,0.105));
+    -webkit-backdrop-filter:blur(20px) saturate(1.18);
+    backdrop-filter:blur(20px) saturate(1.18);
     box-shadow:inset 0 1px 0 rgba(255,255,255,0.14),inset 0 -1px 0 rgba(255,255,255,0.025),0 20px 46px rgba(0,0,0,0.11);
   }
   .out-footer::before,.out-footer::after { content:none !important; }
-  .out-footer-cover {
-    position:absolute; inset:-15%; z-index:0; pointer-events:none;
-    background-position:center; background-size:cover; background-repeat:no-repeat;
-    filter:blur(20px) saturate(1.16) brightness(0.44);
-    transform:scale(1.08);
-  }
-  .out-footer-cover::after {
-    content:''; position:absolute; inset:-12%;
-    background:linear-gradient(100deg,rgba(4,12,13,0.58),rgba(3,7,10,0.34) 52%,rgba(5,9,12,0.62));
-  }
   .out-footer-copy,.out-final,.out-final-right,.out-best-track {
     min-width:0; background:transparent !important; background-image:none !important;
     border-color:transparent; box-shadow:none !important;
   }
-  .out-footer-copy,.out-final { position:relative; z-index:1; }
   .out-best-track {
     margin:0; padding:0; display:grid;
-    grid-template-columns:auto minmax(0,1fr); gap:7px 18px; align-items:center;
+    grid-template-columns:auto minmax(0,1fr); gap:5px 16px; align-items:center;
     border:0; border-radius:0; background:transparent; backdrop-filter:none;
   }
   .out-best-star {
-    grid-row:1 / span 2; font-size:42px; color:#ffffff;
-    text-shadow:0 0 18px rgba(255,255,255,0.62);
+    grid-row:1 / span 2; font-size:31px; color:#d7ff71;
+    text-shadow:0 0 17px rgba(200,240,96,0.54);
   }
   .out-best-label {
-    font-family:'DM Mono',monospace; font-size:16px; font-weight:650;
-    letter-spacing:0.15em; text-transform:uppercase; color:#ffffff;
-    text-shadow:0 0 14px rgba(255,255,255,0.50);
+    font-family:'DM Mono',monospace; font-size:9px; font-weight:500;
+    letter-spacing:0.16em; text-transform:uppercase; color:#d7ff71;
   }
   .out-best-name {
     min-width:0; font-family:'Inter',sans-serif;
-    font-size:48px; line-height:1.04; font-weight:750; letter-spacing:-0.04em;
-    color:#ffffff; text-shadow:0 0 19px rgba(255,255,255,0.56);
+    font-size:28px; line-height:1.08; font-weight:700; letter-spacing:-0.025em;
+    color:#d7ff71;
   }
   .out-best-score { display:none; }
   .out-comment {
@@ -1097,19 +1063,19 @@
   }
   .out-final { margin:0; padding:0; border:0; display:block; }
   .out-final-right {
-    width:auto; display:flex; align-items:center; justify-content:flex-end; gap:30px;
+    width:auto; display:flex; align-items:center; justify-content:flex-end; gap:26px;
   }
   .out-final-avg {
-    font-family:'Syne',sans-serif; font-size:84px; line-height:0.84; font-weight:800;
+    font-family:'Syne',sans-serif; font-size:68px; line-height:0.84; font-weight:800;
     letter-spacing:-0.06em; color:#d7ff71;
     text-shadow:0 0 22px rgba(200,240,96,0.23); box-shadow:none !important;
   }
   .out-final-rank {
-    min-width:116px; padding:18px 20px; border-radius:var(--export-radius-medium);
+    min-width:100px; padding:16px 18px; border-radius:var(--export-radius-medium);
     display:grid; place-items:center;
     border:1px solid currentColor;
     background:linear-gradient(145deg,rgba(111,164,106,0.12),rgba(6,15,18,0.16));
-    font-family:'Syne',sans-serif; font-size:54px; line-height:1; font-weight:800;
+    font-family:'Syne',sans-serif; font-size:42px; line-height:1; font-weight:800;
     box-shadow:inset 0 1px 0 rgba(255,255,255,0.08),0 0 20px rgba(124,219,110,0.10);
   }
   .out-final-avg.rank-ss { color:#fff; text-shadow:0 0 24px rgba(255,255,255,0.36); }
@@ -1129,7 +1095,7 @@
   .out-card.previewing .out-album-name {
     margin-top:17px; font-size:clamp(28px,3.7vw,38px); white-space:nowrap;
   }
-  .out-card.previewing .out-album-name.long { font-size:clamp(25px,3.1vw,32px); }
+  .out-card.previewing .out-album-name.long { font-size:clamp(25px,3.1vw,32px); white-space:normal; text-wrap:balance; }
   .out-card.previewing .out-album-name.very-long { font-size:clamp(21px,2.6vw,27px); white-space:normal; }
   .out-card.previewing .out-album-artist { margin-top:8px; font-size:11px; }
   .out-card.previewing .out-album-badges { margin-top:16px; gap:7px; }
@@ -1140,11 +1106,8 @@
   }
   .out-card.previewing .out-album-description::before { width:28px; }
   .out-card.previewing .out-album-cover-score {
-    width:134px; min-width:0; padding:10px 9px; column-gap:6px;
-    grid-template-columns:17px minmax(0,1fr) 17px; border-radius:13px;
+    min-width:108px; padding:10px 13px; gap:9px; border-radius:13px;
   }
-  .out-card.previewing .out-album-cover-score::after { width:17px; height:17px; }
-  .out-card.previewing .out-track-list.two-columns { column-count:1; }
   .out-card.previewing .out-cover-score-star { font-size:17px; }
   .out-card.previewing .out-album-cover-score-val { font-size:21px; }
   .out-card.previewing .out-album-cover-score-label { font-size:7px; }
@@ -1187,11 +1150,7 @@
       -webkit-line-clamp:3;
     }
     .out-card.previewing .out-album-description::before { width:18px; }
-    .out-card.previewing .out-album-cover-score {
-      width:90px; min-width:0; padding:5px 6px; column-gap:4px;
-      grid-template-columns:10px minmax(0,1fr) 10px; border-radius:9px;
-    }
-    .out-card.previewing .out-album-cover-score::after { width:10px; height:10px; }
+    .out-card.previewing .out-album-cover-score { min-width:69px; padding:5px 7px; gap:5px; border-radius:9px; }
     .out-card.previewing .out-cover-score-star { font-size:10px; }
     .out-card.previewing .out-album-cover-score-val { font-size:12px; }
     .out-card.previewing .out-album-cover-score-label { font-size:5px; }
@@ -3200,12 +3159,7 @@
 
   /* ── EDITORIAL EXPORT METADATA ── */
   const _albumDescriptionPromises = new Map();
-  // Sube la ficha editorial a una versión nueva para refrescar descripciones cortas ya guardadas.
-  const ALBUM_DESCRIPTION_VERSION = 2;
   const _blurredAlbumBackgrounds = new Map();
-  const _abstractAlbumBackgrounds = new Map();
-  // Fondo general clásico: portada ampliada, desenfocada y oscurecida.
-  const RATING_EXPORT_BACKGROUND_MODE = 'blurred';
 
   async function createBlurredAlbumBackground(source) {
     if (!source) return '';
@@ -3254,131 +3208,6 @@
     return task;
   }
 
-  function clampColor(value) {
-    return Math.max(0, Math.min(255, Math.round(value)));
-  }
-
-  function rgba(color, alpha) {
-    return 'rgba(' + clampColor(color[0]) + ',' + clampColor(color[1]) + ',' + clampColor(color[2]) + ',' + alpha + ')';
-  }
-
-  function blendColor(first, second, amount) {
-    return [
-      first[0] + (second[0] - first[0]) * amount,
-      first[1] + (second[1] - first[1]) * amount,
-      first[2] + (second[2] - first[2]) * amount
-    ];
-  }
-
-  function extractCoverPalette(image) {
-    const sampleSize = 48;
-    const canvas = document.createElement('canvas');
-    canvas.width = sampleSize;
-    canvas.height = sampleSize;
-    const context = canvas.getContext('2d', { willReadFrequently:true });
-    const sourceWidth = image.naturalWidth || image.width;
-    const sourceHeight = image.naturalHeight || image.height;
-    const scale = Math.max(sampleSize / sourceWidth, sampleSize / sourceHeight);
-    const drawWidth = sourceWidth * scale;
-    const drawHeight = sourceHeight * scale;
-    context.drawImage(image, (sampleSize - drawWidth) / 2, (sampleSize - drawHeight) / 2, drawWidth, drawHeight);
-
-    const pixels = context.getImageData(0, 0, sampleSize, sampleSize).data;
-    const buckets = new Map();
-    for (let index = 0; index < pixels.length; index += 16) {
-      const red = pixels[index];
-      const green = pixels[index + 1];
-      const blue = pixels[index + 2];
-      const alpha = pixels[index + 3];
-      const highest = Math.max(red, green, blue);
-      const lowest = Math.min(red, green, blue);
-      const saturation = highest - lowest;
-      if (alpha < 140 || highest < 28 || saturation < 16) continue;
-      const key = ((red >> 4) << 16) | ((green >> 4) << 8) | (blue >> 4);
-      const weight = 1 + saturation / 56 + highest / 510;
-      buckets.set(key, (buckets.get(key) || 0) + weight);
-    }
-
-    const candidates = [...buckets.entries()]
-      .sort((left, right) => right[1] - left[1])
-      .map(([key]) => [((key >> 16) & 15) * 16 + 8, ((key >> 8) & 15) * 16 + 8, (key & 15) * 16 + 8]);
-
-    const palette = [];
-    for (const color of candidates) {
-      const distinct = palette.every(saved => Math.hypot(color[0] - saved[0], color[1] - saved[1], color[2] - saved[2]) > 62);
-      if (distinct) palette.push(color);
-      if (palette.length === 4) break;
-    }
-    return palette.length ? palette : [[44, 84, 94], [88, 57, 80], [74, 102, 62]];
-  }
-
-  function createAbstractAlbumBackground(source) {
-    if (!source) return Promise.resolve('');
-    if (_abstractAlbumBackgrounds.has(source)) return _abstractAlbumBackgrounds.get(source);
-
-    const task = new Promise(resolve => {
-      const image = new Image();
-      if (!String(source).startsWith('data:')) image.crossOrigin = 'anonymous';
-      image.decoding = 'async';
-      image.onload = () => {
-        try {
-          const palette = extractCoverPalette(image);
-          const size = 720;
-          const canvas = document.createElement('canvas');
-          canvas.width = size;
-          canvas.height = size;
-          const context = canvas.getContext('2d');
-          const night = [5, 10, 14];
-          context.fillStyle = rgba(blendColor(night, palette[0], 0.25), 1);
-          context.fillRect(0, 0, size, size);
-
-          const positions = [[0.12, 0.16, 0.72], [0.84, 0.15, 0.66], [0.36, 0.72, 0.76], [0.89, 0.82, 0.56]];
-          positions.forEach((position, index) => {
-            const color = blendColor(palette[index % palette.length], night, 0.12);
-            const centerX = position[0] * size;
-            const centerY = position[1] * size;
-            const radius = position[2] * size;
-            const gradient = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
-            gradient.addColorStop(0, rgba(color, 0.62));
-            gradient.addColorStop(0.45, rgba(color, 0.25));
-            gradient.addColorStop(1, rgba(color, 0));
-            context.fillStyle = gradient;
-            context.fillRect(0, 0, size, size);
-          });
-
-          // Una capa suave une los colores, parecida al fondo de letras de Apple Music.
-          const wash = context.createLinearGradient(0, 0, size, size);
-          wash.addColorStop(0, rgba(blendColor(palette[0], night, 0.42), 0.18));
-          wash.addColorStop(0.52, 'rgba(5,10,14,0.06)');
-          wash.addColorStop(1, rgba(blendColor(palette[palette.length - 1], night, 0.42), 0.16));
-          context.fillStyle = wash;
-          context.fillRect(0, 0, size, size);
-
-          const vignette = context.createRadialGradient(size * 0.48, size * 0.42, size * 0.05, size * 0.50, size * 0.50, size * 0.78);
-          vignette.addColorStop(0, 'rgba(3,7,10,0.06)');
-          vignette.addColorStop(0.62, 'rgba(3,7,10,0.26)');
-          vignette.addColorStop(1, 'rgba(2,5,8,0.56)');
-          context.fillStyle = vignette;
-          context.fillRect(0, 0, size, size);
-          resolve(canvas.toDataURL('image/jpeg', 0.90));
-        } catch {
-          resolve('');
-        }
-      };
-      image.onerror = () => resolve('');
-      image.src = source;
-    });
-
-    _abstractAlbumBackgrounds.set(source, task);
-    return task;
-  }
-
-  async function createRatingBackground(source) {
-    if (RATING_EXPORT_BACKGROUND_MODE === 'blurred') return createBlurredAlbumBackground(source);
-    const abstract = await createAbstractAlbumBackground(source);
-    return abstract || createBlurredAlbumBackground(source);
-  }
-
 
   function resolveReleaseType(album, trackCount = 0) {
     const raw = String(album?.type || album?.releaseType || '').trim();
@@ -3399,7 +3228,7 @@
     return 'Album';
   }
 
-  function cleanAlbumDescription(raw, maxLength = 260) {
+  function cleanAlbumDescription(raw, maxLength = 190) {
     if (!raw) return '';
     const decoder = document.createElement('div');
     decoder.innerHTML = String(raw);
@@ -3411,11 +3240,11 @@
       .trim();
     if (!text) return '';
 
-    // Mantiene una ficha breve, pero con suficiente contexto editorial.
+    // Keep the export editorial: one or two short sentences, never a full article.
     const sentenceMatches = text.match(/[^.!?]+[.!?]+/g);
     if (sentenceMatches?.length) {
       let short = '';
-      for (const sentence of sentenceMatches.slice(0, 3)) {
+      for (const sentence of sentenceMatches.slice(0, 2)) {
         if ((short + ' ' + sentence).trim().length > maxLength) break;
         short = (short + ' ' + sentence).trim();
       }
@@ -3447,14 +3276,14 @@
       + encodeURIComponent(album.artist || '') + '&album='
       + encodeURIComponent(album.title || '') + '&api_key=' + LASTFM_KEY + '&format=json&autocorrect=1';
     const data = await fetchJsonWithTimeout(url);
-    return cleanAlbumDescription(data?.album?.wiki?.content || data?.album?.wiki?.summary || '');
+    return cleanAlbumDescription(data?.album?.wiki?.summary || data?.album?.wiki?.content || '');
   }
 
   async function fetchWikipediaDescription(album) {
     const query = [album.title, album.artist, 'album'].filter(Boolean).join(' ');
     const url = 'https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch='
       + encodeURIComponent(query)
-      + '&gsrlimit=4&prop=extracts&exintro=1&explaintext=1&exsentences=3&redirects=1&origin=*&format=json';
+      + '&gsrlimit=4&prop=extracts&exintro=1&explaintext=1&exsentences=2&redirects=1&origin=*&format=json';
     const data = await fetchJsonWithTimeout(url);
     const pages = Object.values(data?.query?.pages || {}).sort((a, b) => (a.index || 99) - (b.index || 99));
     if (!pages.length) return '';
@@ -3475,9 +3304,7 @@
 
   async function ensureAlbumDescription(album, trackCount) {
     if (!album) return '';
-    if (album.description && album.descriptionVersion === ALBUM_DESCRIPTION_VERSION) {
-      return cleanAlbumDescription(album.description);
-    }
+    if (album.description) return cleanAlbumDescription(album.description);
     const key = [album.artist, album.title].map(value => String(value || '').trim().toLowerCase()).join('|');
     if (!key.replace('|', '')) return '';
 
@@ -3495,7 +3322,6 @@
 
     const result = await _albumDescriptionPromises.get(key);
     album.description = result.text;
-    album.descriptionVersion = ALBUM_DESCRIPTION_VERSION;
     album.descriptionSource = result.source;
     album.descriptionChecked = true;
     album.type = resolveReleaseType(album, trackCount);
@@ -3506,7 +3332,7 @@
     if (!album) return;
     Promise.all([
       ensureAlbumDescription(album, trackCount),
-      createRatingBackground(album.coverUrl || '')
+      createBlurredAlbumBackground(album.coverUrl || '')
     ]).then(() => {
       if (currentAlbum === album) saveData();
     }).catch(() => {});
@@ -3549,7 +3375,7 @@
       if (!albumAtStart.description) showToast('Preparando la ficha editorial…', 'info');
       [albumDescription, blurredCoverUrl] = await Promise.all([
         ensureAlbumDescription(albumAtStart, entries.length),
-        createRatingBackground(albumAtStart.coverUrl || '')
+        createBlurredAlbumBackground(albumAtStart.coverUrl || '')
       ]);
       if (albumAtStart !== currentAlbum) return false;
       saveData();
@@ -3604,6 +3430,7 @@
       const kicker = document.createElement('div');
       kicker.className = 'out-hero-kicker';
       kicker.append(
+        makeText('span', 'out-hero-kicker-artist', currentAlbum.artist || 'Unknown artist'),
         makeText('span', 'out-hero-kicker-year', currentAlbum.year || '—')
       );
       info.appendChild(kicker);
@@ -3667,7 +3494,7 @@
     const trackPanelLayout = document.createElement('div');
     trackPanelLayout.className = 'out-track-panel-layout';
     const trackList = document.createElement('div');
-    trackList.className = 'out-track-list' + (entries.length > 6 ? ' two-columns' : '');
+    trackList.className = 'out-track-list';
 
     let rescoreSum = 0;
     entries.forEach(entry => {
@@ -3685,14 +3512,14 @@
       );
 
       if (rescoreActive) {
-        // Usar el delta capturado al iniciar la exportación evita depender de IDs de filas.
-        const deltaValue = Number.isFinite(entry.delta) ? entry.delta : 0;
+        const deltaInput = document.getElementById('rscore-' + entry.index);
+        const deltaValue = deltaInput ? parseFloat(deltaInput.value) : NaN;
         const delta = makeText(
           'span',
-          'out-track-delta' + (deltaValue < 0 ? ' negative' : ''),
-          deltaValue !== 0 ? formatRescoreDelta(deltaValue) : '—'
+          'out-track-delta' + (!isNaN(deltaValue) && deltaValue < 0 ? ' negative' : ''),
+          !isNaN(deltaValue) && deltaValue !== 0 ? formatRescoreDelta(deltaValue) : '—'
         );
-        if (deltaValue !== 0) rescoreSum += deltaValue;
+        if (!isNaN(deltaValue) && deltaValue !== 0) rescoreSum += deltaValue;
         else delta.style.opacity = '0.3';
         track.appendChild(delta);
       }
@@ -3707,12 +3534,6 @@
 
     const footer = document.createElement('footer');
     footer.className = 'out-footer';
-    if (currentAlbum?.coverUrl) {
-      const footerCover = document.createElement('div');
-      footerCover.className = 'out-footer-cover';
-      footerCover.style.backgroundImage = 'url("' + currentAlbum.coverUrl + '")';
-      footer.appendChild(footerCover);
-    }
     const footerCopy = document.createElement('div');
     footerCopy.className = 'out-footer-copy';
 
@@ -3854,7 +3675,10 @@
   let cachedPcExportUrl = '';
   let cachedPcExportPromise = null;
   let cachedPcExportVersion = 0;
-  // Contrato canónico de escritorio. Nunca se deriva del navegador cliente.
+  // Contrato de exportación: no depende del viewport del dispositivo.
+  // Chromium compone una ficha de escritorio de 1280 CSS px dentro de una
+  // ventana fija de 1440 × 2600 y el servidor entrega el PNG a 1920 px de ancho.
+  // El alto queda deliberadamente automático porque varía con el tracklist.
   const PC_EXPORT_VIEWPORT_WIDTH = 1440;
   const PC_EXPORT_VIEWPORT_HEIGHT = 2600;
   const PC_EXPORT_CARD_WIDTH = 1280;
