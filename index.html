@@ -6134,7 +6134,10 @@
       }
     } catch(e) {
       console.error(e);
-      showToast('⚠ Error al conectar con el servidor');
+      const exportMessage = String(e?.message || '');
+      showToast(exportMessage.includes('renderer de exportación')
+        ? `⚠ ${exportMessage}`
+        : '⚠ Error al conectar con el servidor');
       btnText.textContent = 'Discord';
       btn.disabled = false;
     }
