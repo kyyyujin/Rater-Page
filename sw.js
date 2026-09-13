@@ -1,4 +1,4 @@
-const CACHE = 'rater-v20';
+const CACHE = 'rater-v8';
 const ASSETS = [
   '/',
   '/index.html',
