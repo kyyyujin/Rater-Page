@@ -1,4 +1,4 @@
-<!-- Album Rater v2.8.5 -->
+<!-- Album Rater v2.8.6 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -3782,9 +3782,6 @@
     outputEl.appendChild(scaler);
 
     showToast('✓ Resultado generado');
-    ensureCachedPcExport(card).catch(error => {
-      console.error('[background export]', error);
-    });
 
     outputEl.scrollIntoView({ behavior:'smooth', block:'nearest' });
 
@@ -3860,7 +3857,7 @@
   const PC_EXPORT_VIEWPORT_HEIGHT = 2600;
   const PC_EXPORT_CARD_WIDTH = 1280;
   const PC_EXPORT_IMAGE_WIDTH = 1920;
-  const REQUIRED_RATING_EXPORT_REVISION = 'rater-export-20260913.1';
+  const REQUIRED_RATING_EXPORT_REVISION = 'rater-export-20260913.2';
 
   function clearCachedPcExport() {
     if (cachedPcExportUrl) URL.revokeObjectURL(cachedPcExportUrl);
@@ -3939,6 +3936,11 @@
         throw new Error('El servidor devolvió una imagen inválida');
       }
       return blob;
+    } catch (error) {
+      if (error?.name === 'AbortError') {
+        throw new Error('El renderer tardó demasiado en responder. Intenta nuevamente.');
+      }
+      throw error;
     } finally {
       clearTimeout(timeout);
     }
@@ -5987,10 +5989,9 @@
     btn.innerHTML = '⏳ Guardando…';
 
     try {
-      // Reutiliza el PNG maestro generado silenciosamente en segundo plano.
-      const blob = await ensureCachedPcExport(card);
-
-            const albumTitle  = (currentAlbum?.title  || 'Álbum').toUpperCase();
+      // Guardar en Vault no necesita rasterizar la ficha. El PNG se genera
+      // únicamente al exportar o enviar a Discord.
+      const albumTitle  = (currentAlbum?.title  || 'Álbum').toUpperCase();
       const albumArtist = (currentAlbum?.artist || '').toUpperCase();
       const title = albumArtist ? `- ${albumTitle} [${albumArtist}]` : `- ${albumTitle}`;
 
@@ -6016,7 +6017,6 @@
       const formData = new FormData();
       formData.append('title',       title);
       formData.append('album_title', currentAlbum?.title    || '');
-      formData.append('file',        blob, 'rating.png');
       formData.append('user_id',     userId);
       formData.append('artist',      currentAlbum?.artist   || '');
       formData.append('year',        currentAlbum?.year     || '');
@@ -6294,7 +6294,8 @@
       formData.append('notes', (document.getElementById('comment-input')?.value || '').trim());
 
       const res = await fetch(`${BOT_SERVER}/post`, { method: 'POST', body: formData });
-      const data = await res.json();
+      let data = {};
+      try { data = await res.json(); } catch (_) {}
 
       if (res.ok) {
         showToast('✅ Enviado al foro de Discord');
@@ -6305,16 +6306,17 @@
         if (btnSaveDb) { btnSaveDb.disabled = true; btnSaveDb.style.opacity = '0.4'; btnSaveDb.style.cursor = 'not-allowed'; btnSaveDb.title = 'Ya guardado vía Discord'; }
       } else {
         console.error('Error:', data);
-        showToast('⚠ Error al enviar a Discord');
-        btnText.textContent = 'Discord';
-        btn.disabled = false;
+        const discordDetail = data?.details?.message || data?.error || 'Discord rechazó el envío';
+        throw new Error(discordDetail);
       }
     } catch(e) {
       console.error(e);
-      const exportMessage = String(e?.message || '');
-      showToast(exportMessage.includes('renderer de exportación')
-        ? `⚠ ${exportMessage}`
-        : '⚠ Error al conectar con el servidor');
+      const rawMessage = String(e?.message || '');
+      const isNetworkFailure = e?.name === 'TypeError' || /failed to fetch|networkerror|load failed/i.test(rawMessage);
+      const message = isNetworkFailure
+        ? 'Render no respondió o reinició el servicio. Intenta nuevamente en unos segundos.'
+        : (rawMessage || 'Error al enviar a Discord');
+      showToast(`⚠ ${message}`);
       btnText.textContent = 'Discord';
       btn.disabled = false;
     }
@@ -9716,7 +9718,7 @@
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js?v=21')
+      navigator.serviceWorker.register('/sw.js?v=22')
         .then(r => { r.update(); console.log('SW registrado:', r.scope); })
         .catch(e => console.warn('SW error:', e));
     });
