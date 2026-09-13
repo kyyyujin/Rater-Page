@@ -3683,6 +3683,7 @@
   const PC_EXPORT_VIEWPORT_HEIGHT = 2600;
   const PC_EXPORT_CARD_WIDTH = 1280;
   const PC_EXPORT_IMAGE_WIDTH = 1920;
+  const REQUIRED_RATING_EXPORT_REVISION = 'rater-export-20260913.1';
 
   function clearCachedPcExport() {
     if (cachedPcExportUrl) URL.revokeObjectURL(cachedPcExportUrl);
@@ -3747,6 +3748,9 @@
       }
       if (response.headers.get('X-Rating-Renderer') !== 'chromium') {
         throw new Error('El servidor no confirmó el compositor Chromium');
+      }
+      if (response.headers.get('X-Rating-Export-Revision') !== REQUIRED_RATING_EXPORT_REVISION) {
+        throw new Error('El renderer de exportación todavía se está actualizando. Recargá en un momento e intentá de nuevo.');
       }
       const renderedWidth = Number(response.headers.get('X-Rating-Image-Width'));
       if (renderedWidth && renderedWidth !== PC_EXPORT_IMAGE_WIDTH) {
@@ -9532,8 +9536,8 @@
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then(r => console.log('SW registrado:', r.scope))
+      navigator.serviceWorker.register('/sw.js?v=8')
+        .then(r => { r.update(); console.log('SW registrado:', r.scope); })
         .catch(e => console.warn('SW error:', e));
     });
   }
