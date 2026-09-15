@@ -3444,9 +3444,9 @@
   }
 
   async function fetchLastfmDescription(album) {
-    const url = 'https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist='
+    const url = BOT_SERVER + '/lastfm?method=album.getinfo&artist='
       + encodeURIComponent(album.artist || '') + '&album='
-      + encodeURIComponent(album.title || '') + '&api_key=' + LASTFM_KEY + '&format=json&autocorrect=1';
+      + encodeURIComponent(album.title || '') + '&autocorrect=1';
     const data = await fetchJsonWithTimeout(url);
     return cleanAlbumDescription(data?.album?.wiki?.content || data?.album?.wiki?.summary || '');
   }
@@ -4702,12 +4702,10 @@
     loadTracklist(previewReleaseId, previewTitle, previewArtist, '', previewCoverPayload);
   }
 
-  const LASTFM_KEY = '194ec400973f470ddaccd3248100186f';
-
   async function fetchLastfmCover(artist, title) {
     // 1. Try exact match first (album.getinfo)
     try {
-      const url  = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(title)}&api_key=${LASTFM_KEY}&format=json`;
+      const url  = `${BOT_SERVER}/lastfm?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(title)}`;
       const res  = await fetch(url);
       const data = await res.json();
       if (!data?.error) {
@@ -4719,7 +4717,7 @@
     // 2. Fallback: album.search by "artist title" query
     try {
       const q    = `${title} ${artist}`;
-      const url  = `https://ws.audioscrobbler.com/2.0/?method=album.search&album=${encodeURIComponent(q)}&api_key=${LASTFM_KEY}&format=json&limit=5`;
+      const url  = `${BOT_SERVER}/lastfm?method=album.search&album=${encodeURIComponent(q)}&limit=5`;
       const res  = await fetch(url);
       const data = await res.json();
       const matches = data?.results?.albummatches?.album || [];
@@ -4778,7 +4776,7 @@
     } catch {}
     // 2) Last.fm
     try {
-      const url = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist || '')}&album=${encodeURIComponent(title)}&api_key=${LASTFM_KEY}&format=json`;
+      const url = `${BOT_SERVER}/lastfm?method=album.getinfo&artist=${encodeURIComponent(artist || '')}&album=${encodeURIComponent(title)}`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
@@ -4914,7 +4912,7 @@
       // Last resort: fetch from Last.fm tags if still empty
       if (!resolvedGenre) {
         try {
-          const lfUrl  = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(albumTitle)}&api_key=${LASTFM_KEY}&format=json`;
+          const lfUrl  = `${BOT_SERVER}/lastfm?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(albumTitle)}`;
           const lfRes  = await fetch(lfUrl);
           const lfData = await lfRes.json();
           const lfTags = lfData?.album?.tags?.tag || [];
@@ -5247,7 +5245,7 @@
   }
 
   async function lfAlbumGetinfo(artist, album, lfUser) {
-    const url = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}&username=${encodeURIComponent(lfUser)}&api_key=${LASTFM_KEY}&format=json`;
+    const url = `${BOT_SERVER}/lastfm?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}&username=${encodeURIComponent(lfUser)}`;
     const res  = await fetch(url);
     const data = await res.json();
     return parseInt(data?.album?.userplaycount || '0', 10);
@@ -5271,7 +5269,7 @@
 
       // 3. Search fallback — find how Last.fm names this album
       if (!plays) {
-        const searchUrl = `https://ws.audioscrobbler.com/2.0/?method=album.search&album=${encodeURIComponent(cleanAlbumName(album))}&api_key=${LASTFM_KEY}&format=json&limit=8`;
+        const searchUrl = `${BOT_SERVER}/lastfm?method=album.search&album=${encodeURIComponent(cleanAlbumName(album))}&limit=8`;
         const searchRes  = await fetch(searchUrl);
         const searchData = await searchRes.json();
         const matches = searchData?.results?.albummatches?.album || [];
@@ -5281,7 +5279,7 @@
 
       // 4. Artist top albums fallback — fuzzy name match
       if (!plays) {
-        const topUrl = `https://ws.audioscrobbler.com/2.0/?method=artist.gettopalbums&artist=${encodeURIComponent(artist)}&api_key=${LASTFM_KEY}&format=json&limit=20`;
+        const topUrl = `${BOT_SERVER}/lastfm?method=artist.gettopalbums&artist=${encodeURIComponent(artist)}&limit=20`;
         const topRes  = await fetch(topUrl);
         const topData = await topRes.json();
         const topAlbums = topData?.topalbums?.album || [];
@@ -5760,7 +5758,7 @@
   async function searchLastfmAlbums(album, artist) {
     try {
       if (artist) {
-        const infoUrl = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}&api_key=${LASTFM_KEY}&format=json`;
+        const infoUrl = `${BOT_SERVER}/lastfm?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}`;
         const infoRes  = await fetch(infoUrl);
         const infoData = await infoRes.json();
         if (!infoData.error && infoData.album?.tracks?.track) {
@@ -5768,7 +5766,7 @@
         }
       }
       const q = artist ? `${album} ${artist}` : album;
-      const url  = `https://ws.audioscrobbler.com/2.0/?method=album.search&album=${encodeURIComponent(q)}&api_key=${LASTFM_KEY}&format=json&limit=10`;
+      const url  = `${BOT_SERVER}/lastfm?method=album.search&album=${encodeURIComponent(q)}&limit=10`;
       const res  = await fetch(url);
       const data = await res.json();
       const matches = data?.results?.albummatches?.album || [];
@@ -5866,7 +5864,7 @@
     document.getElementById('preview-content').innerHTML = '<div class="preview-loading">Cargando desde Last.fm…</div>';
 
     try {
-      const url  = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(title)}&api_key=${LASTFM_KEY}&format=json`;
+      const url  = `${BOT_SERVER}/lastfm?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(title)}`;
       const res  = await fetch(url);
       const data = await res.json();
       if (data.error || !data.album) throw new Error('not found');
@@ -5902,7 +5900,7 @@
 
     try {
       if (!tracks || !tracks.length) {
-        const url  = `https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(albumTitle)}&api_key=${LASTFM_KEY}&format=json`;
+        const url  = `${BOT_SERVER}/lastfm?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(albumTitle)}`;
         const res  = await fetch(url);
         const data = await res.json();
         if (!data.error && data.album?.tracks?.track) {
@@ -6720,7 +6718,7 @@
 
     try {
       do {
-        const url = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${encodeURIComponent(lfUser)}&api_key=${LASTFM_KEY}&format=json&limit=200&from=${fromTs}&page=${page}`;
+        const url = `${BOT_SERVER}/lastfm?method=user.getrecenttracks&user=${encodeURIComponent(lfUser)}&limit=200&from=${fromTs}&page=${page}`;
         const res  = await fetch(url);
         const data = await res.json();
 
@@ -7314,7 +7312,7 @@
       const bg = document.getElementById(`sp-sbanner-${idx}`);
       if (!bg) return;
       if (r.type === 'album') {
-        fetch(`https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(r.sub)}&album=${encodeURIComponent(r.name)}&api_key=${LASTFM_KEY}&format=json`)
+        fetch(`${BOT_SERVER}/lastfm?method=album.getinfo&artist=${encodeURIComponent(r.sub)}&album=${encodeURIComponent(r.name)}`)
           .then(res => res.json())
           .then(data => {
             const imgs = data?.album?.image || [];
@@ -7335,7 +7333,7 @@
         // Find album this track belongs to
         const stream = spData.find(s => s.track === r.name && s.artist === r.sub && s.album);
         if (stream?.album) {
-          fetch(`https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(r.sub)}&album=${encodeURIComponent(stream.album)}&api_key=${LASTFM_KEY}&format=json`)
+          fetch(`${BOT_SERVER}/lastfm?method=album.getinfo&artist=${encodeURIComponent(r.sub)}&album=${encodeURIComponent(stream.album)}`)
             .then(res => res.json())
             .then(data => {
               const imgs = data?.album?.image || [];
@@ -7509,7 +7507,7 @@
       }
 
       // 2. Last.fm — album.getInfo
-      const lfRes  = await fetch(`https://ws.audioscrobbler.com/2.0/?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}&api_key=${LASTFM_KEY}&format=json`);
+      const lfRes  = await fetch(`${BOT_SERVER}/lastfm?method=album.getinfo&artist=${encodeURIComponent(artist)}&album=${encodeURIComponent(album)}`);
       const lfDat  = await lfRes.json();
       const imgs   = lfDat?.album?.image || [];
       const large  = imgs.find(i=>i.size==='extralarge') || imgs.find(i=>i.size==='large') || imgs[imgs.length-1];
@@ -8988,7 +8986,7 @@
     const lfUser = localStorage.getItem('lastfm_username');
     if (!lfUser) return;
     try {
-      const url  = `https://ws.audioscrobbler.com/2.0/?method=user.getrecenttracks&user=${encodeURIComponent(lfUser)}&api_key=${LASTFM_KEY}&format=json&limit=1`;
+      const url  = `${BOT_SERVER}/lastfm?method=user.getrecenttracks&user=${encodeURIComponent(lfUser)}&limit=1`;
       const res  = await fetch(url);
       const data = await res.json();
       const track = data?.recenttracks?.track?.[0];
