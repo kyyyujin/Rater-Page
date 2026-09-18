@@ -2391,7 +2391,7 @@
         <span style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;color:#fff;">⚙ Configuración</span>
         <button onclick="closeDiscordSettings()" style="background:none;border:none;color:#666;font-size:18px;cursor:pointer;line-height:1;">✕</button>
       </div>
-      <p style="font-size:12px;color:#888;margin-bottom:16px;line-height:1.5;">Configurá tu Thread ID de Discord y tu nombre de usuario para guardar el historial en la nube.</p>
+      <p style="font-size:12px;color:#888;margin-bottom:16px;line-height:1.5;">El Thread ID se guarda de forma segura en tu cuenta y se usa para enviar tus ratings a Discord.</p>
       <label style="font-size:11px;color:#aaa;font-family:'DM Mono',monospace;display:block;margin-bottom:6px;">THREAD ID</label>
       <input id="discord-thread-input" type="text" placeholder="ej: 1315912659295666286"
         style="width:100%;box-sizing:border-box;padding:10px 12px;border-radius:8px;border:1px solid rgba(88,101,242,0.3);background:#15151a;color:#fff;font-family:'DM Mono',monospace;font-size:13px;outline:none;margin-bottom:12px;" />
@@ -6185,35 +6185,64 @@
     if (e.target === document.getElementById('dedup-modal')) closeDedupModal();
   });
 
-  function openDiscordSettings() {
+  async function openDiscordSettings() {
     document.getElementById('discord-thread-input').value = localStorage.getItem('discord_thread_id') || '';
     document.getElementById('discord-user-input').value   = localStorage.getItem('discord_user_id')   || '';
     document.getElementById('lastfm-user-input').value    = localStorage.getItem('lastfm_username')    || '';
     const saved = localStorage.getItem('discord_thread_id');
     document.getElementById('discord-settings-status').textContent = saved ? '✓ Configuración guardada' : '';
     document.getElementById('discord-modal').style.display = 'flex';
+    const token = localStorage.getItem('auth_token');
+    if (!token) return;
+    try {
+      const res = await fetch(`${BOT_SERVER}/rater/discord-settings/get`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) return;
+      if (data.thread_id) {
+        localStorage.setItem('discord_thread_id', data.thread_id);
+        document.getElementById('discord-thread-input').value = data.thread_id;
+        document.getElementById('discord-settings-status').textContent = '✓ Thread ID seguro cargado';
+      }
+    } catch (_) {}
   }
 
   function closeDiscordSettings() {
     document.getElementById('discord-modal').style.display = 'none';
   }
 
-  function saveDiscordSettings() {
+  async function saveDiscordSettings() {
     const threadVal  = document.getElementById('discord-thread-input').value.trim();
-    const userVal    = document.getElementById('discord-user-input').value.trim();
     const lastfmVal  = document.getElementById('lastfm-user-input').value.trim();
+    const statusEl   = document.getElementById('discord-settings-status');
     if (!threadVal) {
-      document.getElementById('discord-settings-status').textContent = '⚠ Ingresá un Thread ID';
+      statusEl.textContent = '⚠ Ingresá un Thread ID';
       return;
     }
-    if (!userVal) {
-      document.getElementById('discord-settings-status').textContent = '⚠ Ingresá tu nombre de usuario';
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      statusEl.textContent = '⚠ Tu sesión ya no es válida';
       return;
     }
-    localStorage.setItem('discord_thread_id', threadVal);
-    localStorage.setItem('discord_user_id',   userVal);
+    statusEl.textContent = 'Guardando…';
+    try {
+      const res = await fetch(`${BOT_SERVER}/rater/discord-settings`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, thread_id: threadVal })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) throw new Error(data.error || 'No se pudo guardar el Thread ID');
+      localStorage.setItem('discord_thread_id', data.thread_id);
+    } catch (error) {
+      statusEl.textContent = `⚠ ${error.message || 'No se pudo guardar el Thread ID'}`;
+      return;
+    }
     if (lastfmVal) localStorage.setItem('lastfm_username', lastfmVal);
-    document.getElementById('discord-settings-status').textContent = lastfmVal
+    statusEl.textContent = lastfmVal
       ? '✓ Guardado · Last.fm conectado 🎵'
       : '✓ Guardado correctamente';
     // Refresh sync bar if Spotify data is loaded
@@ -6231,10 +6260,9 @@
   /* ── SEND TO DISCORD FORUM ── */
 
   async function sendToDiscord() {
-    const threadId = localStorage.getItem('discord_thread_id');
-    if (!threadId) {
-      openDiscordSettings();
-      showToast('⚠ Configurá tu Thread ID primero');
+    const authToken = localStorage.getItem('auth_token');
+    if (!authToken) {
+      showToast('⚠ Tu sesión expiró. Volvé a iniciar sesión.');
       return;
     }
 
@@ -6260,11 +6288,8 @@
       formData.append('album_title', currentAlbum?.title || '');  // Clean title for Supabase
       formData.append('file', blob, 'rating.png');
 
-      formData.append('thread_id', threadId);
-
-      // Add user identity and rating data for Supabase
-      const userId = localStorage.getItem('discord_user_id') || '';
-      if (userId) formData.append('user_id', userId);
+      // La identidad y el Thread ID se derivan server-side de la sesión, no del navegador.
+      formData.append('auth_token', authToken);
       formData.append('artist',    currentAlbum?.artist   || '');
       formData.append('year',      currentAlbum?.year     || '');
       formData.append('genre',     currentAlbum?.genre    || '');
@@ -6304,8 +6329,11 @@
         if (btnSaveDb) { btnSaveDb.disabled = true; btnSaveDb.style.opacity = '0.4'; btnSaveDb.style.cursor = 'not-allowed'; btnSaveDb.title = 'Ya guardado vía Discord'; }
       } else {
         console.error('Error:', data);
-        const discordDetail = data?.details?.message || data?.error || 'Discord rechazó el envío';
-        throw new Error(discordDetail);
+        const retryAfter = Number(data?.retry_after_seconds);
+        const retryMessage = Number.isFinite(retryAfter) && retryAfter > 0
+          ? ` Discord indicó esperar ${Math.ceil(retryAfter)} s.`
+          : '';
+        throw new Error(`${data?.error || 'Discord rechazó el envío'}${retryMessage}`);
       }
     } catch(e) {
       console.error(e);
