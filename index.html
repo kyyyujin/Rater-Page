@@ -5841,6 +5841,74 @@
   }
 
   /* ══════════════════════════════════════════
+     NOW PLAYING — Last.fm polling
+  ══════════════════════════════════════════ */
+  let _npCurrent = null;
+  let _npInterval = null;
+
+  async function fetchNowPlaying() {
+    const lfUser = localStorage.getItem('lastfm_username');
+    if (!lfUser) return;
+    try {
+      const url  = `${BOT_SERVER}/lastfm?method=user.getrecenttracks&user=${encodeURIComponent(lfUser)}&limit=1`;
+      const res  = await fetch(url);
+      const data = await res.json();
+      const track = data?.recenttracks?.track?.[0];
+      if (!track) { hideNowPlaying(); return; }
+
+      const isPlaying = track['@attr']?.nowplaying === 'true';
+      if (!isPlaying) { hideNowPlaying(); return; }
+
+      const trackName  = track.name || '';
+      const artistName = track.artist?.['#text'] || '';
+      const albumName  = track.album?.['#text'] || '';
+      const imgUrl     = track.image?.find(i => i.size === 'large') || track.image?.find(i => i.size === 'medium');
+      const imgSrc     = imgUrl?.['#text'] || '';
+      const sig        = `${trackName}|${artistName}`;
+      if (_npCurrent === sig) return;
+      _npCurrent = sig;
+
+      document.getElementById('np-track').textContent  = trackName;
+      document.getElementById('np-artist').textContent = artistName + (albumName ? ' · ' + albumName : '');
+
+      const artEl = document.getElementById('np-art');
+      if (imgSrc && !imgSrc.includes('2a96cbd8b46e442fc41c2b86b821562f')) {
+        artEl.innerHTML = `<img src="${escHtml(imgSrc)}" alt="" />`;
+        document.getElementById('np-bg').style.backgroundImage = `url('${imgSrc}')`;
+      } else {
+        fetchAlbumImg(artistName, albumName).then(src => {
+          if (src) {
+            artEl.innerHTML = `<img src="${escHtml(src)}" alt="" />`;
+            document.getElementById('np-bg').style.backgroundImage = `url('${src}')`;
+          } else {
+            artEl.innerHTML = '<div id="np-art-placeholder">🎵</div>';
+          }
+        });
+      }
+
+      document.getElementById('now-playing-bar').classList.add('visible');
+    } catch { /* Now Playing is optional and must never block the Rater. */ }
+  }
+
+  function hideNowPlaying() {
+    _npCurrent = null;
+    document.getElementById('now-playing-bar').classList.remove('visible');
+  }
+
+  async function npClickLoad() {
+    if (!_npCurrent) return;
+    const [, artistName] = _npCurrent.split('|');
+    const artistLine = document.getElementById('np-artist').textContent;
+    const albumName  = artistLine.includes(' · ') ? artistLine.split(' · ').slice(1).join(' · ').trim() : '';
+    if (!albumName) { showToast('⚠ No hay álbum disponible para esta canción'); return; }
+
+    showToast(`🔍 Buscando "${albumName}"…`);
+    document.getElementById('search-input').value  = albumName;
+    document.getElementById('search-artist').value = artistName;
+    await searchAlbum();
+  }
+
+  /* ══════════════════════════════════════════
      PENDING ALBUMS DRAWER
   ══════════════════════════════════════════ */
   const PENDING_KEY = 'albumrater_pending_v1';
@@ -6243,13 +6311,15 @@
       app.classList.add('fade-in');
       setTimeout(() => app.classList.remove('fade-in'), 700);
     }, 500);
+    // Paint authenticated identity first. Optional widgets must never make a
+    // valid session look logged out if one of them fails during startup.
+    renderUserSessionChip();
     startNowPlayingPolling();
     initAdminSelector();
     loadHeroBg();
     syncHeroSearch();
     relocateModalsToBody();
     watchModalsForBlurAndFab();
-    renderUserSessionChip();
     syncWorkInProgressFromServer();
   }
 
