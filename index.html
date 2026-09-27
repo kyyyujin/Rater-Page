@@ -1,4 +1,4 @@
-<!-- Album Rater v2.8.6 -->
+<!-- Album Rater v2.8.7 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1638,6 +1638,12 @@
     height: 28px;
     flex-shrink: 0;
   }
+  .footer-logo-icon {
+    width: 28px;
+    height: 28px;
+    display: block;
+    flex-shrink: 0;
+  }
   .footer-logo-name {
     font-size: 9px;
     text-transform: uppercase;
@@ -2271,16 +2277,27 @@
           <span class="footer-logo-name">Last.fm</span>
         </div>
         <div class="footer-logo-item">
-          <img src="https://cdn.discordapp.com/attachments/899414766882283600/1500688994370064475/100_sin_titulo_20260503203540.png?ex=69faaa89&is=69f95909&hm=9f8a665d8c61e33d765eeddd9f8dc1ee3b444024b23dedbf2acea87b5b2141fe&" alt="MusicBrainz" class="footer-logo-img" onerror="this.style.display='none'" />
+          <svg class="footer-logo-icon" viewBox="0 0 28 28" role="img" aria-label="MusicBrainz">
+            <title>MusicBrainz</title>
+            <rect x="2" y="2" width="11" height="11" rx="2" fill="#f8bf3c"/>
+            <rect x="15" y="2" width="11" height="11" rx="2" fill="#e35d4f"/>
+            <rect x="2" y="15" width="11" height="11" rx="2" fill="#4db4d7"/>
+            <rect x="15" y="15" width="11" height="11" rx="2" fill="#8acb68"/>
+            <path d="M5.2 18.3h1.5l1.3 2.5 1.3-2.5h1.5v4.1H9.6v-2l-1 2H7.5l-1-2v2H5.2zM17.1 18.3h2.2c1.2 0 1.8.5 1.8 1.2 0 .5-.3.8-.7.9.5.1.9.4.9 1 0 .8-.7 1.3-1.9 1.3h-2.3zm1.3 1.6h.8c.4 0 .6-.1.6-.4s-.2-.4-.6-.4h-.8zm0 1.5h.9c.4 0 .7-.1.7-.5 0-.3-.3-.4-.7-.4h-.9z" fill="#15151b"/>
+          </svg>
           <span class="footer-logo-name">MusicBrainz</span>
         </div>
         <div class="footer-logo-item">
-          <img src="https://cdn.discordapp.com/attachments/899414766882283600/1500689004826464298/100_sin_titulo_20260503203945.png?ex=69faaa8c&is=69f9590c&hm=6e85c8512fa36176dcee3fba394a7addddf9e0bc64449762e239c63cd1944e95&" alt="iTunes" class="footer-logo-img" onerror="this.style.display='none'" />
+          <svg class="footer-logo-icon" viewBox="0 0 28 28" role="img" aria-label="iTunes">
+            <title>iTunes</title>
+            <defs><linearGradient id="itunes-gradient" x1="3" y1="3" x2="25" y2="25" gradientUnits="userSpaceOnUse"><stop stop-color="#fa4c97"/><stop offset="1" stop-color="#7855d7"/></linearGradient></defs>
+            <circle cx="14" cy="14" r="13" fill="url(#itunes-gradient)"/>
+            <path d="M17.9 6.8v11.1a3.1 3.1 0 1 1-1.3-2.5v-5l-5.3 1.2v7.1a3.1 3.1 0 1 1-1.3-2.5V10.5z" fill="#fff"/>
+          </svg>
           <span class="footer-logo-name">iTunes</span>
         </div>
       </div>
     </div>
-    <div class="footer-sig">a <span class="footer-sig-name">Kyujin's</span> Page</div>
   </div>
 </footer>
 
