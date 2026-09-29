@@ -1893,11 +1893,22 @@
   .rating-mode-switch { display:flex; gap:8px; margin:0 0 20px; }
   .rating-mode-switch button { flex:1; padding:11px 14px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--muted); font:600 12px 'DM Mono',monospace; cursor:pointer; }
   .rating-mode-switch button.active { border-color:var(--accent2); color:var(--accent2); background:rgba(96,212,240,.09); }
-  .fast-rate-picker { display:none; padding:20px; margin-bottom:20px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); }
-  .fast-rate-picker .score-label { margin-bottom:12px; }
-  .fast-rate-tiers { display:grid; grid-template-columns:repeat(auto-fit,minmax(58px,1fr)); gap:8px; }
-  .fast-rate-tiers button { padding:12px 4px; border:1px solid var(--border); border-radius:9px; background:rgba(255,255,255,.025); color:var(--text); font:800 15px 'Syne',sans-serif; cursor:pointer; }
-  .fast-rate-tiers button.selected { border-color:var(--tier-color); color:var(--tier-color); background:color-mix(in srgb,var(--tier-color) 12%,transparent); }
+  .fast-rate-picker { display:none; padding:22px; margin-bottom:20px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); text-align:center; }
+  .fast-rate-picker .score-label { margin-bottom:5px; }
+  .fast-rate-hint { margin:0 0 14px; color:var(--muted); font:11px 'DM Mono',monospace; }
+  .fast-rate-wheel-wrap { position:relative; max-width:340px; margin:auto; isolation:isolate; }
+  .fast-rate-wheel-wrap::before { content:''; position:absolute; z-index:0; top:50%; left:8%; right:8%; height:56px; transform:translateY(-50%); border:1px solid color-mix(in srgb,var(--wheel-color,#7cdb6e) 58%,transparent); border-radius:14px; background:color-mix(in srgb,var(--wheel-color,#7cdb6e) 9%,transparent); box-shadow:0 0 32px color-mix(in srgb,var(--wheel-color,#7cdb6e) 9%,transparent); pointer-events:none; }
+  .fast-rate-wheel { position:relative; z-index:1; height:280px; overflow-y:auto; padding:112px 0; box-sizing:border-box; scroll-snap-type:y mandatory; overscroll-behavior:contain; touch-action:pan-y; -webkit-overflow-scrolling:touch; scrollbar-width:none; mask-image:linear-gradient(to bottom,transparent 0%,#000 25%,#000 75%,transparent 100%); }
+  .fast-rate-wheel::-webkit-scrollbar { display:none; }
+  .fast-rate-wheel:focus-visible { outline:2px solid var(--accent2); outline-offset:3px; border-radius:14px; }
+  .fast-rate-tier { display:flex; align-items:center; justify-content:center; width:100%; height:56px; padding:0; border:0; background:none; color:var(--tier-color); font:800 31px 'Syne',sans-serif; cursor:pointer; scroll-snap-align:center; transform-origin:center center; user-select:none; }
+  .fast-rate-tier.selected { font-size:39px; text-shadow:0 0 24px color-mix(in srgb,var(--tier-color) 48%,transparent); }
+  .fast-rate-wheel-arrow { position:absolute; z-index:2; left:50%; transform:translateX(-50%); width:40px; height:30px; border:0; background:transparent; color:var(--muted); font-size:23px; line-height:1; cursor:pointer; }
+  .fast-rate-wheel-arrow:hover:not(:disabled) { color:var(--accent2); }
+  .fast-rate-wheel-arrow:disabled { opacity:.25; cursor:default; }
+  .fast-rate-wheel-arrow.up { top:0; }
+  .fast-rate-wheel-arrow.down { bottom:0; }
+  .fast-rate-current { margin-top:12px; min-height:18px; color:var(--muted); font:11px 'DM Mono',monospace; }
   #desktop-grid.fast-rate-mode .table-wrap, #desktop-grid.fast-rate-mode .score-bar-wrap,
   #desktop-grid.fast-rate-mode #rescore-total-wrap, #desktop-grid.fast-rate-mode .btn-add,
   #desktop-grid.fast-rate-mode #rescore-btn, #desktop-grid.fast-rate-mode #rescore-apply-btn { display:none !important; }
@@ -2225,8 +2236,14 @@
 
   <!-- TABLE -->
   <div class="fast-rate-picker" id="fast-rate-picker">
-    <div class="score-label">Elegí el tier del álbum · sin promedio ni scores de tracks</div>
-    <div class="fast-rate-tiers" id="fast-rate-tiers"></div>
+    <div class="score-label">Elegí el tier del álbum</div>
+    <p class="fast-rate-hint">Deslizá o usá la rueda · sin promedio ni scores de tracks</p>
+    <div class="fast-rate-wheel-wrap" id="fast-rate-wheel-wrap">
+      <button type="button" class="fast-rate-wheel-arrow up" id="fast-tier-up" aria-label="Tier anterior">⌃</button>
+      <div class="fast-rate-wheel" id="fast-rate-tiers" role="listbox" aria-label="Tier del álbum" tabindex="0"></div>
+      <button type="button" class="fast-rate-wheel-arrow down" id="fast-tier-down" aria-label="Tier siguiente">⌄</button>
+    </div>
+    <div class="fast-rate-current" id="fast-tier-current" role="status" aria-live="polite"></div>
   </div>
   <div class="table-wrap">
     <div class="table-header" id="table-header">
@@ -2363,6 +2380,9 @@
   let ratingMode = 'normal';
   let selectedFastTier = '';
   const FAST_TIERS = ['SS','S+','S','S-','A+','A','A-','B+','B-','C+','C-'];
+  const FAST_TIER_HEIGHT = 56;
+  const fastTierWheel = document.getElementById('fast-rate-tiers');
+  let fastWheelFrame = 0;
 
   function fastTierRank(label) {
     if (!FAST_TIERS.includes(label)) return { label:'—', cls:'rank-none' };
@@ -2379,6 +2399,7 @@
       button.setAttribute('aria-pressed', String(value === ratingMode));
     });
     document.querySelector('.score-hero .score-label').textContent = ratingMode === 'fast' ? 'Tier elegido' : 'Promedio';
+    if (ratingMode === 'fast') selectFastTier(selectedFastTier || 'A');
     document.getElementById('output-text').replaceChildren();
     clearCachedPcExport();
     const save = document.getElementById('btn-save-db');
@@ -2386,30 +2407,74 @@
     updateAverage(); saveData();
   }
 
-  function selectFastTier(label) {
+  function renderFastTierWheel() {
+    const center = fastTierWheel.scrollTop / FAST_TIER_HEIGHT;
+    [...fastTierWheel.children].forEach((button, index) => {
+      const distance = index - center;
+      const depth = Math.min(Math.abs(distance), 3);
+      button.style.transform = `perspective(320px) rotateX(${-distance * 17}deg) scale(${1 - depth * .1})`;
+      button.style.opacity = String(Math.max(.22, 1 - depth * .25));
+    });
+  }
+
+  function selectFastTier(label, fromWheel = false) {
     if (!FAST_TIERS.includes(label)) return;
+    const changed = selectedFastTier !== label;
     selectedFastTier = label;
+    const index = FAST_TIERS.indexOf(label);
+    if (!fromWheel) fastTierWheel.scrollTop = index * FAST_TIER_HEIGHT;
+    fastTierWheel.setAttribute('aria-activedescendant', `fast-tier-${index}`);
+    fastTierWheel.parentElement.style.setProperty('--wheel-color', rankColor(fastTierRank(label).cls));
+    document.getElementById('fast-tier-current').textContent = `${label} · tier seleccionado`;
+    document.getElementById('fast-tier-up').disabled = index === 0;
+    document.getElementById('fast-tier-down').disabled = index === FAST_TIERS.length - 1;
     document.querySelectorAll('#fast-rate-tiers button').forEach(button => {
       const selected = button.dataset.tier === label;
       button.classList.toggle('selected', selected);
-      button.setAttribute('aria-pressed', String(selected));
+      button.setAttribute('aria-selected', String(selected));
     });
-    if (ratingMode === 'fast') {
+    renderFastTierWheel();
+    if (ratingMode === 'fast' && changed) {
       document.getElementById('output-text').replaceChildren();
       clearCachedPcExport();
-      document.getElementById('btn-save-db').disabled = true;
+      const save = document.getElementById('btn-save-db');
+      save.disabled = true; save.style.opacity = '0.4'; save.style.cursor = 'not-allowed';
       updateAverage(); saveData();
     }
   }
 
-  document.getElementById('fast-rate-tiers').replaceChildren(...FAST_TIERS.map(label => {
+  fastTierWheel.replaceChildren(...FAST_TIERS.map((label, index) => {
     const button = document.createElement('button');
-    button.type = 'button'; button.dataset.tier = label; button.textContent = label;
+    button.type = 'button'; button.className = 'fast-rate-tier'; button.dataset.tier = label; button.textContent = label;
+    button.id = `fast-tier-${index}`;
+    button.tabIndex = -1;
+    button.setAttribute('role', 'option');
     button.style.setProperty('--tier-color', rankColor(fastTierRank(label).cls));
-    button.setAttribute('aria-pressed', 'false');
+    button.setAttribute('aria-selected', 'false');
     button.onclick = () => selectFastTier(label);
     return button;
   }));
+  fastTierWheel.addEventListener('scroll', () => {
+    if (ratingMode !== 'fast') return;
+    if (fastWheelFrame) return;
+    fastWheelFrame = requestAnimationFrame(() => {
+      fastWheelFrame = 0;
+      if (ratingMode !== 'fast') return;
+      const index = Math.max(0, Math.min(FAST_TIERS.length - 1, Math.round(fastTierWheel.scrollTop / FAST_TIER_HEIGHT)));
+      selectFastTier(FAST_TIERS[index], true);
+    });
+  }, { passive:true });
+  fastTierWheel.addEventListener('keydown', event => {
+    const index = FAST_TIERS.indexOf(selectedFastTier);
+    const shift = { ArrowUp:-1, ArrowDown:1, PageUp:-3, PageDown:3 }[event.key];
+    const target = event.key === 'Home' ? 0 : event.key === 'End' ? FAST_TIERS.length - 1
+      : shift === undefined ? -1 : Math.max(0, Math.min(FAST_TIERS.length - 1, index + shift));
+    if (target < 0) return;
+    event.preventDefault();
+    selectFastTier(FAST_TIERS[target]);
+  });
+  document.getElementById('fast-tier-up').onclick = () => selectFastTier(FAST_TIERS[Math.max(0, FAST_TIERS.indexOf(selectedFastTier) - 1)]);
+  document.getElementById('fast-tier-down').onclick = () => selectFastTier(FAST_TIERS[Math.min(FAST_TIERS.length - 1, FAST_TIERS.indexOf(selectedFastTier) + 1)]);
 
   function toggleRescore() {
     rescoreActive = !rescoreActive;
@@ -3637,7 +3702,7 @@
     document.getElementById('album-cover-placeholder').style.display = 'flex';
     currentAlbum = null; rowCount = 0;
     selectedFastTier = '';
-    document.querySelectorAll('#fast-rate-tiers button').forEach(button => { button.classList.remove('selected'); button.setAttribute('aria-pressed','false'); });
+    if (ratingMode === 'fast') selectFastTier('A');
     updatePageBg(null);
     document.getElementById('rescore-total-val').textContent = '+0.00';
     updateAverage(); saveData(); addRow();
@@ -6782,7 +6847,7 @@
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js?v=23')
+      navigator.serviceWorker.register('/sw.js?v=24')
         .then(r => { r.update(); console.log('SW registrado:', r.scope); })
         .catch(e => console.warn('SW error:', e));
     });
