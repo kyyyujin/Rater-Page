@@ -1890,6 +1890,21 @@
     #output-text { padding-left: 0; padding-right: 0; }
     .table-wrap, .comment-section, .actions, .output-section { margin-bottom: 0; }
   }
+  .rating-mode-switch { display:flex; gap:8px; margin:0 0 20px; }
+  .rating-mode-switch button { flex:1; padding:11px 14px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--muted); font:600 12px 'DM Mono',monospace; cursor:pointer; }
+  .rating-mode-switch button.active { border-color:var(--accent2); color:var(--accent2); background:rgba(96,212,240,.09); }
+  .fast-rate-picker { display:none; padding:20px; margin-bottom:20px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); }
+  .fast-rate-picker .score-label { margin-bottom:12px; }
+  .fast-rate-tiers { display:grid; grid-template-columns:repeat(auto-fit,minmax(58px,1fr)); gap:8px; }
+  .fast-rate-tiers button { padding:12px 4px; border:1px solid var(--border); border-radius:9px; background:rgba(255,255,255,.025); color:var(--text); font:800 15px 'Syne',sans-serif; cursor:pointer; }
+  .fast-rate-tiers button.selected { border-color:var(--tier-color); color:var(--tier-color); background:color-mix(in srgb,var(--tier-color) 12%,transparent); }
+  #desktop-grid.fast-rate-mode .table-wrap, #desktop-grid.fast-rate-mode .score-bar-wrap,
+  #desktop-grid.fast-rate-mode #rescore-total-wrap, #desktop-grid.fast-rate-mode .btn-add,
+  #desktop-grid.fast-rate-mode #rescore-btn, #desktop-grid.fast-rate-mode #rescore-apply-btn { display:none !important; }
+  #desktop-grid.fast-rate-mode .fast-rate-picker { display:block; }
+  #desktop-grid.fast-rate-mode .score-big { display:none; }
+  .out-card.fast-rate-card .out-final-avg { display:none; }
+  .out-card.fast-rate-card .out-final-rank { font-size:3rem; min-width:92px; text-align:center; }
 </style>
 </head>
 <body>
@@ -2187,6 +2202,10 @@
   </div><!-- end stats-section -->
 
   <!-- SCORE HERO in left panel -->
+  <div class="rating-mode-switch" role="group" aria-label="Modo de rateo">
+    <button type="button" id="normal-rate-mode" class="active" onclick="setRatingMode('normal')" aria-pressed="true">Rateo normal</button>
+    <button type="button" id="fast-rate-mode" onclick="setRatingMode('fast')" aria-pressed="false">⚡ Fast-Rate</button>
+  </div>
   <div class="score-hero">
     <div style="display:flex;flex-direction:column;gap:6px;align-items:center;">
       <div class="score-label">Promedio</div>
@@ -2205,6 +2224,10 @@
   <div id="grid-right">
 
   <!-- TABLE -->
+  <div class="fast-rate-picker" id="fast-rate-picker">
+    <div class="score-label">Elegí el tier del álbum · sin promedio ni scores de tracks</div>
+    <div class="fast-rate-tiers" id="fast-rate-tiers"></div>
+  </div>
   <div class="table-wrap">
     <div class="table-header" id="table-header">
       <span>#</span><span>Track</span>
@@ -2337,6 +2360,56 @@
   let rowCount     = 0;
   let currentAlbum = null;
   let rescoreActive = false;
+  let ratingMode = 'normal';
+  let selectedFastTier = '';
+  const FAST_TIERS = ['SS','S+','S','S-','A+','A','A-','B+','B-','C+','C-'];
+
+  function fastTierRank(label) {
+    if (!FAST_TIERS.includes(label)) return { label:'—', cls:'rank-none' };
+    return { label, cls: 'rank-' + (label === 'SS' ? 'ss' : label[0].toLowerCase()) };
+  }
+
+  function setRatingMode(mode) {
+    ratingMode = mode === 'fast' ? 'fast' : 'normal';
+    if (ratingMode === 'fast' && rescoreActive) toggleRescore();
+    document.getElementById('desktop-grid').classList.toggle('fast-rate-mode', ratingMode === 'fast');
+    ['normal','fast'].forEach(value => {
+      const button = document.getElementById(value + '-rate-mode');
+      button.classList.toggle('active', value === ratingMode);
+      button.setAttribute('aria-pressed', String(value === ratingMode));
+    });
+    document.querySelector('.score-hero .score-label').textContent = ratingMode === 'fast' ? 'Tier elegido' : 'Promedio';
+    document.getElementById('output-text').replaceChildren();
+    clearCachedPcExport();
+    const save = document.getElementById('btn-save-db');
+    save.disabled = true; save.style.opacity = '0.4'; save.style.cursor = 'not-allowed';
+    updateAverage(); saveData();
+  }
+
+  function selectFastTier(label) {
+    if (!FAST_TIERS.includes(label)) return;
+    selectedFastTier = label;
+    document.querySelectorAll('#fast-rate-tiers button').forEach(button => {
+      const selected = button.dataset.tier === label;
+      button.classList.toggle('selected', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
+    if (ratingMode === 'fast') {
+      document.getElementById('output-text').replaceChildren();
+      clearCachedPcExport();
+      document.getElementById('btn-save-db').disabled = true;
+      updateAverage(); saveData();
+    }
+  }
+
+  document.getElementById('fast-rate-tiers').replaceChildren(...FAST_TIERS.map(label => {
+    const button = document.createElement('button');
+    button.type = 'button'; button.dataset.tier = label; button.textContent = label;
+    button.style.setProperty('--tier-color', rankColor(fastTierRank(label).cls));
+    button.setAttribute('aria-pressed', 'false');
+    button.onclick = () => selectFastTier(label);
+    return button;
+  }));
 
   function toggleRescore() {
     rescoreActive = !rescoreActive;
@@ -2670,6 +2743,14 @@
   }
 
   function updateAverage() {
+    if (ratingMode === 'fast') {
+      const rank = fastTierRank(selectedFastTier);
+      const badge = document.getElementById('rank-display');
+      badge.textContent = rank.label;
+      badge.className = `rank-badge ${rank.cls}`;
+      document.getElementById('avg-display').textContent = '—';
+      return;
+    }
     const inputs = document.querySelectorAll('#rows-body input[type="number"]:not(.rescore-input)');
     let sum = 0, count = 0;
     inputs.forEach(i => {
@@ -3036,11 +3117,18 @@
   /* ── GENERATE ── */
   async function generate() {
     syncAlbumMeta();
+    const fastRate = ratingMode === 'fast';
+    if (fastRate && !FAST_TIERS.includes(selectedFastTier)) {
+      showToast('Elegí un tier para Fast-Rate', 'warning'); return false;
+    }
+    if (fastRate && !currentAlbum?.title?.trim()) {
+      showToast('Elegí un álbum para Fast-Rate', 'warning'); return false;
+    }
     const rows = document.querySelectorAll('#rows-body .row');
-    if (!rows.length) { showToast('No hay datos', 'warning'); return false; }
+    if (!fastRate && !rows.length) { showToast('No hay datos', 'warning'); return false; }
 
     let entries = [], sum = 0, count = 0;
-    rows.forEach((row, index) => {
+    if (!fastRate) rows.forEach((row, index) => {
       const name = row.querySelector('input[type="text"]').value.trim() || 'Track ' + (index + 1);
       const baseScore = parseFloat(row.querySelector('input[type="number"]:not(.rescore-input)').value);
       const deltaInput = row.querySelector('.rescore-input');
@@ -3060,7 +3148,7 @@
     const bestEntry = pinnedIndex >= 0 ? entries[pinnedIndex] : entries.find(entry => entry.score === maxScore);
     const rawAvg = count > 0 ? sum / count : null;
     const { penaltyApplied, finalAvg } = finalizeTrackAverage(rawAvg, count);
-    const rank = getRank(finalAvg);
+    const rank = fastRate ? fastTierRank(selectedFastTier) : getRank(finalAvg);
     const density = entries.length <= 7 ? 'spacious' : entries.length <= 14 ? 'balanced' : 'compact';
 
     const albumAtStart = currentAlbum;
@@ -3088,7 +3176,7 @@
     };
 
     const card = document.createElement('div');
-    card.className = 'out-card density-' + density + (currentAlbum?.coverUrl ? '' : ' no-cover');
+    card.className = 'out-card density-' + density + (currentAlbum?.coverUrl ? '' : ' no-cover') + (fastRate ? ' fast-rate-card' : '');
 
     if (currentAlbum?.coverUrl) {
       const background = document.createElement('div');
@@ -3152,8 +3240,8 @@
         info.appendChild(description);
       }
 
-      const coverScoreInput = document.getElementById('cover-score').value;
-      const coverScore = parseFloat(coverScoreInput || currentAlbum.coverScore || currentAlbum.cover_score || '');
+      const coverScoreInput = fastRate ? '' : document.getElementById('cover-score').value;
+      const coverScore = fastRate ? NaN : parseFloat(coverScoreInput || currentAlbum.coverScore || currentAlbum.cover_score || '');
       if (!isNaN(coverScore)) {
         currentAlbum.coverScore = coverScore;
         const scoreLine = document.createElement('div');
@@ -3183,6 +3271,8 @@
       content.appendChild(hero);
     }
 
+    let rescoreSum = 0;
+    if (!fastRate) {
     const trackPanel = document.createElement('section');
     trackPanel.className = 'out-track-panel';
     const trackPanelLayout = document.createElement('div');
@@ -3190,7 +3280,6 @@
     const trackList = document.createElement('div');
     trackList.className = 'out-track-list' + (entries.length > 6 ? ' two-columns' : '');
 
-    let rescoreSum = 0;
     entries.forEach(entry => {
       const is11 = !isNaN(entry.score) && entry.score >= 11;
       const isBest = entry === bestEntry;
@@ -3225,6 +3314,7 @@
 
     trackPanel.appendChild(trackPanelLayout);
     content.appendChild(trackPanel);
+    }
 
     const footer = document.createElement('footer');
     footer.className = 'out-footer';
@@ -3279,10 +3369,8 @@
     final.className = 'out-final';
     const finalRight = document.createElement('div');
     finalRight.className = 'out-final-right';
-    finalRight.append(
-      makeText('span', 'out-final-avg ' + rank.cls, finalAvg !== null ? finalAvg.toFixed(2) : '—'),
-      makeText('span', 'out-final-rank ' + rank.cls, rank.label)
-    );
+    if (!fastRate) finalRight.appendChild(makeText('span', 'out-final-avg ' + rank.cls, finalAvg !== null ? finalAvg.toFixed(2) : '—'));
+    finalRight.appendChild(makeText('span', 'out-final-rank ' + rank.cls, rank.label));
     final.appendChild(finalRight);
     footer.append(footerCopy, final);
     content.appendChild(footer);
@@ -3321,9 +3409,9 @@
     if (!card) { showToast('Genera primero', 'warning'); return; }
 
     const lines = [];
-    if (rescoreActive) lines.push('[Re-score]', '');
+    if (rescoreActive && ratingMode !== 'fast') lines.push('[Re-score]', '');
     if (currentAlbum) lines.push(`${currentAlbum.title} — ${currentAlbum.artist}${currentAlbum.year ? ' (' + currentAlbum.year + ')' : ''}`, '');
-    document.querySelectorAll('.out-track').forEach(t => {
+    if (ratingMode !== 'fast') document.querySelectorAll('.out-track').forEach(t => {
       const num   = t.querySelector('.out-track-num').textContent;
       const name  = t.querySelector('.out-track-name').textContent;
       const score = t.querySelector('.out-track-score').textContent;
@@ -3340,7 +3428,8 @@
     if (penaltyEl) lines.push('', '−0.25 <5 tracks Reduction');
     const avg  = document.querySelector('.out-final-avg')?.textContent;
     const rank = document.querySelector('.out-final-rank')?.textContent;
-    if (avg) lines.push('', `Average: ${avg}  [${rank}]`);
+    if (ratingMode === 'fast') lines.push('', `Fast-Rate: [${rank}]`);
+    else if (avg) lines.push('', `Average: ${avg}  [${rank}]`);
 
     const text = lines.join('\n');
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -3547,6 +3636,8 @@
     img.src = ''; img.style.display = 'none';
     document.getElementById('album-cover-placeholder').style.display = 'flex';
     currentAlbum = null; rowCount = 0;
+    selectedFastTier = '';
+    document.querySelectorAll('#fast-rate-tiers button').forEach(button => { button.classList.remove('selected'); button.setAttribute('aria-pressed','false'); });
     updatePageBg(null);
     document.getElementById('rescore-total-val').textContent = '+0.00';
     updateAverage(); saveData(); addRow();
@@ -3596,7 +3687,7 @@
       descriptionSource: currentAlbum.descriptionSource || '',
       descriptionChecked: Boolean(currentAlbum.descriptionChecked)
     } : null;
-    return { rows, cover, comment, album };
+    return { rows, cover, comment, album, ratingMode, selectedFastTier };
   }
 
   function saveData() {
@@ -3656,7 +3747,8 @@
     const cover   = Array.isArray(saved) ? '' : (saved.cover || '');
     const comment = Array.isArray(saved) ? '' : (saved.comment || '');
     const album   = Array.isArray(saved) ? null : (saved.album || null);
-    if (rows.length) {
+    const mode = !Array.isArray(saved) && saved.ratingMode === 'fast' ? 'fast' : 'normal';
+    if (rows.length || mode === 'fast') {
       rows.forEach(r => addRow(r.name, r.score));
       document.querySelectorAll('#rows-body .row').forEach((rowEl, i) => {
         const ri = rowEl.querySelector('.rescore-input');
@@ -3671,6 +3763,8 @@
       } else {
         document.getElementById('album-art-wrap').classList.add('show');
       }
+      if (mode === 'fast' && FAST_TIERS.includes(saved.selectedFastTier)) selectFastTier(saved.selectedFastTier);
+      setRatingMode(mode);
       return true;
     }
     return false;
@@ -3701,7 +3795,7 @@
     const remote = await fetchRemoteWorkInProgress();
     if (!remote) return;
     const rows = Array.isArray(remote) ? remote : (remote.rows || []);
-    if (!rows.length) return;
+    if (!rows.length && remote.ratingMode !== 'fast') return;
 
     // Limpiar lo que loadData() haya puesto (de localStorage o la fila vacía inicial) antes de aplicar lo remoto.
     document.getElementById('rows-body').innerHTML = '';
@@ -4534,12 +4628,13 @@
     });
     const rawAvg = count > 0 ? sum / count : null;
     const { finalAvg: avg } = finalizeTrackAverage(rawAvg, count);
-    const rank = getRank(avg);
+    const rank = ratingMode === 'fast' ? fastTierRank(selectedFastTier) : getRank(avg);
     const entry = {
       id:       Date.now(),
       album:    { ...currentAlbum },
-      rows, cover, comment,
-      avg:      avg !== null ? avg.toFixed(2) : null,
+      rows: ratingMode === 'fast' ? [] : rows, cover: ratingMode === 'fast' ? '' : cover, comment,
+      ratingMode,
+      avg:      ratingMode === 'fast' ? null : (avg !== null ? avg.toFixed(2) : null),
       rank:     rank.label,
       rankCls:  rank.cls,
       savedAt:  new Date().toLocaleDateString('es', { day:'2-digit', month:'short', year:'numeric' })
@@ -4568,7 +4663,8 @@
 
       let added = 0, updated = 0;
       rows.forEach(row => {
-        const rank = getRank(parseFloat(row.final_score));
+        const fast = row.final_score == null && FAST_TIERS.includes(row.final_rank);
+        const rank = fast ? fastTierRank(row.final_rank) : getRank(parseFloat(row.final_score));
         let cleanTitle = row.album_title || '';
         if (cleanTitle.startsWith('- ')) {
           cleanTitle = cleanTitle.replace(/^- /, '').replace(/\s*\[.*\]$/, '').trim();
@@ -4587,6 +4683,7 @@
           rows:    Array.isArray(row.tracks) ? row.tracks.map(t => ({ name: t.name, score: String(t.score || ''), rscore: '' })) : [],
           cover:   row.cover_score != null ? String(row.cover_score) : '',
           comment: row.notes || '',
+          ratingMode: fast ? 'fast' : 'normal',
           avg:     row.final_score ? parseFloat(row.final_score).toFixed(2) : null,
           rank:    row.final_rank || rank.label,
           rankCls: rank.cls,
@@ -4635,7 +4732,8 @@
 
       // Build temporary entries for display
       adminHistoryCache = rows.map(row => {
-        const rank = getRank(parseFloat(row.final_score));
+        const fast = row.final_score == null && FAST_TIERS.includes(row.final_rank);
+        const rank = fast ? fastTierRank(row.final_rank) : getRank(parseFloat(row.final_score));
         return {
           id:          row.created_at ? new Date(row.created_at).getTime() : Date.now(),
           supabase_id: row.id,
@@ -4650,6 +4748,7 @@
           rows:    Array.isArray(row.tracks) ? row.tracks.map(t => ({ name: t.name, score: String(t.score || ''), rscore: '' })) : [],
           cover:   row.cover_score != null ? String(row.cover_score) : '',
           comment: row.notes || '',
+          ratingMode: fast ? 'fast' : 'normal',
           avg:     row.final_score ? parseFloat(row.final_score).toFixed(2) : null,
           rank:    row.final_rank || rank.label,
           rankCls: rank.cls,
@@ -4843,7 +4942,7 @@
       document.getElementById('rows-body').innerHTML = '';
       document.getElementById('output-text').innerHTML = '';
       rowCount = 0;
-      entry.rows.forEach(r => addRow(r.name, r.score));
+      (entry.rows || []).forEach(r => addRow(r.name, r.score));
       // Restore rescores
       document.querySelectorAll('#rows-body .row').forEach((rowEl, i) => {
         const ri = rowEl.querySelector('.rescore-input');
@@ -4855,6 +4954,8 @@
       updateRescoreTotal();
       currentAlbum = { ...entry.album };
       showAlbumBanner(currentAlbum);
+      if (entry.ratingMode === 'fast' && FAST_TIERS.includes(entry.rank)) selectFastTier(entry.rank);
+      setRatingMode(entry.ratingMode === 'fast' ? 'fast' : 'normal');
       saveData();
       toggleHistory(); // close panel
       showToast(`✓ Cargado: ${entry.album?.title || 'álbum'}`);
@@ -4982,7 +5083,7 @@
     }
 
     // Compute stats
-    const withAvg = h.filter(e => e.avg !== null);
+    const withAvg = h.filter(e => e.avg !== null && e.avg !== '' && Number.isFinite(Number(e.avg)));
     const globalAvg = withAvg.length
       ? (withAvg.reduce((s, e) => s + parseFloat(e.avg), 0) / withAvg.length).toFixed(2)
       : '—';
@@ -5017,7 +5118,7 @@
       const artist = e.album?.artist || 'Desconocido';
       if (!artistMap[artist]) artistMap[artist] = { count: 0, sum: 0, rated: 0 };
       artistMap[artist].count++;
-      if (e.avg !== null) { artistMap[artist].sum += parseFloat(e.avg); artistMap[artist].rated++; }
+      if (e.avg !== null && e.avg !== '' && Number.isFinite(Number(e.avg))) { artistMap[artist].sum += Number(e.avg); artistMap[artist].rated++; }
     });
     const topArtists = Object.entries(artistMap)
       .map(([name, v]) => ({ name, count: v.count, avg: v.rated ? (v.sum / v.rated).toFixed(2) : null }))
@@ -5162,6 +5263,8 @@
     });
     const session = {
       rows,
+      ratingMode,
+      selectedFastTier,
       cover:   document.getElementById('cover-score').value,
       comment: document.getElementById('comment-input').value,
       album:   currentAlbum ? {
@@ -5515,7 +5618,8 @@
       const albumArtist = (currentAlbum?.artist || '').toUpperCase();
       const title = albumArtist ? `- ${albumTitle} [${albumArtist}]` : `- ${albumTitle}`;
 
-      const trackInputRows = document.querySelectorAll('#rows-body .row');
+      const fastRate = ratingMode === 'fast';
+      const trackInputRows = fastRate ? [] : document.querySelectorAll('#rows-body .row');
       const tracks = [];
       let scoreSum = 0, scoreCount = 0;
       trackInputRows.forEach(row => {
@@ -5529,7 +5633,7 @@
       // Cover score is stored separately; final score is based on tracks only.
       const rawAvg = scoreCount > 0 ? scoreSum / scoreCount : null;
       const { finalAvg } = finalizeTrackAverage(rawAvg, scoreCount);
-      const computedAvg  = finalAvg !== null ? finalAvg.toFixed(2) : '';
+      const computedAvg  = fastRate ? '' : (finalAvg !== null ? finalAvg.toFixed(2) : '');
       const computedRank = document.querySelector('.out-final-rank')?.textContent || '';
 
       const userId = localStorage.getItem('discord_user_id') || '';
@@ -5542,7 +5646,7 @@
       formData.append('year',        currentAlbum?.year     || '');
       formData.append('genre',       currentAlbum?.genre    || '');
       formData.append('cover_url',   currentAlbum?.coverUrl || '');
-      formData.append('cover_score', document.getElementById('cover-score')?.value || '');
+      formData.append('cover_score', fastRate ? '' : (document.getElementById('cover-score')?.value || ''));
       formData.append('final_score', computedAvg);
       formData.append('final_rank',  computedRank);
       formData.append('tracks',      JSON.stringify(tracks));
@@ -5814,14 +5918,14 @@
       formData.append('year',      currentAlbum?.year     || '');
       formData.append('genre',     currentAlbum?.genre    || '');
       formData.append('cover_url', currentAlbum?.coverUrl || '');
-      formData.append('cover_score', document.getElementById('cover-score')?.value || '');
-      formData.append('final_score', document.querySelector('.out-final-avg')?.textContent || '');
+      formData.append('cover_score', ratingMode === 'fast' ? '' : (document.getElementById('cover-score')?.value || ''));
+      formData.append('final_score', ratingMode === 'fast' ? '' : (document.querySelector('.out-final-avg')?.textContent || ''));
       formData.append('final_rank',  document.querySelector('.out-final-rank')?.textContent || '');
 
       // Collect track scores from the input rows (not the output display)
       const trackInputRows = document.querySelectorAll('#rows-body .row');
       const tracks = [];
-      trackInputRows.forEach(row => {
+      if (ratingMode !== 'fast') trackInputRows.forEach(row => {
         const nameEl    = row.querySelector('input[type="text"]');
         const scoreEl   = row.querySelector('input[type="number"]:not(.rescore-input)');
         const deltaEl   = row.querySelector('.rescore-input');
@@ -5870,6 +5974,20 @@
 
   /* ── EXPORT TO VAULT ── */
   function exportToVault() {
+    if (ratingMode === 'fast') {
+      if (!currentAlbum?.title || !FAST_TIERS.includes(selectedFastTier)) { showToast('Elegí álbum y tier antes de exportar', 'warning'); return; }
+      const genreRaw = (currentAlbum.genre || '').trim();
+      const vaultAlbum = {
+        _vaultImport:true, title:currentAlbum.title, artist:currentAlbum.artist || '', year:currentAlbum.year || '',
+        score:null, tierOnly:selectedFastTier, coverUrl:currentAlbum.coverUrl || '', tracks:[],
+        genres:genreRaw ? genreRaw.split(/[,/]/).map(g => g.trim()).filter(Boolean) : [],
+        status:'listened', listenDate:new Date().toISOString().slice(0,10),
+        notes:(document.getElementById('comment-input')?.value || '').trim(),
+        _raterMeta:{ mode:'fast', exportedAt:new Date().toISOString() }
+      };
+      downloadVaultImport(vaultAlbum);
+      return;
+    }
     // Collect tracks & scores
     const rows = document.querySelectorAll('#rows-body .row');
     if (!rows.length) { showToast('⚠ No hay datos para exportar'); return; }
@@ -5935,6 +6053,10 @@
 
     if (!vaultAlbum.title) { showToast('⚠ Añade el nombre del álbum primero'); return; }
 
+    downloadVaultImport(vaultAlbum);
+  }
+
+  function downloadVaultImport(vaultAlbum) {
     // Download as JSON
     const blob = new Blob([JSON.stringify(vaultAlbum, null, 2)], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
@@ -6660,7 +6782,7 @@
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js?v=22')
+      navigator.serviceWorker.register('/sw.js?v=23')
         .then(r => { r.update(); console.log('SW registrado:', r.scope); })
         .catch(e => console.warn('SW error:', e));
     });
