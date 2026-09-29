@@ -1891,6 +1891,7 @@
     .table-wrap, .comment-section, .actions, .output-section { margin-bottom: 0; }
   }
   .rating-mode-switch { display:flex; gap:8px; margin:0 0 20px; }
+  .rating-mode-switch[hidden] { display:none !important; }
   .rating-mode-switch button { flex:1; padding:11px 14px; border:1px solid var(--border); border-radius:10px; background:var(--surface); color:var(--muted); font:600 12px 'DM Mono',monospace; cursor:pointer; }
   .rating-mode-switch button.active { border-color:var(--accent2); color:var(--accent2); background:rgba(96,212,240,.09); }
   .fast-rate-picker { display:none; padding:22px; margin-bottom:20px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); text-align:center; }
@@ -2237,7 +2238,7 @@
   </div><!-- end stats-section -->
 
   <!-- SCORE HERO in left panel -->
-  <div class="rating-mode-switch" role="group" aria-label="Modo de rateo">
+  <div class="rating-mode-switch" role="group" aria-label="Modo de rateo" hidden>
     <button type="button" id="normal-rate-mode" class="active" onclick="setRatingMode('normal')" aria-pressed="true">Rateo normal</button>
     <button type="button" id="fast-rate-mode" onclick="setRatingMode('fast')" aria-pressed="false">⚡ Fast-Rate</button>
   </div>
@@ -2403,6 +2404,8 @@
   let rescoreActive = false;
   let ratingMode = 'normal';
   let selectedFastTier = '';
+  const FAST_RATE_VISIBLE = false; // Paused until the Fast Rate design is ready.
+  if (FAST_RATE_VISIBLE) document.querySelector('.rating-mode-switch').hidden = false;
   const FAST_TIERS = ['SS','S+','S','S-','A+','A','A-','B+','B-','C+','C-'];
   const FAST_TIER_HEIGHT = 56;
   const fastTierWheel = document.getElementById('fast-rate-tiers');
@@ -2414,7 +2417,7 @@
   }
 
   function setRatingMode(mode) {
-    ratingMode = mode === 'fast' ? 'fast' : 'normal';
+    ratingMode = FAST_RATE_VISIBLE && mode === 'fast' ? 'fast' : 'normal';
     if (ratingMode === 'fast' && rescoreActive) toggleRescore();
     document.getElementById('desktop-grid').classList.toggle('fast-rate-mode', ratingMode === 'fast');
     ['normal','fast'].forEach(value => {
@@ -2700,7 +2703,7 @@
   }
 
   /* ── ROWS ── */
-  function addRow(name = '', score = '') {
+  function addRow(name = '', score = '', persist = true) {
     rowCount++;
     const body = document.getElementById('rows-body');
     const row  = document.createElement('div');
@@ -2744,7 +2747,7 @@
     if (rescoreActive) row.classList.add('rescore-mode');
     body.appendChild(row);
     if (score !== '') updateScore(document.getElementById(`score-${rowCount}`), rowCount);
-    updateAverage(); renumber(); saveData();
+    updateAverage(); renumber(); if (persist) saveData();
   }
 
   function deleteRow(btn) { btn.closest('.row').remove(); updateAverage(); renumber(); saveData(); }
@@ -4123,15 +4126,28 @@
     return false;
   }
 
+  function preservePausedFastDraft(saved, source = 'local') {
+    try {
+      const key = source === 'remote' ? 'albumRaterPausedFastDraftRemote' : 'albumRaterPausedFastDraft';
+      if (!localStorage.getItem(key)) {
+        localStorage.setItem(key, JSON.stringify(saved));
+      }
+    } catch(e) {}
+  }
+
   function loadData() {
+    let pausedDraft = false;
     try {
       const raw = localStorage.getItem('albumRater');
       if (raw) {
         const saved = JSON.parse(raw);
-        if (applyLoadedData(saved)) return;
+        if (!FAST_RATE_VISIBLE && saved.ratingMode === 'fast') {
+          preservePausedFastDraft(saved);
+          pausedDraft = true;
+        } else if (applyLoadedData(saved)) return;
       }
     } catch(e) {}
-    addRow();
+    addRow('', '', !pausedDraft);
     // Always show banner for manual entry
     document.getElementById('album-art-wrap').classList.add('show');
   }
@@ -4147,6 +4163,10 @@
   async function syncWorkInProgressFromServer() {
     const remote = await fetchRemoteWorkInProgress();
     if (!remote) return;
+    if (!FAST_RATE_VISIBLE && remote.ratingMode === 'fast') {
+      preservePausedFastDraft(remote, 'remote');
+      return;
+    }
     const rows = Array.isArray(remote) ? remote : (remote.rows || []);
     if (!rows.length && remote.ratingMode !== 'fast') return;
 
@@ -5291,6 +5311,10 @@
   }
 
   function loadFromHistory(entry) {
+    if (!FAST_RATE_VISIBLE && entry.ratingMode === 'fast') {
+      showToast('Fast-Rate está pausado; el rating sigue guardado', 'info');
+      return;
+    }
     showConfirm(entry, () => {
       document.getElementById('rows-body').innerHTML = '';
       document.getElementById('output-text').innerHTML = '';
@@ -5694,6 +5718,12 @@
 
         // ── Restore session ──
         const session = payload.session || (payload.rows ? payload : null);
+        if (session?.ratingMode === 'fast' && !FAST_RATE_VISIBLE) {
+          preservePausedFastDraft(session);
+          event.target.value = '';
+          showToast('Historial importado; el borrador Fast-Rate queda guardado hasta reactivar el modo', 'info');
+          return;
+        }
         if (session) {
           const sessionRows = Array.isArray(session.rows) ? session.rows : [];
           if (sessionRows.length || session.album) {
