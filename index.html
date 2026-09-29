@@ -86,9 +86,10 @@
         rgb(var(--mobile-hero-color)) 86%, var(--bg) 100%);
     }
     #mobile-cover-hero-title {
+      position: absolute; left: 0; right: 0; bottom: 17%;
       padding: 24px; text-align: center;
-      font-family: 'Syne', sans-serif; font-size: clamp(36px, 10vw, 64px);
-      font-weight: 800; line-height: 1.08; letter-spacing: -.04em;
+      font-family: 'Inter', sans-serif; font-size: clamp(36px, 10vw, 64px);
+      font-weight: 400; line-height: 1.08; letter-spacing: -.04em;
       color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.8), 0 8px 32px rgba(0,0,0,.5);
     }
     #mobile-rater-header > h1,
@@ -7109,15 +7110,20 @@
       const art = document.getElementById('mobile-cover-hero-art');
       if (!hero || !art) return;
       try {
-        const response = await fetch(`${BOT_SERVER}/covers`);
+        const response = await fetch(`${BOT_SERVER}/covers?quality=deezer`);
         if (!response.ok) return;
         const data = await response.json();
         const covers = (Array.isArray(data.covers) ? data.covers : []).filter(src => typeof src === 'string' && src);
         if (!covers.length) return;
         const start = Math.floor(Math.random() * covers.length);
+        // The server selects a DB album and upgrades only a confirmed Deezer match.
+        // Old backends still return covers, so the normal random selection remains compatible.
+        const candidates = data.heroCover
+          ? [...new Set([data.heroCover, data.heroOriginalCover, ...covers].filter(src => typeof src === 'string' && src))]
+          : covers.map((_, offset) => covers[(start + offset) % covers.length]);
         // Try another database cover if the selected resource is unavailable.
-        for (let offset = 0; offset < Math.min(covers.length, 3); offset++) {
-          const source = covers[(start + offset) % covers.length];
+        for (let offset = 0; offset < Math.min(candidates.length, 3); offset++) {
+          const source = candidates[offset];
           const image = await new Promise(resolve => {
             const img = new Image();
             let retried = false;
