@@ -1917,6 +1917,38 @@
   .out-card.fast-rate-card .out-final-avg { display:none; }
   .out-card.fast-rate-card .out-final-rank { font-size:3rem; min-width:92px; text-align:center; }
 </style>
+<style id="fast-rate-export-styles">
+  .fast-export-preview { width:100%; aspect-ratio:1; position:relative; overflow:hidden; border-radius:18px; }
+  .fast-export-card { position:relative; width:1280px; height:1280px; overflow:hidden; color:#fff; background:#182333; font-family:Inter,Arial,sans-serif; isolation:isolate; }
+  .fast-export-card * { box-sizing:border-box; }
+  .fast-export-ambient { position:absolute; inset:-90px; width:calc(100% + 180px); height:calc(100% + 180px); object-fit:cover; filter:blur(70px) saturate(1.25); opacity:.86; }
+  .fast-export-card::after { content:""; position:absolute; inset:0; background:linear-gradient(125deg,rgba(12,16,30,.18),rgba(12,16,30,.48)), radial-gradient(circle at 78% 82%,var(--fast-glow),transparent 41%); pointer-events:none; }
+  .fast-export-layout { position:relative; z-index:1; display:grid; grid-template-columns:740px 1fr; gap:24px; height:100%; padding:28px; }
+  .fast-export-cover { position:relative; height:100%; overflow:hidden; border:1px solid rgba(255,255,255,.65); border-radius:24px; background:linear-gradient(135deg,#25374b,#614966); box-shadow:0 24px 62px rgba(0,0,0,.34); }
+  .fast-export-cover img { width:100%; height:100%; display:block; object-fit:cover; object-position:center; }
+  .fast-export-panel { min-width:0; height:100%; display:flex; flex-direction:column; padding:24px; border:1px solid rgba(255,255,255,.54); border-radius:24px; background:rgba(20,25,42,.43); box-shadow:0 24px 62px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.25); backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); }
+  .fast-export-brand { display:flex; align-items:center; justify-content:space-between; gap:10px; color:#fff; font:500 13px 'DM Mono',monospace; letter-spacing:6px; white-space:nowrap; }
+  .fast-export-mode { border:1px solid rgba(255,255,255,.65); border-radius:30px; padding:10px 12px; font-size:11px; letter-spacing:2px; background:rgba(255,255,255,.1); }
+  .fast-export-info { margin-top:70px; min-width:0; }
+  .fast-export-artist { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:36px; font-weight:300; line-height:1.12; overflow-wrap:anywhere; text-shadow:0 2px 16px rgba(0,0,0,.4); }
+  .fast-export-title { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; margin:12px 0 18px; font-family:Syne,Inter,sans-serif; font-size:57px; font-weight:800; line-height:1.06; letter-spacing:-2px; overflow-wrap:anywhere; text-shadow:0 2px 20px rgba(0,0,0,.35); }
+  .fast-export-title.long { font-size:43px; }
+  .fast-export-title.very-long { font-size:34px; line-height:1.12; }
+  .fast-export-artist.long { font-size:28px; }
+  .fast-export-subtitle { font:400 21px 'DM Mono',monospace; letter-spacing:4px; text-transform:uppercase; }
+  .fast-export-genres { display:flex; flex-wrap:wrap; gap:9px; margin-top:28px; }
+  .fast-export-genre { max-width:100%; border:1px solid rgba(255,255,255,.65); border-radius:30px; padding:8px 13px; background:rgba(255,255,255,.08); font:400 13px 'DM Mono',monospace; letter-spacing:1px; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fast-export-meta { display:flex; flex-wrap:wrap; gap:20px 32px; margin-top:32px; padding-top:25px; border-top:1px solid rgba(255,255,255,.25); }
+  .fast-export-meta-item { min-width:135px; max-width:100%; }
+  .fast-export-meta-label { color:rgba(255,255,255,.72); font:400 12px 'DM Mono',monospace; letter-spacing:2px; }
+  .fast-export-meta-value { margin-top:7px; font:500 18px Inter,Arial,sans-serif; overflow-wrap:anywhere; }
+  .fast-export-tier-box { display:flex; flex-direction:column; align-items:center; justify-content:space-between; min-height:475px; margin-top:auto; padding:34px 12px 27px; border:1px solid rgba(255,255,255,.58); border-radius:25px; background:linear-gradient(145deg,rgba(255,255,255,.15),rgba(255,255,255,.035)); box-shadow:inset 0 1px rgba(255,255,255,.22),0 20px 45px rgba(0,0,0,.14); text-align:center; }
+  .fast-export-tier-label { font:500 17px 'DM Mono',monospace; letter-spacing:7px; }
+  .fast-export-tier { max-width:100%; color:var(--fast-tier-color); font-family:Syne,Inter,sans-serif; font-size:260px; line-height:1; font-weight:800; letter-spacing:-15px; -webkit-text-stroke:2px rgba(255,255,255,.75); text-shadow:0 0 24px var(--fast-glow),0 0 70px var(--fast-glow),0 14px 30px rgba(0,0,0,.4); }
+  .fast-export-tier.multi { font-size:195px; letter-spacing:-12px; }
+  .fast-export-signoff { font:500 15px 'DM Mono',monospace; letter-spacing:6px; line-height:1.8; }
+  .fast-export-signoff small { display:block; font-size:10px; letter-spacing:4px; }
+</style>
 </head>
 <body>
 
@@ -2402,6 +2434,7 @@
     if (ratingMode === 'fast') selectFastTier(selectedFastTier || 'A');
     document.getElementById('output-text').replaceChildren();
     clearCachedPcExport();
+    clearFastExport();
     const save = document.getElementById('btn-save-db');
     save.disabled = true; save.style.opacity = '0.4'; save.style.cursor = 'not-allowed';
     updateAverage(); saveData();
@@ -2437,6 +2470,7 @@
     if (ratingMode === 'fast' && changed) {
       document.getElementById('output-text').replaceChildren();
       clearCachedPcExport();
+      clearFastExport();
       const save = document.getElementById('btn-save-db');
       save.disabled = true; save.style.opacity = '0.4'; save.style.cursor = 'not-allowed';
       updateAverage(); saveData();
@@ -3179,9 +3213,145 @@
     }).catch(() => {});
   }
 
+  /* Fast Rate has its own square DOM and capture contract. Normal generation is below. */
+  const FAST_EXPORT_SIZE = 1280;
+  const FAST_EXPORT_REVISION = 'fast-rate-export-20260929.1';
+  let fastPreviewObserver = null;
+  let fastExportPromise = null;
+  let fastExportVersion = 0;
+  let fastExportBlob = null;
+
+  function clearFastExport() {
+    fastExportVersion++;
+    fastExportBlob = null;
+    fastExportPromise = null;
+    fastPreviewObserver?.disconnect();
+    fastPreviewObserver = null;
+  }
+
+  function fastExportIdentity() {
+    return JSON.stringify([ratingMode, selectedFastTier, currentAlbum?.title || '', currentAlbum?.artist || '',
+      currentAlbum?.year || '', currentAlbum?.genre || '', currentAlbum?.type || '', currentAlbum?.coverUrl || '']);
+  }
+
+  function fastText(tag, cls, value) {
+    const node = document.createElement(tag);
+    node.className = cls;
+    node.textContent = value;
+    return node;
+  }
+
+  function fastCoverReady(source) {
+    if (!source) return Promise.resolve(false);
+    return new Promise(resolve => {
+      const image = new Image();
+      const timeout = setTimeout(() => resolve(false), 12000);
+      image.onload = async () => {
+        try { if (image.decode) await image.decode(); } catch (_) {}
+        clearTimeout(timeout); resolve(true);
+      };
+      image.onerror = () => { clearTimeout(timeout); resolve(false); };
+      image.src = source;
+    });
+  }
+
+  async function generateFastRate() {
+    if (!FAST_TIERS.includes(selectedFastTier)) { showToast('Elegí un tier para Fast-Rate', 'warning'); return false; }
+    if (!currentAlbum?.title?.trim()) { showToast('Elegí un álbum para Fast-Rate', 'warning'); return false; }
+
+    const identity = fastExportIdentity();
+    const album = { ...currentAlbum };
+    const cover = album.coverUrl || '';
+    const coverLoaded = await fastCoverReady(cover);
+    if (identity !== fastExportIdentity()) return false;
+    clearFastExport();
+
+    const output = document.getElementById('output-text');
+    output.replaceChildren();
+    const preview = document.createElement('div');
+    preview.className = 'fast-export-preview';
+    const card = document.createElement('div');
+    card.className = 'fast-export-card';
+    card.dataset.identity = identity;
+    const tier = selectedFastTier;
+    const color = rankColor(fastTierRank(tier).cls);
+    card.style.setProperty('--fast-tier-color', color);
+    card.style.setProperty('--fast-glow', color + '88');
+
+    if (coverLoaded) {
+      const ambient = document.createElement('img');
+      ambient.className = 'fast-export-ambient'; ambient.src = cover; ambient.alt = '';
+      card.appendChild(ambient);
+    }
+    const layout = fastText('div', 'fast-export-layout', '');
+    const coverFrame = fastText('div', 'fast-export-cover', '');
+    if (coverLoaded) {
+      const image = document.createElement('img');
+      image.src = cover; image.alt = '';
+      coverFrame.appendChild(image);
+    }
+    layout.appendChild(coverFrame);
+    const panel = fastText('div', 'fast-export-panel', '');
+    const brand = fastText('div', 'fast-export-brand', '');
+    brand.append(fastText('span', '', 'ALBUM RATER'), fastText('span', 'fast-export-mode', '✦ FAST RATE'));
+    panel.appendChild(brand);
+
+    const info = fastText('div', 'fast-export-info', '');
+    const artist = String(album.artist || '').trim();
+    if (artist) info.appendChild(fastText('div', 'fast-export-artist' + (artist.length > 27 ? ' long' : ''), artist));
+    const title = String(album.title).trim();
+    info.appendChild(fastText('div', 'fast-export-title' + (title.length > 40 ? ' very-long' : title.length > 24 ? ' long' : ''), title));
+    const type = album.typeSource === 'musicbrainz' ? String(album.type || '').trim() : '';
+    const year = String(album.year || '').trim();
+    const subtitle = [type, year].filter(Boolean).join(' · ');
+    if (subtitle) info.appendChild(fastText('div', 'fast-export-subtitle', subtitle));
+
+    const genres = String(album.genre || '').split(/[,;/|]/).map(value => value.trim()).filter(Boolean).slice(0, 3);
+    if (genres.length) {
+      const pills = fastText('div', 'fast-export-genres', '');
+      genres.forEach(value => pills.appendChild(fastText('span', 'fast-export-genre', value)));
+      info.appendChild(pills);
+    }
+    const metadata = [['TYPE', type], ['RELEASED', String(album.releaseDate || '').trim()],
+      ['LABEL', String(album.label || '').trim()]] .filter(([,value]) => value);
+    if (metadata.length) {
+      const meta = fastText('div', 'fast-export-meta', '');
+      metadata.forEach(([label, value]) => {
+        const item = fastText('div', 'fast-export-meta-item', '');
+        item.append(fastText('div', 'fast-export-meta-label', label), fastText('div', 'fast-export-meta-value', value));
+        meta.appendChild(item);
+      });
+      info.appendChild(meta);
+    }
+    panel.appendChild(info);
+    const tierBox = fastText('div', 'fast-export-tier-box', '');
+    tierBox.append(fastText('div', 'fast-export-tier-label', 'YOUR TIER'),
+      fastText('div', 'fast-export-tier' + (tier.length > 1 ? ' multi' : ''), tier));
+    const signoff = fastText('div', 'fast-export-signoff', 'FAST RATED');
+    signoff.appendChild(fastText('small', '', 'ON ALBUM RATER'));
+    tierBox.appendChild(signoff);
+    panel.appendChild(tierBox);
+    layout.appendChild(panel);
+    card.appendChild(layout);
+    preview.appendChild(card);
+    output.appendChild(preview);
+    const resize = () => { card.style.transformOrigin = 'top left'; card.style.transform = `scale(${preview.clientWidth / FAST_EXPORT_SIZE})`; };
+    fastPreviewObserver = new ResizeObserver(resize);
+    fastPreviewObserver.observe(preview);
+    resize();
+    await Promise.all(Array.from(card.querySelectorAll('img')).map(img => img.decode().catch(() => {})));
+    if (identity !== fastExportIdentity()) { output.replaceChildren(); clearFastExport(); return false; }
+    showToast('✓ Resultado generado');
+    output.scrollIntoView({ behavior:'smooth', block:'nearest' });
+    const save = document.getElementById('btn-save-db');
+    save.disabled = false; save.style.opacity = '1'; save.style.cursor = 'pointer'; save.title = 'Guardar en la base de datos';
+    return true;
+  }
+
   /* ── GENERATE ── */
   async function generate() {
     syncAlbumMeta();
+    if (ratingMode === 'fast') return generateFastRate();
     const fastRate = ratingMode === 'fast';
     if (fastRate && !FAST_TIERS.includes(selectedFastTier)) {
       showToast('Elegí un tier para Fast-Rate', 'warning'); return false;
@@ -3470,8 +3640,11 @@
 
   /* ── COPY (plain text) ── */
   function copyResult() {
-    const card = document.querySelector('.out-card');
+    const card = ratingMode === 'fast' ? document.querySelector('.fast-export-card') : document.querySelector('.out-card');
     if (!card) { showToast('Genera primero', 'warning'); return; }
+    if (ratingMode === 'fast' && card.dataset.identity !== fastExportIdentity()) {
+      showToast('Los datos cambiaron; genera de nuevo', 'warning'); return;
+    }
 
     const lines = [];
     if (rescoreActive && ratingMode !== 'fast') lines.push('[Re-score]', '');
@@ -3492,7 +3665,7 @@
     const penaltyEl = document.querySelector('.out-penalty');
     if (penaltyEl) lines.push('', '−0.25 <5 tracks Reduction');
     const avg  = document.querySelector('.out-final-avg')?.textContent;
-    const rank = document.querySelector('.out-final-rank')?.textContent;
+    const rank = ratingMode === 'fast' ? selectedFastTier : document.querySelector('.out-final-rank')?.textContent;
     if (ratingMode === 'fast') lines.push('', `Fast-Rate: [${rank}]`);
     else if (avg) lines.push('', `Average: ${avg}  [${rank}]`);
 
@@ -3660,6 +3833,7 @@
   }
 
   async function exportImage() {
+    if (ratingMode === 'fast') return exportFastImage();
     const card = document.querySelector('.out-card');
     if (!card) { showToast('Genera primero', 'warning'); return; }
 
@@ -3684,11 +3858,82 @@
     }
   }
 
+  async function captureFastRate(card) {
+    const token = localStorage.getItem('auth_token');
+    if (!token) throw new Error('Sesión inválida o expirada');
+    if (card.dataset.identity !== fastExportIdentity()) throw new Error('Los datos cambiaron; genera la preview de nuevo');
+    const clone = card.cloneNode(true);
+    clone.style.removeProperty('transform');
+    clone.style.removeProperty('transform-origin');
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 75000);
+    try {
+      await document.fonts.ready;
+      await Promise.all(Array.from(card.querySelectorAll('img')).map(img => img.decode().catch(() => {})));
+      const response = await fetch(BOT_SERVER + '/render-fast-rating', {
+        method:'POST', headers:{ 'Content-Type':'application/json' }, signal:controller.signal,
+        body:JSON.stringify({ token, cardHtml:clone.outerHTML,
+          cssText:document.getElementById('fast-rate-export-styles').textContent,
+          fontUrls:collectRatingExportFonts() })
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'No se pudo renderizar Fast Rate');
+      }
+      if (response.headers.get('X-Fast-Rate-Export-Revision') !== FAST_EXPORT_REVISION ||
+          response.headers.get('X-Rating-Renderer') !== 'chromium' ||
+          Number(response.headers.get('X-Rating-Image-Width')) !== 1920) {
+        throw new Error('El renderer de Fast Rate todavía se está actualizando. Recargá e intentá de nuevo.');
+      }
+      const blob = await response.blob();
+      if (!blob.type.includes('png') || blob.size < 1000) throw new Error('El servidor devolvió una imagen inválida');
+      return blob;
+    } catch (error) {
+      if (error?.name === 'AbortError') throw new Error('El renderer tardó demasiado. Intentá nuevamente.');
+      throw error;
+    } finally { clearTimeout(timeout); }
+  }
+
+  async function ensureFastExport(card = document.querySelector('.fast-export-card')) {
+    if (!card || card.dataset.identity !== fastExportIdentity()) throw new Error('Genera de nuevo la preview de Fast Rate');
+    if (fastExportBlob) return fastExportBlob;
+    if (fastExportPromise) return fastExportPromise;
+    const version = fastExportVersion;
+    const request = captureFastRate(card).then(blob => {
+      if (version !== fastExportVersion || card.dataset.identity !== fastExportIdentity())
+        throw new Error('La preview cambió durante la exportación');
+      fastExportBlob = blob;
+      return blob;
+    });
+    fastExportPromise = request;
+    try { return await request; }
+    finally { if (fastExportPromise === request) fastExportPromise = null; }
+  }
+
+  async function exportFastImage() {
+    const card = document.querySelector('.fast-export-card');
+    if (!card) { showToast('Genera primero', 'warning'); return; }
+    const button = document.getElementById('export-btn');
+    const originalText = button?.innerHTML;
+    if (button) { button.disabled = true; button.innerHTML = '⏳ Exportando…'; }
+    try {
+      const blob = await ensureFastExport(card);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `${(currentAlbum?.title || 'album').replace(/[^a-z0-9]/gi, '_')}_fast_rating.png`;
+      link.href = url; link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showToast('Imagen guardada', 'success');
+    } catch (error) { console.error(error); showToast(error.message || 'Error al exportar', 'error'); }
+    finally { if (button) { button.disabled = false; button.innerHTML = originalText; } }
+  }
+
   /* ── CLEAR ── */
   function clearAll() {
     showConfirm({ album: { title: '¿Limpiar todo?', artist: 'Se perderá la sesión actual', coverUrl: null } }, () => {
       document.getElementById('rows-body').innerHTML = '';
     clearCachedPcExport();
+    clearFastExport();
     document.getElementById('output-text').innerHTML = '';
     document.getElementById('cover-score').value = '';
     document.getElementById('dot-cover').className = 'score-dot';
@@ -4636,7 +4881,7 @@
         highResCover = coverPayload.replace('100x100bb', '1200x1200bb').replace('100x100', '1200x1200');
       }
 
-      currentAlbum = { title: albumTitle, artist, year: resolvedYear, genre: resolvedGenre, coverUrl: highResCover, type: data['release-group']?.['primary-type'] || data['release-group']?.['secondary-types']?.[0] || '' };
+      currentAlbum = { title: albumTitle, artist, year: resolvedYear, genre: resolvedGenre, coverUrl: highResCover, type: data['release-group']?.['primary-type'] || data['release-group']?.['secondary-types']?.[0] || '', typeSource:'musicbrainz' };
       warmAlbumDescription(currentAlbum, tracks.length);
       showAlbumBanner(currentAlbum);
       status.textContent = `✓ ${tracks.length} tracks de ${artist} — ${albumTitle} cargados`;
@@ -5105,6 +5350,15 @@
     currentAlbum.artist = document.getElementById('album-art-artist').value;
     currentAlbum.year   = document.getElementById('album-art-year').value;
     currentAlbum.genre  = document.getElementById('album-art-genre').value;
+    if (ratingMode === 'fast') {
+      const preview = document.querySelector('.fast-export-card');
+      if (preview && preview.dataset.identity !== fastExportIdentity()) {
+        document.getElementById('output-text').replaceChildren();
+        clearFastExport();
+        const save = document.getElementById('btn-save-db');
+        save.disabled = true; save.style.opacity = '0.4'; save.style.cursor = 'not-allowed';
+      }
+    }
     saveData();
   }
 
@@ -5121,6 +5375,10 @@
       ph.style.display  = 'none';
       if (!currentAlbum) currentAlbum = { title: '', artist: '', year: '', coverUrl: null };
       currentAlbum.coverUrl = dataUrl;
+      if (ratingMode === 'fast') {
+        document.getElementById('output-text').replaceChildren();
+        clearFastExport();
+      }
       document.getElementById('album-art-wrap').classList.add('show');
       updatePageBg(dataUrl);
     };
@@ -5668,8 +5926,11 @@
 
   /* ── SAVE TO DATABASE (new Guardar behavior) ── */
   async function saveToDatabase() {
-    const card = document.querySelector('.out-card');
+    const card = ratingMode === 'fast' ? document.querySelector('.fast-export-card') : document.querySelector('.out-card');
     if (!card) { showToast('⚠ Genera primero el resultado'); return; }
+    if (ratingMode === 'fast' && card.dataset.identity !== fastExportIdentity()) {
+      showToast('Los datos cambiaron; genera de nuevo', 'warning'); return;
+    }
 
     const btn = document.getElementById('btn-save-db');
     const origText = btn.innerHTML;
@@ -5699,7 +5960,7 @@
       const rawAvg = scoreCount > 0 ? scoreSum / scoreCount : null;
       const { finalAvg } = finalizeTrackAverage(rawAvg, scoreCount);
       const computedAvg  = fastRate ? '' : (finalAvg !== null ? finalAvg.toFixed(2) : '');
-      const computedRank = document.querySelector('.out-final-rank')?.textContent || '';
+      const computedRank = fastRate ? selectedFastTier : (document.querySelector('.out-final-rank')?.textContent || '');
 
       const userId = localStorage.getItem('discord_user_id') || '';
 
@@ -5955,7 +6216,7 @@
       return;
     }
 
-    const card = document.querySelector('.out-card');
+    const card = ratingMode === 'fast' ? document.querySelector('.fast-export-card') : document.querySelector('.out-card');
     if (!card) { showToast('⚠ Genera el resultado primero'); return; }
 
     const btn = document.getElementById('discord-btn');
@@ -5965,7 +6226,7 @@
 
     try {
       // Discord recibe el PNG maestro generado silenciosamente en segundo plano.
-      const blob = await ensureCachedPcExport(card);
+      const blob = ratingMode === 'fast' ? await ensureFastExport(card) : await ensureCachedPcExport(card);
 
             // Build title: - BLONDE [FRANK OCEAN]
       const albumTitle  = (currentAlbum?.title  || 'Álbum').toUpperCase();
@@ -5985,7 +6246,7 @@
       formData.append('cover_url', currentAlbum?.coverUrl || '');
       formData.append('cover_score', ratingMode === 'fast' ? '' : (document.getElementById('cover-score')?.value || ''));
       formData.append('final_score', ratingMode === 'fast' ? '' : (document.querySelector('.out-final-avg')?.textContent || ''));
-      formData.append('final_rank',  document.querySelector('.out-final-rank')?.textContent || '');
+      formData.append('final_rank', ratingMode === 'fast' ? selectedFastTier : (document.querySelector('.out-final-rank')?.textContent || ''));
 
       // Collect track scores from the input rows (not the output display)
       const trackInputRows = document.querySelectorAll('#rows-body .row');
