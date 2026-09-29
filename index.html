@@ -3242,17 +3242,36 @@
   }
 
   function fastCoverReady(source) {
-    if (!source) return Promise.resolve(false);
+    if (!source) return Promise.resolve(null);
     return new Promise(resolve => {
       const image = new Image();
-      const timeout = setTimeout(() => resolve(false), 12000);
+      const timeout = setTimeout(() => resolve(null), 12000);
       image.onload = async () => {
         try { if (image.decode) await image.decode(); } catch (_) {}
-        clearTimeout(timeout); resolve(true);
+        clearTimeout(timeout); resolve(image);
       };
-      image.onerror = () => { clearTimeout(timeout); resolve(false); };
+      image.onerror = () => { clearTimeout(timeout); resolve(null); };
       image.src = source;
     });
+  }
+
+  function prepareFastArtwork(source, image) {
+    if (!image) return { cover:'', ambient:'' };
+    if (!source.startsWith('data:')) return { cover:source, ambient:source };
+    try {
+      const raster = (limit, quality) => {
+        const scale = Math.min(1, limit / Math.max(image.naturalWidth, image.naturalHeight));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+        const context = canvas.getContext('2d');
+        context.fillStyle = '#182333';
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg', quality);
+      };
+      return { cover:raster(1600, .88), ambient:raster(96, .7) };
+    } catch (_) { return { cover:source, ambient:'' }; }
   }
 
   async function generateFastRate() {
@@ -3262,7 +3281,7 @@
     const identity = fastExportIdentity();
     const album = { ...currentAlbum };
     const cover = album.coverUrl || '';
-    const coverLoaded = await fastCoverReady(cover);
+    const artwork = prepareFastArtwork(cover, await fastCoverReady(cover));
     if (identity !== fastExportIdentity()) return false;
     clearFastExport();
 
@@ -3278,16 +3297,16 @@
     card.style.setProperty('--fast-tier-color', color);
     card.style.setProperty('--fast-glow', color + '88');
 
-    if (coverLoaded) {
+    if (artwork.ambient) {
       const ambient = document.createElement('img');
-      ambient.className = 'fast-export-ambient'; ambient.src = cover; ambient.alt = '';
+      ambient.className = 'fast-export-ambient'; ambient.src = artwork.ambient; ambient.alt = '';
       card.appendChild(ambient);
     }
     const layout = fastText('div', 'fast-export-layout', '');
     const coverFrame = fastText('div', 'fast-export-cover', '');
-    if (coverLoaded) {
+    if (artwork.cover) {
       const image = document.createElement('img');
-      image.src = cover; image.alt = '';
+      image.src = artwork.cover; image.alt = '';
       coverFrame.appendChild(image);
     }
     layout.appendChild(coverFrame);
