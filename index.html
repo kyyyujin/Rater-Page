@@ -59,6 +59,47 @@
   h1 span { color: var(--accent); }
   .subtitle { margin-top: 10px; color: var(--muted); font-size: 13px; }
 
+  /* Mobile cover hero — isolated from desktop and rating export styles. */
+  #mobile-cover-hero { display: none; }
+  @media (max-width: 899px) {
+    #mobile-cover-hero {
+      --mobile-hero-color: 38, 42, 54;
+      display: grid; place-items: center;
+      position: relative; isolation: isolate; overflow: hidden;
+      width: 100vw; margin: -40px calc(50% - 50vw) 24px;
+      height: clamp(380px, 64vh, 620px);
+      height: clamp(380px, 64svh, 620px);
+      background: rgb(var(--mobile-hero-color));
+    }
+    #mobile-cover-hero-art {
+      position: absolute; inset: 0; z-index: -2;
+      background-size: cover; background-position: center;
+      opacity: 0; transition: opacity .5s ease;
+    }
+    #mobile-cover-hero.loaded #mobile-cover-hero-art { opacity: 1; }
+    #mobile-cover-hero::before {
+      content: ''; position: absolute; inset: 0; z-index: -1;
+      background: linear-gradient(to bottom,
+        rgba(0,0,0,.12) 0%, rgba(0,0,0,.18) 38%,
+        rgba(var(--mobile-hero-color),0) 48%,
+        rgba(var(--mobile-hero-color),.65) 72%,
+        rgb(var(--mobile-hero-color)) 86%, var(--bg) 100%);
+    }
+    #mobile-cover-hero-title {
+      padding: 24px; text-align: center;
+      font-family: 'Syne', sans-serif; font-size: clamp(36px, 10vw, 64px);
+      font-weight: 800; line-height: 1.08; letter-spacing: -.04em;
+      color: #fff; text-shadow: 0 2px 6px rgba(0,0,0,.8), 0 8px 32px rgba(0,0,0,.5);
+    }
+    #mobile-rater-header > h1,
+    #mobile-rater-header > .subtitle,
+    #mobile-rater-header .badge { display: none; }
+    #mobile-rater-header > div:first-child { justify-content: flex-end !important; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #mobile-cover-hero-art { transition: none; }
+  }
+
   /* SEARCH */
   /* ── DESKTOP HERO BANNER ── */
   #desktop-hero {
@@ -1992,6 +2033,12 @@
 <div id="page-bg"></div>
 <div class="container">
 
+  <!-- Mobile header: a random database cover, independent of the album being rated. -->
+  <section id="mobile-cover-hero" aria-labelledby="mobile-cover-hero-title">
+    <div id="mobile-cover-hero-art" aria-hidden="true"></div>
+    <h1 id="mobile-cover-hero-title">Album Rate</h1>
+  </section>
+
   <!-- NOW PLAYING -->
   <div id="now-playing-bar" onclick="npClickLoad()" title="Click para cargar este álbum" style="cursor:pointer">
     <div id="np-bg"></div>
@@ -2013,7 +2060,7 @@
     <div id="np-footer">vía <a href="https://last.fm" target="_blank" onclick="event.stopPropagation()">last.fm</a></div>
   </div>
 
-  <header>
+  <header id="mobile-rater-header">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
       <div class="badge" style="margin-bottom:0;">🎵 Album Rater</div>
       <div id="user-session-chip-mobile" style="display:none;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:20px;background:rgba(88,101,242,0.1);border:1px solid rgba(88,101,242,0.3);cursor:pointer;" onclick="openDiscordSettings()">
@@ -6947,6 +6994,7 @@
     startNowPlayingPolling();
     initAdminSelector();
     loadHeroBg();
+    loadMobileHeroBg();
     syncHeroSearch();
     relocateModalsToBody();
     watchModalsForBlurAndFab();
@@ -7030,6 +7078,75 @@
       img.src = src;
     } catch {}
   }
+
+  // Mobile-only color sampling: do not change the palette used by either export.
+  function mobileHeroDominantColor(image) {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 40;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0, 40, 40);
+    const pixels = ctx.getImageData(0, 0, 40, 40).data;
+    const buckets = new Map();
+    for (let i = 0; i < pixels.length; i += 4) {
+      if (pixels[i + 3] < 128) continue;
+      const [r, g, b] = [pixels[i], pixels[i + 1], pixels[i + 2]];
+      const key = `${r >> 5},${g >> 5},${b >> 5}`;
+      const bucket = buckets.get(key) || { count: 0, r: 0, g: 0, b: 0 };
+      bucket.count++; bucket.r += r; bucket.g += g; bucket.b += b;
+      buckets.set(key, bucket);
+    }
+    const dominant = [...buckets.values()].sort((a, b) => b.count - a.count)[0];
+    if (!dominant) return [38, 42, 54];
+    return [dominant.r, dominant.g, dominant.b].map(channel => Math.round(channel / dominant.count));
+  }
+
+  let mobileHeroTask = null;
+  function loadMobileHeroBg() {
+    if (!window.matchMedia('(max-width: 899px)').matches) return;
+    if (mobileHeroTask) return mobileHeroTask;
+    mobileHeroTask = (async () => {
+      const hero = document.getElementById('mobile-cover-hero');
+      const art = document.getElementById('mobile-cover-hero-art');
+      if (!hero || !art) return;
+      try {
+        const response = await fetch(`${BOT_SERVER}/covers`);
+        if (!response.ok) return;
+        const data = await response.json();
+        const covers = (Array.isArray(data.covers) ? data.covers : []).filter(src => typeof src === 'string' && src);
+        if (!covers.length) return;
+        const start = Math.floor(Math.random() * covers.length);
+        // Try another database cover if the selected resource is unavailable.
+        for (let offset = 0; offset < Math.min(covers.length, 3); offset++) {
+          const source = covers[(start + offset) % covers.length];
+          const image = await new Promise(resolve => {
+            const img = new Image();
+            let retried = false;
+            const timer = setTimeout(() => finish(null), 10000);
+            function finish(value) {
+              clearTimeout(timer); img.onload = img.onerror = null; resolve(value);
+            }
+            img.crossOrigin = 'anonymous';
+            img.onload = () => finish(img);
+            img.onerror = () => {
+              // A provider without CORS can still display its cover; sampling uses a neutral fallback.
+              if (retried) { finish(null); return; }
+              retried = true; img.removeAttribute('crossorigin'); img.src = source;
+            };
+            img.src = source;
+          });
+          if (!image) continue;
+          try { hero.style.setProperty('--mobile-hero-color', mobileHeroDominantColor(image).join(', ')); } catch (_) {}
+          art.style.backgroundImage = `url(${JSON.stringify(source)})`;
+          hero.classList.add('loaded');
+          return;
+        }
+      } catch (_) { /* Keep the title and fallback gradient when covers are unavailable. */ }
+    })();
+    return mobileHeroTask;
+  }
+  window.matchMedia('(max-width: 899px)').addEventListener('change', () => {
+    if (document.getElementById('main-app').style.display !== 'none') loadMobileHeroBg();
+  });
 
   function syncHeroSearch() {
     const searchSection   = document.getElementById('search-section-mobile');
@@ -7189,3 +7306,4 @@
 </script>
 </body>
 </html>
+
