@@ -64,6 +64,7 @@
   @media (max-width: 899px) {
     #mobile-cover-hero {
       --mobile-hero-color: 38, 42, 54;
+      --mobile-hero-shade: 19, 20, 24;
       display: grid; place-items: center;
       position: relative; isolation: isolate; overflow: hidden;
       width: 100vw; margin: -40px calc(50% - 50vw) 24px;
@@ -80,39 +81,37 @@
     #mobile-cover-hero::before {
       content: ''; position: absolute; inset: 0; z-index: -1;
       background:
-        linear-gradient(to bottom, rgba(0,0,0,.08) 0%, transparent 35%,
-          rgba(8,8,9,.12) 58%, rgba(8,8,9,.5) 80%, var(--bg) 100%),
-        linear-gradient(to bottom, rgba(var(--mobile-hero-color),0) 42%,
-          rgba(var(--mobile-hero-color),.12) 60%,
-          rgba(var(--mobile-hero-color),.4) 84%, rgba(var(--mobile-hero-color),.55) 100%);
+        linear-gradient(to bottom, rgba(0,0,0,.05), transparent 38%),
+        linear-gradient(to bottom, rgba(var(--mobile-hero-color),0) 45%,
+          rgba(var(--mobile-hero-color),.08) 56%,
+          rgba(var(--mobile-hero-color),.22) 68%,
+          rgba(var(--mobile-hero-shade),.62) 82%,
+          rgba(var(--mobile-hero-shade),.9) 91%, var(--bg) 100%);
     }
     #mobile-cover-hero-copy {
-      position: absolute; left: 0; right: 0; bottom: 17%;
-      padding: 24px; text-align: center;
-      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      position: absolute; left: 0; right: 0; top: 73%; transform: translateY(-50%);
+      padding: 0 28px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 18px;
       color: #fff; font-family: 'Inter', sans-serif;
     }
     #mobile-cover-hero-kicker {
-      font-size: 10px; font-weight: 500; letter-spacing: .2em;
-      text-transform: uppercase; line-height: 1.5; color: rgba(255,255,255,.8);
+      font-size: 9px; font-weight: 400; letter-spacing: .24em;
+      text-transform: uppercase; line-height: 1.5; color: rgba(255,255,255,.65);
     }
     #mobile-cover-hero-title {
-      font-family: 'Inter', sans-serif; font-size: clamp(36px, 10vw, 64px);
-      font-weight: 400; line-height: 1.08; letter-spacing: -.04em;
-      color: #fff; text-shadow: 0 2px 14px rgba(0,0,0,.3);
+      font-family: 'Inter', sans-serif; font-size: clamp(40px, 11vw, 68px);
+      font-weight: 300; line-height: 1.08; letter-spacing: -.045em;
+      color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,.22);
     }
-    #mobile-cover-hero-album {
-      max-width: 100%; font-size: 13px; line-height: 1.5;
-      text-shadow: 0 1px 8px rgba(0,0,0,.25);
+    #mobile-cover-hero-detail {
+      display: flex; align-items: center; gap: 12px; width: 116px;
+      color: rgba(255,255,255,.55);
     }
-    #mobile-cover-hero-album-title {
-      display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
-      overflow: hidden; overflow-wrap: break-word; font-weight: 500;
+    #mobile-cover-hero-detail::before, #mobile-cover-hero-detail::after {
+      content: ''; flex: 1; height: 1px; transform: scaleY(.5);
+      background: rgba(255,255,255,.4);
     }
-    #mobile-cover-hero-album-artist {
-      display: block; font-size: 11px; color: rgba(255,255,255,.7);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    }
+    #mobile-cover-hero-detail svg { width: 8px; height: 8px; flex-shrink: 0; }
     #mobile-rater-header > h1,
     #mobile-rater-header > .subtitle,
     #mobile-rater-header .badge { display: none; }
@@ -2061,9 +2060,8 @@
     <div id="mobile-cover-hero-copy">
       <p id="mobile-cover-hero-kicker">Tu música, tu criterio</p>
       <h1 id="mobile-cover-hero-title">Album Rate</h1>
-      <div id="mobile-cover-hero-album" hidden>
-        <span id="mobile-cover-hero-album-title"></span>
-        <span id="mobile-cover-hero-album-artist"></span>
+      <div id="mobile-cover-hero-detail" aria-hidden="true">
+        <svg viewBox="0 0 10 10" fill="currentColor"><path d="M5 0 6.25 3.75 10 5 6.25 6.25 5 10 3.75 6.25 0 5 3.75 3.75Z" /></svg>
       </div>
     </div>
   </section>
@@ -7129,6 +7127,17 @@
     return [dominant.r, dominant.g, dominant.b].map(channel => Math.round(channel / dominant.count));
   }
 
+  function mobileHeroHighResolutionSource(source) {
+    try {
+      const url = new URL(source);
+      if (url.protocol !== 'https:' || !url.hostname.endsWith('.dzcdn.net') || !url.pathname.startsWith('/images/cover/')) return source;
+      const size = url.pathname.match(/\/(\d+)x(\d+)-000000-/);
+      if (size && Math.min(Number(size[1]), Number(size[2])) >= 1800) return source;
+      url.pathname = url.pathname.replace(/\/\d+x\d+-000000-\d+-0-0\.jpg$/, '/1800x1800-000000-100-0-0.jpg');
+      return url.href;
+    } catch (_) { return source; }
+  }
+
   let mobileHeroTask = null;
   function loadMobileHeroBg() {
     if (!window.matchMedia('(max-width: 899px)').matches) return;
@@ -7146,11 +7155,13 @@
         const start = Math.floor(Math.random() * covers.length);
         // The server selects a DB album and upgrades only a confirmed Deezer match.
         // Old backends still return covers, so the normal random selection remains compatible.
-        const candidates = data.heroCover
-          ? [...new Set([data.heroCover, data.heroOriginalCover, ...covers].filter(src => typeof src === 'string' && src))]
-          : covers.map((_, offset) => covers[(start + offset) % covers.length]);
+        const selectedCover = typeof data.heroCover === 'string' ? data.heroCover : covers[start];
+        const candidates = [...new Set([
+          mobileHeroHighResolutionSource(selectedCover), selectedCover, data.heroOriginalCover,
+          ...covers.map((_, offset) => covers[(start + offset) % covers.length])
+        ].filter(src => typeof src === 'string' && src))];
         // Try another database cover if the selected resource is unavailable.
-        for (let offset = 0; offset < Math.min(candidates.length, 3); offset++) {
+        for (let offset = 0; offset < Math.min(candidates.length, 4); offset++) {
           const source = candidates[offset];
           const image = await new Promise(resolve => {
             const img = new Image();
@@ -7169,16 +7180,12 @@
             img.src = source;
           });
           if (!image) continue;
-          try { hero.style.setProperty('--mobile-hero-color', mobileHeroDominantColor(image).join(', ')); } catch (_) {}
+          try {
+            const color = mobileHeroDominantColor(image);
+            hero.style.setProperty('--mobile-hero-color', color.join(', '));
+            hero.style.setProperty('--mobile-hero-shade', color.map(channel => Math.round(channel * .24 + 8 * .76)).join(', '));
+          } catch (_) {}
           art.style.backgroundImage = `url(${JSON.stringify(source)})`;
-          const metadata = document.getElementById('mobile-cover-hero-album');
-          const album = data.heroAlbum;
-          // Only identify the selected album while its upgraded or original artwork is displayed.
-          if (metadata && album?.title && (source === data.heroCover || source === data.heroOriginalCover)) {
-            document.getElementById('mobile-cover-hero-album-title').textContent = album.title;
-            document.getElementById('mobile-cover-hero-album-artist').textContent = album.artist || '';
-            metadata.hidden = false;
-          } else if (metadata) { metadata.hidden = true; }
           hero.classList.add('loaded');
           return;
         }
