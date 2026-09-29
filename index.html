@@ -78,6 +78,30 @@
       opacity: 0; transition: opacity .5s ease;
     }
     #mobile-cover-hero.loaded #mobile-cover-hero-art { opacity: 1; }
+    #mobile-cover-hero.is-loading:not(.loaded)::after {
+      content: ''; position: absolute; inset: 0; z-index: -2;
+      background: linear-gradient(110deg, #171b24 20%, #2a3040 48%, #171b24 76%);
+      background-size: 220% 100%; animation: mobileHeroLoading 3s ease-in-out infinite;
+    }
+    @keyframes mobileHeroLoading {
+      0%, 100% { background-position: 100% 0; }
+      50% { background-position: 0 0; }
+    }
+    #mobile-cover-hero #user-session-chip-mobile {
+      position: absolute; z-index: 3;
+      top: calc(16px + env(safe-area-inset-top, 0px));
+      right: max(16px, env(safe-area-inset-right, 0px));
+      align-items: center; gap: 8px; min-height: 42px; padding: 6px 12px 6px 6px;
+      border-radius: 24px; border: 1px solid rgba(255,255,255,.18);
+      background: rgba(8,8,9,.5); color: #fff; cursor: pointer;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    }
+    #user-session-chip-mobile:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+    #user-session-avatar-mobile { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
+    #user-session-name-mobile {
+      font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
+      max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
     #mobile-cover-hero::before {
       content: ''; position: absolute; inset: 0; z-index: -1;
       background:
@@ -115,10 +139,10 @@
     #mobile-rater-header > h1,
     #mobile-rater-header > .subtitle,
     #mobile-rater-header .badge { display: none; }
-    #mobile-rater-header > div:first-child { justify-content: flex-end !important; }
   }
   @media (prefers-reduced-motion: reduce) {
     #mobile-cover-hero-art { transition: none; }
+    #mobile-cover-hero.is-loading:not(.loaded)::after { animation: none; }
   }
 
   /* SEARCH */
@@ -2055,8 +2079,12 @@
 <div class="container">
 
   <!-- Mobile header: a random database cover, independent of the album being rated. -->
-  <section id="mobile-cover-hero" aria-labelledby="mobile-cover-hero-title">
+  <section id="mobile-cover-hero" class="is-loading" aria-labelledby="mobile-cover-hero-title">
     <div id="mobile-cover-hero-art" aria-hidden="true"></div>
+    <button type="button" id="user-session-chip-mobile" style="display:none;" onclick="openDiscordSettings()" aria-label="Abrir configuración de tu cuenta">
+      <img id="user-session-avatar-mobile" src="" alt="" style="display:none;" />
+      <span id="user-session-name-mobile"></span>
+    </button>
     <div id="mobile-cover-hero-copy">
       <p id="mobile-cover-hero-kicker">Tu música, tu criterio</p>
       <h1 id="mobile-cover-hero-title">Album Rate</h1>
@@ -2088,13 +2116,6 @@
   </div>
 
   <header id="mobile-rater-header">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;">
-      <div class="badge" style="margin-bottom:0;">🎵 Album Rater</div>
-      <div id="user-session-chip-mobile" style="display:none;align-items:center;gap:6px;padding:4px 10px 4px 4px;border-radius:20px;background:rgba(88,101,242,0.1);border:1px solid rgba(88,101,242,0.3);cursor:pointer;" onclick="openDiscordSettings()">
-        <img id="user-session-avatar-mobile" src="" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;display:block;" />
-        <span id="user-session-name-mobile" style="font-family:'DM Mono',monospace;font-size:11px;color:#c8c8e0;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
-      </div>
-    </div>
     <h1>Califica<br><span>tus álbumes</span></h1>
     <p class="subtitle">Ponle nota a cada track — el promedio se calcula solo</p>
   <a href="https://album-vault.vercel.app/" style="display:inline-block;margin-top:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(200,240,96,0.3);background:rgba(200,240,96,0.07);color:var(--accent);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;text-decoration:none;letter-spacing:0.05em;">🗄 Ir al Vault</a>
@@ -7139,6 +7160,68 @@
   }
 
   let mobileHeroTask = null;
+  const MOBILE_HERO_CACHE_KEY = 'albumRaterMobileHeroArtwork';
+
+  function paintMobileHero(source, color = [38, 42, 54]) {
+    const hero = document.getElementById('mobile-cover-hero');
+    const art = document.getElementById('mobile-cover-hero-art');
+    if (!hero || !art) return;
+    hero.style.setProperty('--mobile-hero-color', color.join(', '));
+    hero.style.setProperty('--mobile-hero-shade', color.map(channel => Math.round(channel * .24 + 8 * .76)).join(', '));
+    art.style.backgroundImage = `url(${JSON.stringify(source)})`;
+    hero.classList.add('loaded');
+  }
+
+  function restoreMobileHeroPreview() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(MOBILE_HERO_CACHE_KEY) || 'null');
+      if (!saved || typeof saved.preview !== 'string' || saved.preview.length > 320000 ||
+          !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(saved.preview) ||
+          !Array.isArray(saved.color) || saved.color.length !== 3 ||
+          !saved.color.every(channel => Number.isFinite(channel) && channel >= 0 && channel <= 255)) return;
+      paintMobileHero(saved.preview, saved.color);
+    } catch (_) { /* Storage may be disabled or contain an incomplete old preview. */ }
+  }
+
+  function rememberMobileHeroPreview(image, color) {
+    try {
+      // Store a small local image rather than a URL that may need another network request.
+      const scale = Math.min(1, 480 / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = `rgb(${color.join(',')})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const preview = canvas.toDataURL('image/jpeg', .78);
+      if (preview.length <= 320000) localStorage.setItem(MOBILE_HERO_CACHE_KEY, JSON.stringify({ preview, color }));
+    } catch (_) { /* CORS or storage quota must not prevent displaying the live artwork. */ }
+  }
+
+  function mobileHeroImageReady(source) {
+    return new Promise(resolve => {
+      const img = new Image();
+      let retried = false;
+      const timer = setTimeout(() => finish(null), 8000);
+      function finish(value) {
+        clearTimeout(timer); img.onload = img.onerror = null; resolve(value);
+      }
+      img.crossOrigin = 'anonymous';
+      img.fetchPriority = 'high';
+      img.decoding = 'async';
+      img.onload = async () => {
+        try { if (img.decode) await img.decode(); } catch (_) {}
+        finish(img);
+      };
+      img.onerror = () => {
+        if (retried) { finish(null); return; }
+        retried = true; img.removeAttribute('crossorigin'); img.src = source;
+      };
+      img.src = source;
+    });
+  }
+
   function loadMobileHeroBg() {
     if (!window.matchMedia('(max-width: 899px)').matches) return;
     if (mobileHeroTask) return mobileHeroTask;
@@ -7146,8 +7229,13 @@
       const hero = document.getElementById('mobile-cover-hero');
       const art = document.getElementById('mobile-cover-hero-art');
       if (!hero || !art) return;
+      restoreMobileHeroPreview();
+      hero.classList.add('is-loading');
+      const controller = new AbortController();
+      const fetchTimeout = setTimeout(() => controller.abort(), 20000);
       try {
-        const response = await fetch(`${BOT_SERVER}/covers?quality=deezer`);
+        const response = await fetch(`${BOT_SERVER}/covers?quality=deezer`, { signal: controller.signal });
+        clearTimeout(fetchTimeout);
         if (!response.ok) return;
         const data = await response.json();
         const covers = (Array.isArray(data.covers) ? data.covers : []).filter(src => typeof src === 'string' && src);
@@ -7163,33 +7251,16 @@
         // Try another database cover if the selected resource is unavailable.
         for (let offset = 0; offset < Math.min(candidates.length, 4); offset++) {
           const source = candidates[offset];
-          const image = await new Promise(resolve => {
-            const img = new Image();
-            let retried = false;
-            const timer = setTimeout(() => finish(null), 10000);
-            function finish(value) {
-              clearTimeout(timer); img.onload = img.onerror = null; resolve(value);
-            }
-            img.crossOrigin = 'anonymous';
-            img.onload = () => finish(img);
-            img.onerror = () => {
-              // A provider without CORS can still display its cover; sampling uses a neutral fallback.
-              if (retried) { finish(null); return; }
-              retried = true; img.removeAttribute('crossorigin'); img.src = source;
-            };
-            img.src = source;
-          });
+          const image = await mobileHeroImageReady(source);
           if (!image) continue;
-          try {
-            const color = mobileHeroDominantColor(image);
-            hero.style.setProperty('--mobile-hero-color', color.join(', '));
-            hero.style.setProperty('--mobile-hero-shade', color.map(channel => Math.round(channel * .24 + 8 * .76)).join(', '));
-          } catch (_) {}
-          art.style.backgroundImage = `url(${JSON.stringify(source)})`;
-          hero.classList.add('loaded');
+          let color = [38, 42, 54];
+          try { color = mobileHeroDominantColor(image); } catch (_) {}
+          paintMobileHero(source, color);
+          rememberMobileHeroPreview(image, color);
           return;
         }
       } catch (_) { /* Keep the title and fallback gradient when covers are unavailable. */ }
+      finally { clearTimeout(fetchTimeout); hero.classList.remove('is-loading'); }
     })();
     return mobileHeroTask;
   }
@@ -7314,6 +7385,8 @@
     } catch (e) {}
   });
 
+  // Public artwork can preload while the real backend session check runs.
+  loadMobileHeroBg();
   checkAuth();
 
   // Restart Now Playing polling after saving settings (handled inside saveDiscordSettings directly)
