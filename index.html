@@ -1922,26 +1922,23 @@
   .fast-export-card { position:relative; width:1280px; height:1280px; overflow:hidden; color:#fff; background:#182333; font-family:Inter,Arial,sans-serif; isolation:isolate; }
   .fast-export-card * { box-sizing:border-box; }
   .fast-export-artwork { position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:cover; object-position:center; }
-  .fast-export-brand { position:absolute; z-index:1; top:42px; left:42px; display:flex; align-items:center; gap:16px; padding:11px 16px; border:1px solid rgba(255,255,255,.28); border-radius:30px; background:rgba(8,12,22,.48); color:#fff; font:500 12px 'DM Mono',monospace; letter-spacing:3px; text-shadow:0 2px 8px rgba(0,0,0,.55); white-space:nowrap; }
-  .fast-export-mode { padding-left:14px; border-left:1px solid rgba(255,255,255,.5); font-size:11px; letter-spacing:2px; }
-  .fast-export-info { position:absolute; z-index:1; top:134px; right:42px; width:475px; max-height:650px; overflow:hidden; padding:30px 32px; border:1px solid rgba(255,255,255,.25); border-radius:24px; background:linear-gradient(110deg,rgba(10,14,27,.32),rgba(10,14,27,.74)); box-shadow:0 14px 40px rgba(0,0,0,.2); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
-  .fast-export-artist { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:32px; font-weight:400; line-height:1.13; overflow-wrap:anywhere; text-shadow:0 2px 12px rgba(0,0,0,.65); }
-  .fast-export-title { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; margin:12px 0 0; font-family:Syne,Inter,sans-serif; font-size:53px; font-weight:800; line-height:1.06; letter-spacing:-2px; overflow-wrap:anywhere; text-shadow:0 3px 16px rgba(0,0,0,.6); }
-  .fast-export-title.long { font-size:40px; }
-  .fast-export-title.very-long { font-size:31px; line-height:1.12; }
-  .fast-export-artist.long { font-size:26px; }
-  .fast-export-genres { display:flex; flex-wrap:wrap; gap:8px; margin-top:25px; }
-  .fast-export-genre { max-width:100%; border:1px solid rgba(255,255,255,.5); border-radius:30px; padding:7px 11px; background:rgba(0,0,0,.2); font:400 11px 'DM Mono',monospace; letter-spacing:1px; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .fast-export-meta { display:flex; flex-wrap:wrap; gap:16px 26px; margin-top:25px; padding-top:20px; border-top:1px solid rgba(255,255,255,.23); }
-  .fast-export-meta-item { min-width:110px; max-width:100%; }
-  .fast-export-meta-label { color:rgba(255,255,255,.72); font:400 10px 'DM Mono',monospace; letter-spacing:2px; }
-  .fast-export-meta-value { margin-top:6px; font:500 15px Inter,Arial,sans-serif; overflow-wrap:anywhere; }
-  .fast-export-tier-box { position:absolute; z-index:1; right:52px; bottom:62px; width:420px; height:380px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; text-align:center; }
-  .fast-export-tier-box::before { content:""; position:absolute; inset:8% -2%; z-index:-1; border-radius:50%; background:radial-gradient(ellipse,rgba(8,10,20,.54),rgba(8,10,20,.17) 53%,transparent 75%); pointer-events:none; }
-  .fast-export-tier-label { padding:8px 13px; border-radius:25px; background:rgba(8,12,22,.48); font:500 14px 'DM Mono',monospace; letter-spacing:5px; text-shadow:0 2px 8px rgba(0,0,0,.7); }
-  .fast-export-tier { max-width:100%; color:var(--fast-tier-color); font-family:Syne,Inter,sans-serif; font-size:290px; line-height:.98; font-weight:800; letter-spacing:-16px; -webkit-text-stroke:2px rgba(255,255,255,.8); text-shadow:0 0 20px var(--fast-glow),0 0 56px var(--fast-glow),0 12px 18px rgba(0,0,0,.8); }
-  .fast-export-tier.multi { font-size:205px; letter-spacing:-13px; }
-  .fast-export-signoff { position:absolute; z-index:1; left:43px; bottom:39px; padding:9px 13px; border-radius:12px; background:rgba(8,12,22,.48); font:500 11px 'DM Mono',monospace; letter-spacing:3px; line-height:1.65; text-shadow:0 2px 8px rgba(0,0,0,.6); }
+  .fast-export-brand { position:absolute; z-index:1; top:39px; left:42px; display:flex; flex-direction:column; gap:5px; color:#fff; font:500 14px 'DM Mono',monospace; letter-spacing:4px; text-shadow:0 2px 12px rgba(0,0,0,.9); white-space:nowrap; }
+  .fast-export-mode { font-size:13px; letter-spacing:3px; }
+  .fast-export-info { position:absolute; z-index:1; top:250px; right:42px; width:450px; max-height:390px; overflow:hidden; padding:22px 25px; border:1px solid rgba(255,255,255,.28); border-radius:20px; background:linear-gradient(110deg,rgba(10,14,27,.24),rgba(10,14,27,.48)); box-shadow:0 10px 26px rgba(0,0,0,.14); backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); }
+  .fast-export-artist { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:28px; font-weight:400; line-height:1.12; overflow-wrap:normal; word-break:normal; text-shadow:0 2px 12px rgba(0,0,0,.75); }
+  .fast-export-title { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; margin:7px 0 0; font-family:Syne,Inter,sans-serif; font-size:48px; font-weight:800; line-height:1.08; letter-spacing:-1px; overflow-wrap:normal; word-break:normal; hyphens:none; text-wrap:balance; text-shadow:0 3px 16px rgba(0,0,0,.75); }
+  .fast-export-genres { display:flex; flex-wrap:wrap; gap:7px; margin-top:15px; }
+  .fast-export-genre { max-width:100%; border:1px solid rgba(255,255,255,.5); border-radius:30px; padding:6px 10px; background:rgba(0,0,0,.16); font:400 10px 'DM Mono',monospace; letter-spacing:1px; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fast-export-meta { display:flex; flex-wrap:wrap; gap:12px 22px; margin-top:16px; padding-top:14px; border-top:1px solid rgba(255,255,255,.23); }
+  .fast-export-meta-item { min-width:96px; max-width:100%; }
+  .fast-export-meta-label { color:rgba(255,255,255,.8); font:400 9px 'DM Mono',monospace; letter-spacing:2px; }
+  .fast-export-meta-value { margin-top:4px; font:500 13px Inter,Arial,sans-serif; overflow-wrap:anywhere; text-shadow:0 2px 8px rgba(0,0,0,.65); }
+  .fast-export-tier-box { position:absolute; z-index:1; right:42px; bottom:74px; width:450px; height:350px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; text-align:center; }
+  .fast-export-tier-box::before { content:""; position:absolute; inset:8% -4%; z-index:-1; border-radius:50%; background:radial-gradient(ellipse,rgba(8,10,20,.38),rgba(8,10,20,.1) 54%,transparent 76%); pointer-events:none; }
+  .fast-export-tier-label { font:500 12px 'DM Mono',monospace; letter-spacing:4px; text-shadow:0 2px 10px rgba(0,0,0,.9); }
+  .fast-export-tier { max-width:100%; color:var(--fast-tier-color); font-family:Inter,Arial,sans-serif; font-size:280px; line-height:1; font-weight:900; letter-spacing:-15px; -webkit-text-stroke:4px var(--fast-tier-color); text-shadow:0 2px 0 rgba(255,255,255,.75),0 8px 0 rgba(0,0,0,.36),0 0 30px var(--fast-glow),0 0 62px var(--fast-glow),0 18px 22px rgba(0,0,0,.8); }
+  .fast-export-tier.multi { font-size:215px; letter-spacing:-12px; }
+  .fast-export-signoff { position:absolute; z-index:1; left:43px; bottom:39px; font:500 11px 'DM Mono',monospace; letter-spacing:3px; line-height:1.65; text-shadow:0 2px 10px rgba(0,0,0,.9); }
   .fast-export-signoff small { display:block; font-size:9px; letter-spacing:2px; }
 </style>
 </head>
@@ -3226,7 +3223,8 @@
 
   function fastExportIdentity() {
     return JSON.stringify([ratingMode, selectedFastTier, currentAlbum?.title || '', currentAlbum?.artist || '',
-      currentAlbum?.year || '', currentAlbum?.genre || '', currentAlbum?.type || '', currentAlbum?.coverUrl || '']);
+      currentAlbum?.year || '', currentAlbum?.genre || '', currentAlbum?.type || '', currentAlbum?.coverUrl || '',
+      currentAlbum?.releaseDate || '', currentAlbum?.releaseIdentity || '', currentAlbum?.label || '']);
   }
 
   function fastText(tag, cls, value) {
@@ -3234,6 +3232,36 @@
     node.className = cls;
     node.textContent = value;
     return node;
+  }
+
+  function fitFastInfoText(node, value, { maxSize, minSize, maxLines, weight, family }) {
+    const context = document.createElement('canvas').getContext('2d');
+    const words = value.trim().split(/\s+/);
+    // The info panel is 450px wide with 25px padding on each side. Leave
+    // extra room for font metrics and letter-spacing differences in Chromium.
+    const width = 388;
+    for (let size = maxSize; size >= minSize; size--) {
+      context.font = `${weight} ${size}px ${family}`;
+      let lines = 1;
+      let line = '';
+      let fits = true;
+      for (const word of words) {
+        if (context.measureText(word).width > width) { fits = false; break; }
+        const next = line ? `${line} ${word}` : word;
+        if (context.measureText(next).width <= width) line = next;
+        else { lines++; line = word; }
+      }
+      if (fits && lines <= maxLines && !(lines > 1 && line.length === 1)) {
+        node.style.fontSize = `${size}px`;
+        if (words.length === 1) node.style.whiteSpace = 'nowrap';
+        return;
+      }
+    }
+    node.style.fontSize = `${minSize}px`;
+    if (words.length === 1) {
+      node.style.whiteSpace = 'nowrap';
+      node.style.textOverflow = 'ellipsis';
+    }
   }
 
   function fastCoverReady(source) {
@@ -3274,6 +3302,7 @@
     const album = { ...currentAlbum };
     const cover = album.coverUrl || '';
     const artwork = prepareFastArtwork(cover, await fastCoverReady(cover));
+    await document.fonts.ready;
     if (identity !== fastExportIdentity()) return false;
     clearFastExport();
 
@@ -3296,24 +3325,30 @@
       card.appendChild(image);
     }
     const brand = fastText('div', 'fast-export-brand', '');
-    brand.append(fastText('span', '', 'ALBUM RATER'), fastText('span', 'fast-export-mode', '✦ FAST RATE'));
+    brand.append(fastText('span', '', 'ALBUM RATER'), fastText('span', 'fast-export-mode', 'FAST RATE'));
     card.appendChild(brand);
 
     const info = fastText('div', 'fast-export-info', '');
     const artist = String(album.artist || '').trim();
-    if (artist) info.appendChild(fastText('div', 'fast-export-artist' + (artist.length > 27 ? ' long' : ''), artist));
+    if (artist) {
+      const artistNode = fastText('div', 'fast-export-artist', artist);
+      fitFastInfoText(artistNode, artist, { maxSize:28, minSize:19, maxLines:2, weight:400, family:'Inter' });
+      info.appendChild(artistNode);
+    }
     const title = String(album.title).trim();
-    info.appendChild(fastText('div', 'fast-export-title' + (title.length > 40 ? ' very-long' : title.length > 24 ? ' long' : ''), title));
-    const type = album.typeSource === 'musicbrainz' ? String(album.type || '').trim() : '';
-    const year = String(album.year || '').trim();
+    const titleNode = fastText('div', 'fast-export-title', title);
+    fitFastInfoText(titleNode, title, { maxSize:48, minSize:20, maxLines:2, weight:800, family:'Syne' });
+    info.appendChild(titleNode);
+    const sameRelease = album.releaseIdentity === `${title}\u0000${artist}`;
+    const type = sameRelease && album.typeSource === 'musicbrainz' ? String(album.type || '').trim() : '';
     const genres = String(album.genre || '').split(/[,;/|]/).map(value => value.trim()).filter(Boolean).slice(0, 3);
     if (genres.length) {
       const pills = fastText('div', 'fast-export-genres', '');
       genres.forEach(value => pills.appendChild(fastText('span', 'fast-export-genre', value)));
       info.appendChild(pills);
     }
-    const metadata = [['TYPE', type], ['RELEASED', String(album.releaseDate || year).trim()],
-      ['LABEL', String(album.label || '').trim()]] .filter(([,value]) => value);
+    const metadata = [['TYPE', type], ['RELEASED', sameRelease ? String(album.releaseDate || '').trim() : ''],
+      ['LABEL', sameRelease ? String(album.label || '').trim() : '']] .filter(([,value]) => value);
     if (metadata.length) {
       const meta = fastText('div', 'fast-export-meta', '');
       metadata.forEach(([label, value]) => {
@@ -3332,6 +3367,17 @@
     card.append(tierBox, signoff);
     preview.appendChild(card);
     output.appendChild(preview);
+    // Optional metadata gives way to the album identity on crowded covers.
+    const meta = info.querySelector('.fast-export-meta');
+    const pills = info.querySelector('.fast-export-genres');
+    while (info.scrollHeight > info.clientHeight + 1 && meta?.lastElementChild) {
+      meta.lastElementChild.remove();
+      if (!meta.childElementCount) meta.remove();
+    }
+    while (info.scrollHeight > info.clientHeight + 1 && pills?.lastElementChild) {
+      pills.lastElementChild.remove();
+      if (!pills.childElementCount) pills.remove();
+    }
     const resize = () => { card.style.transformOrigin = 'top left'; card.style.transform = `scale(${preview.clientWidth / FAST_EXPORT_SIZE})`; };
     fastPreviewObserver = new ResizeObserver(resize);
     fastPreviewObserver.observe(preview);
@@ -4529,7 +4575,7 @@
         addRow(trackName, savedScore);
       });
 
-      currentAlbum = { title: albumTitle, artist, year, genre, coverUrl: highResCover, type: resolveReleaseType({ title:albumTitle }, tracks.length) };
+      currentAlbum = { title: albumTitle, artist, year, genre, coverUrl: highResCover, releaseDate: itunesAlbum.releaseDate || '', releaseIdentity:`${albumTitle}\u0000${artist}`, type: resolveReleaseType({ title:albumTitle }, tracks.length) };
       warmAlbumDescription(currentAlbum, tracks.length);
       showAlbumBanner(currentAlbum);
       status.textContent = `✓ ${tracks.length} tracks de ${artist} — ${albumTitle} cargados`;
@@ -4878,7 +4924,7 @@
         highResCover = coverPayload.replace('100x100bb', '1200x1200bb').replace('100x100', '1200x1200');
       }
 
-      currentAlbum = { title: albumTitle, artist, year: resolvedYear, genre: resolvedGenre, coverUrl: highResCover, type: data['release-group']?.['primary-type'] || data['release-group']?.['secondary-types']?.[0] || '', typeSource:'musicbrainz' };
+      currentAlbum = { title: albumTitle, artist, year: resolvedYear, genre: resolvedGenre, coverUrl: highResCover, releaseDate: data.date || '', releaseIdentity:`${albumTitle}\u0000${artist}`, type: data['release-group']?.['primary-type'] || data['release-group']?.['secondary-types']?.[0] || '', typeSource:'musicbrainz' };
       warmAlbumDescription(currentAlbum, tracks.length);
       showAlbumBanner(currentAlbum);
       status.textContent = `✓ ${tracks.length} tracks de ${artist} — ${albumTitle} cargados`;
