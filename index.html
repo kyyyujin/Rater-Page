@@ -1921,33 +1921,28 @@
   .fast-export-preview { width:100%; aspect-ratio:1; position:relative; overflow:hidden; border-radius:18px; }
   .fast-export-card { position:relative; width:1280px; height:1280px; overflow:hidden; color:#fff; background:#182333; font-family:Inter,Arial,sans-serif; isolation:isolate; }
   .fast-export-card * { box-sizing:border-box; }
-  .fast-export-ambient { position:absolute; inset:-90px; width:calc(100% + 180px); height:calc(100% + 180px); object-fit:cover; filter:blur(70px) saturate(1.25); opacity:.86; }
-  .fast-export-card::after { content:""; position:absolute; inset:0; background:linear-gradient(125deg,rgba(12,16,30,.18),rgba(12,16,30,.48)), radial-gradient(circle at 78% 82%,var(--fast-glow),transparent 41%); pointer-events:none; }
-  .fast-export-layout { position:relative; z-index:1; display:grid; grid-template-columns:740px 1fr; gap:24px; height:100%; padding:28px; }
-  .fast-export-cover { position:relative; height:100%; overflow:hidden; border:1px solid rgba(255,255,255,.65); border-radius:24px; background:linear-gradient(135deg,#25374b,#614966); box-shadow:0 24px 62px rgba(0,0,0,.34); }
-  .fast-export-cover img { width:100%; height:100%; display:block; object-fit:cover; object-position:center; }
-  .fast-export-panel { min-width:0; height:100%; display:flex; flex-direction:column; padding:24px; border:1px solid rgba(255,255,255,.54); border-radius:24px; background:rgba(20,25,42,.43); box-shadow:0 24px 62px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.25); backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); }
-  .fast-export-brand { display:flex; align-items:center; justify-content:space-between; gap:10px; color:#fff; font:500 13px 'DM Mono',monospace; letter-spacing:6px; white-space:nowrap; }
-  .fast-export-mode { border:1px solid rgba(255,255,255,.65); border-radius:30px; padding:10px 12px; font-size:11px; letter-spacing:2px; background:rgba(255,255,255,.1); }
-  .fast-export-info { margin-top:70px; min-width:0; }
-  .fast-export-artist { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:36px; font-weight:300; line-height:1.12; overflow-wrap:anywhere; text-shadow:0 2px 16px rgba(0,0,0,.4); }
-  .fast-export-title { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; margin:12px 0 18px; font-family:Syne,Inter,sans-serif; font-size:57px; font-weight:800; line-height:1.06; letter-spacing:-2px; overflow-wrap:anywhere; text-shadow:0 2px 20px rgba(0,0,0,.35); }
-  .fast-export-title.long { font-size:43px; }
-  .fast-export-title.very-long { font-size:34px; line-height:1.12; }
-  .fast-export-artist.long { font-size:28px; }
-  .fast-export-subtitle { font:400 21px 'DM Mono',monospace; letter-spacing:4px; text-transform:uppercase; }
-  .fast-export-genres { display:flex; flex-wrap:wrap; gap:9px; margin-top:28px; }
-  .fast-export-genre { max-width:100%; border:1px solid rgba(255,255,255,.65); border-radius:30px; padding:8px 13px; background:rgba(255,255,255,.08); font:400 13px 'DM Mono',monospace; letter-spacing:1px; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .fast-export-meta { display:flex; flex-wrap:wrap; gap:20px 32px; margin-top:32px; padding-top:25px; border-top:1px solid rgba(255,255,255,.25); }
-  .fast-export-meta-item { min-width:135px; max-width:100%; }
-  .fast-export-meta-label { color:rgba(255,255,255,.72); font:400 12px 'DM Mono',monospace; letter-spacing:2px; }
-  .fast-export-meta-value { margin-top:7px; font:500 18px Inter,Arial,sans-serif; overflow-wrap:anywhere; }
-  .fast-export-tier-box { display:flex; flex-direction:column; align-items:center; justify-content:space-between; min-height:475px; margin-top:auto; padding:34px 12px 27px; border:1px solid rgba(255,255,255,.58); border-radius:25px; background:linear-gradient(145deg,rgba(255,255,255,.15),rgba(255,255,255,.035)); box-shadow:inset 0 1px rgba(255,255,255,.22),0 20px 45px rgba(0,0,0,.14); text-align:center; }
-  .fast-export-tier-label { font:500 17px 'DM Mono',monospace; letter-spacing:7px; }
-  .fast-export-tier { max-width:100%; color:var(--fast-tier-color); font-family:Syne,Inter,sans-serif; font-size:260px; line-height:1; font-weight:800; letter-spacing:-15px; -webkit-text-stroke:2px rgba(255,255,255,.75); text-shadow:0 0 24px var(--fast-glow),0 0 70px var(--fast-glow),0 14px 30px rgba(0,0,0,.4); }
-  .fast-export-tier.multi { font-size:195px; letter-spacing:-12px; }
-  .fast-export-signoff { font:500 15px 'DM Mono',monospace; letter-spacing:6px; line-height:1.8; }
-  .fast-export-signoff small { display:block; font-size:10px; letter-spacing:4px; }
+  .fast-export-artwork { position:absolute; inset:0; width:100%; height:100%; display:block; object-fit:cover; object-position:center; }
+  .fast-export-brand { position:absolute; z-index:1; top:42px; left:42px; display:flex; align-items:center; gap:16px; padding:11px 16px; border:1px solid rgba(255,255,255,.28); border-radius:30px; background:rgba(8,12,22,.48); color:#fff; font:500 12px 'DM Mono',monospace; letter-spacing:3px; text-shadow:0 2px 8px rgba(0,0,0,.55); white-space:nowrap; }
+  .fast-export-mode { padding-left:14px; border-left:1px solid rgba(255,255,255,.5); font-size:11px; letter-spacing:2px; }
+  .fast-export-info { position:absolute; z-index:1; top:134px; right:42px; width:475px; max-height:650px; overflow:hidden; padding:30px 32px; border:1px solid rgba(255,255,255,.25); border-radius:24px; background:linear-gradient(110deg,rgba(10,14,27,.32),rgba(10,14,27,.74)); box-shadow:0 14px 40px rgba(0,0,0,.2); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); }
+  .fast-export-artist { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; font-size:32px; font-weight:400; line-height:1.13; overflow-wrap:anywhere; text-shadow:0 2px 12px rgba(0,0,0,.65); }
+  .fast-export-title { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:3; overflow:hidden; margin:12px 0 0; font-family:Syne,Inter,sans-serif; font-size:53px; font-weight:800; line-height:1.06; letter-spacing:-2px; overflow-wrap:anywhere; text-shadow:0 3px 16px rgba(0,0,0,.6); }
+  .fast-export-title.long { font-size:40px; }
+  .fast-export-title.very-long { font-size:31px; line-height:1.12; }
+  .fast-export-artist.long { font-size:26px; }
+  .fast-export-genres { display:flex; flex-wrap:wrap; gap:8px; margin-top:25px; }
+  .fast-export-genre { max-width:100%; border:1px solid rgba(255,255,255,.5); border-radius:30px; padding:7px 11px; background:rgba(0,0,0,.2); font:400 11px 'DM Mono',monospace; letter-spacing:1px; text-transform:uppercase; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .fast-export-meta { display:flex; flex-wrap:wrap; gap:16px 26px; margin-top:25px; padding-top:20px; border-top:1px solid rgba(255,255,255,.23); }
+  .fast-export-meta-item { min-width:110px; max-width:100%; }
+  .fast-export-meta-label { color:rgba(255,255,255,.72); font:400 10px 'DM Mono',monospace; letter-spacing:2px; }
+  .fast-export-meta-value { margin-top:6px; font:500 15px Inter,Arial,sans-serif; overflow-wrap:anywhere; }
+  .fast-export-tier-box { position:absolute; z-index:1; right:52px; bottom:62px; width:420px; height:380px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; text-align:center; }
+  .fast-export-tier-box::before { content:""; position:absolute; inset:8% -2%; z-index:-1; border-radius:50%; background:radial-gradient(ellipse,rgba(8,10,20,.54),rgba(8,10,20,.17) 53%,transparent 75%); pointer-events:none; }
+  .fast-export-tier-label { padding:8px 13px; border-radius:25px; background:rgba(8,12,22,.48); font:500 14px 'DM Mono',monospace; letter-spacing:5px; text-shadow:0 2px 8px rgba(0,0,0,.7); }
+  .fast-export-tier { max-width:100%; color:var(--fast-tier-color); font-family:Syne,Inter,sans-serif; font-size:290px; line-height:.98; font-weight:800; letter-spacing:-16px; -webkit-text-stroke:2px rgba(255,255,255,.8); text-shadow:0 0 20px var(--fast-glow),0 0 56px var(--fast-glow),0 12px 18px rgba(0,0,0,.8); }
+  .fast-export-tier.multi { font-size:205px; letter-spacing:-13px; }
+  .fast-export-signoff { position:absolute; z-index:1; left:43px; bottom:39px; padding:9px 13px; border-radius:12px; background:rgba(8,12,22,.48); font:500 11px 'DM Mono',monospace; letter-spacing:3px; line-height:1.65; text-shadow:0 2px 8px rgba(0,0,0,.6); }
+  .fast-export-signoff small { display:block; font-size:9px; letter-spacing:2px; }
 </style>
 </head>
 <body>
@@ -3256,22 +3251,19 @@
   }
 
   function prepareFastArtwork(source, image) {
-    if (!image) return { cover:'', ambient:'' };
-    if (!source.startsWith('data:')) return { cover:source, ambient:source };
+    if (!image) return '';
+    if (!source.startsWith('data:')) return source;
     try {
-      const raster = (limit, quality) => {
-        const scale = Math.min(1, limit / Math.max(image.naturalWidth, image.naturalHeight));
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
-        canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
-        const context = canvas.getContext('2d');
-        context.fillStyle = '#182333';
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(image, 0, 0, canvas.width, canvas.height);
-        return canvas.toDataURL('image/jpeg', quality);
-      };
-      return { cover:raster(1600, .88), ambient:raster(96, .7) };
-    } catch (_) { return { cover:source, ambient:'' }; }
+      const scale = Math.min(1, 1600 / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const context = canvas.getContext('2d');
+      context.fillStyle = '#182333';
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL('image/jpeg', .88);
+    } catch (_) { return source; }
   }
 
   async function generateFastRate() {
@@ -3297,23 +3289,15 @@
     card.style.setProperty('--fast-tier-color', color);
     card.style.setProperty('--fast-glow', color + '88');
 
-    if (artwork.ambient) {
-      const ambient = document.createElement('img');
-      ambient.className = 'fast-export-ambient'; ambient.src = artwork.ambient; ambient.alt = '';
-      card.appendChild(ambient);
-    }
-    const layout = fastText('div', 'fast-export-layout', '');
-    const coverFrame = fastText('div', 'fast-export-cover', '');
-    if (artwork.cover) {
+    if (artwork) {
       const image = document.createElement('img');
-      image.src = artwork.cover; image.alt = '';
-      coverFrame.appendChild(image);
+      image.className = 'fast-export-artwork';
+      image.src = artwork; image.alt = '';
+      card.appendChild(image);
     }
-    layout.appendChild(coverFrame);
-    const panel = fastText('div', 'fast-export-panel', '');
     const brand = fastText('div', 'fast-export-brand', '');
     brand.append(fastText('span', '', 'ALBUM RATER'), fastText('span', 'fast-export-mode', '✦ FAST RATE'));
-    panel.appendChild(brand);
+    card.appendChild(brand);
 
     const info = fastText('div', 'fast-export-info', '');
     const artist = String(album.artist || '').trim();
@@ -3322,16 +3306,13 @@
     info.appendChild(fastText('div', 'fast-export-title' + (title.length > 40 ? ' very-long' : title.length > 24 ? ' long' : ''), title));
     const type = album.typeSource === 'musicbrainz' ? String(album.type || '').trim() : '';
     const year = String(album.year || '').trim();
-    const subtitle = [type, year].filter(Boolean).join(' · ');
-    if (subtitle) info.appendChild(fastText('div', 'fast-export-subtitle', subtitle));
-
     const genres = String(album.genre || '').split(/[,;/|]/).map(value => value.trim()).filter(Boolean).slice(0, 3);
     if (genres.length) {
       const pills = fastText('div', 'fast-export-genres', '');
       genres.forEach(value => pills.appendChild(fastText('span', 'fast-export-genre', value)));
       info.appendChild(pills);
     }
-    const metadata = [['TYPE', type], ['RELEASED', String(album.releaseDate || '').trim()],
+    const metadata = [['TYPE', type], ['RELEASED', String(album.releaseDate || year).trim()],
       ['LABEL', String(album.label || '').trim()]] .filter(([,value]) => value);
     if (metadata.length) {
       const meta = fastText('div', 'fast-export-meta', '');
@@ -3342,16 +3323,13 @@
       });
       info.appendChild(meta);
     }
-    panel.appendChild(info);
+    card.appendChild(info);
     const tierBox = fastText('div', 'fast-export-tier-box', '');
     tierBox.append(fastText('div', 'fast-export-tier-label', 'YOUR TIER'),
       fastText('div', 'fast-export-tier' + (tier.length > 1 ? ' multi' : ''), tier));
     const signoff = fastText('div', 'fast-export-signoff', 'FAST RATED');
     signoff.appendChild(fastText('small', '', 'ON ALBUM RATER'));
-    tierBox.appendChild(signoff);
-    panel.appendChild(tierBox);
-    layout.appendChild(panel);
-    card.appendChild(layout);
+    card.append(tierBox, signoff);
     preview.appendChild(card);
     output.appendChild(preview);
     const resize = () => { card.style.transformOrigin = 'top left'; card.style.transform = `scale(${preview.clientWidth / FAST_EXPORT_SIZE})`; };
