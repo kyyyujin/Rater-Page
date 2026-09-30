@@ -95,13 +95,32 @@
       border-radius: 24px; border: 1px solid rgba(255,255,255,.18);
       background: rgba(8,8,9,.5); color: #fff; cursor: pointer;
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      max-width: calc(50% - 24px);
     }
     #user-session-chip-mobile:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
     #user-session-avatar-mobile { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; }
     #user-session-name-mobile {
       font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500;
-      max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      min-width: 0; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
+    #user-session-avatar-mobile { flex-shrink: 0; }
+    #mobile-cover-hero-actions {
+      position: absolute; z-index: 3;
+      top: calc(16px + env(safe-area-inset-top, 0px));
+      left: max(16px, env(safe-area-inset-left, 0px));
+      display: flex; flex-direction: column; gap: 7px;
+      width: calc(50% - 24px); max-width: 170px;
+    }
+    #mobile-cover-hero-actions a, #mobile-cover-hero-actions button {
+      display: flex; align-items: center; gap: 7px; min-height: 42px;
+      padding: 7px 10px; border-radius: 24px; border: 1px solid rgba(255,255,255,.18);
+      background: rgba(8,8,9,.5); color: #fff; cursor: pointer; text-decoration: none;
+      font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 400; text-align: left;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    }
+    #mobile-cover-hero-actions .hero-action-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #mobile-cover-hero-actions .hero-action-icon { flex-shrink: 0; }
+    #mobile-cover-hero-actions :is(a,button):focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
     #mobile-cover-hero::before {
       content: ''; position: absolute; inset: 0; z-index: -1;
       background:
@@ -113,7 +132,8 @@
           rgba(var(--mobile-hero-shade),.9) 91%, var(--bg) 100%);
     }
     #mobile-cover-hero-copy {
-      position: absolute; left: 0; right: 0; top: 73%; transform: translateY(-50%);
+      position: absolute; left: 0; right: 0;
+      top: min(88%, calc(100% - clamp(58px, 13vw, 78px))); transform: translateY(-50%);
       padding: 0 28px; text-align: center;
       display: flex; flex-direction: column; align-items: center; gap: 18px;
       color: #fff; font-family: 'Inter', sans-serif;
@@ -136,9 +156,7 @@
       background: rgba(255,255,255,.4);
     }
     #mobile-cover-hero-detail svg { width: 8px; height: 8px; flex-shrink: 0; }
-    #mobile-rater-header > h1,
-    #mobile-rater-header > .subtitle,
-    #mobile-rater-header .badge { display: none; }
+    #mobile-rater-header { display: none; }
   }
   @media (prefers-reduced-motion: reduce) {
     #mobile-cover-hero-art { transition: none; }
@@ -2081,6 +2099,17 @@
   <!-- Mobile header: a random database cover, independent of the album being rated. -->
   <section id="mobile-cover-hero" class="is-loading" aria-labelledby="mobile-cover-hero-title">
     <div id="mobile-cover-hero-art" aria-hidden="true"></div>
+    <nav id="mobile-cover-hero-actions" aria-label="Accesos del Rater">
+      <a id="mobile-hero-vault" href="https://album-vault.vercel.app/" aria-label="Ir al Vault">
+        <span class="hero-action-icon" aria-hidden="true">🗄</span><span class="hero-action-label">Ir al Vault</span>
+      </a>
+      <button type="button" id="mobile-hero-dedup" onclick="openDedupModal()" aria-label="Borrar duplicados">
+        <span class="hero-action-icon" aria-hidden="true">🗑</span><span class="hero-action-label">Borrar duplicados</span>
+      </button>
+      <button type="button" id="mobile-hero-settings" onclick="openDiscordSettings()" aria-label="Configuración">
+        <span class="hero-action-icon" aria-hidden="true">⚙</span><span class="hero-action-label">Configuración</span>
+      </button>
+    </nav>
     <button type="button" id="user-session-chip-mobile" style="display:none;" onclick="openDiscordSettings()" aria-label="Abrir configuración de tu cuenta">
       <img id="user-session-avatar-mobile" src="" alt="" style="display:none;" />
       <span id="user-session-name-mobile"></span>
@@ -2118,9 +2147,6 @@
   <header id="mobile-rater-header">
     <h1>Califica<br><span>tus álbumes</span></h1>
     <p class="subtitle">Ponle nota a cada track — el promedio se calcula solo</p>
-  <a href="https://album-vault.vercel.app/" style="display:inline-block;margin-top:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(200,240,96,0.3);background:rgba(200,240,96,0.07);color:var(--accent);font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;text-decoration:none;letter-spacing:0.05em;">🗄 Ir al Vault</a>
-  <button onclick="openDiscordSettings()" style="margin-top:12px;padding:6px 14px;border-radius:6px;border:1px solid rgba(88,101,242,0.4);background:rgba(88,101,242,0.08);color:#7289da;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">⚙ Configuración</button>
-  <button onclick="openDedupModal()" style="margin-top:8px;padding:6px 14px;border-radius:6px;border:1px solid rgba(220,60,60,0.35);background:rgba(220,60,60,0.07);color:#e05555;font-family:'DM Mono',monospace;font-size:11px;cursor:pointer;">🗑 Borrar duplicados</button>
   </header>
 
   <!-- DISCORD SETTINGS MODAL -->
