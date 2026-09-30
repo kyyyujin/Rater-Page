@@ -1355,6 +1355,59 @@
   }
   .album-edit-input.genre::placeholder { color: rgba(96,212,240,0.4); }
 
+  /* Mobile album panel follows the desktop cover + bottom metadata composition. */
+  @media (max-width: 899px) {
+    #album-art-wrap {
+      position: relative; isolation: isolate; overflow: hidden;
+      padding: 0; gap: 0;
+      height: clamp(320px, 90vw, 420px);
+    }
+    #album-art-wrap.show { display: block; }
+    #album-art-wrap .album-cover-btn {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      border-radius: inherit;
+    }
+    #album-art-wrap .album-art-img,
+    #album-art-wrap .album-cover-placeholder {
+      width: 100%; height: 100%; border: none; border-radius: inherit;
+    }
+    #album-art-wrap .album-cover-placeholder {
+      font-size: 48px;
+      background: linear-gradient(135deg, var(--surface2), var(--surface));
+    }
+    #album-art-wrap::after {
+      content: ''; position: absolute; inset: 0; z-index: 1;
+      background: linear-gradient(to top, rgba(0,0,0,.88) 0%, rgba(0,0,0,.45) 45%, transparent 75%);
+      border-radius: inherit; pointer-events: none;
+    }
+    #album-art-wrap .album-art-info {
+      position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+      display: flex; flex-direction: column; gap: 4px;
+      min-width: 0; padding: 14px 16px;
+    }
+    #album-art-wrap .album-edit-input {
+      min-height: 30px; text-overflow: ellipsis;
+    }
+    #album-art-wrap .album-edit-input.title {
+      color: #fff; font-size: clamp(18px, 5vw, 24px);
+    }
+    #album-art-wrap .album-edit-input.artist { color: rgba(255,255,255,.75); font-size: 14px; }
+    #album-art-wrap .album-edit-input.year { color: rgba(255,255,255,.6); font-size: 12px; }
+    #album-art-wrap .album-edit-input.genre {
+      color: var(--accent2); font-size: 12px;
+      background: rgba(96,212,240,.18); border-color: rgba(96,212,240,.4);
+    }
+    #album-art-wrap .album-edit-input::placeholder { color: rgba(255,255,255,.55); }
+    #album-art-wrap .album-edit-input:hover { background: rgba(255,255,255,.12); }
+    #album-art-wrap .album-edit-input:focus { background: rgba(255,255,255,.16); }
+    #album-art-wrap .album-cover-overlay {
+      inset: 12px 12px auto auto; z-index: 2;
+      width: 34px; height: 34px; border-radius: 50%;
+      font-size: 16px; opacity: 1; background: rgba(0,0,0,.45);
+      border: 1px solid rgba(255,255,255,.18);
+    }
+  }
+
   /* History panel */
   .history-section {
     background: var(--surface); border: 1px solid var(--border);
