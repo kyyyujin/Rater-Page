@@ -108,18 +108,18 @@
       position: absolute; z-index: 3;
       top: calc(16px + env(safe-area-inset-top, 0px));
       left: max(16px, env(safe-area-inset-left, 0px));
-      display: flex; flex-direction: column; gap: 7px;
-      width: calc(50% - 24px); max-width: 170px;
+      display: flex; flex-direction: column; align-items: flex-start; gap: 5px;
+      width: max-content; max-width: min(146px, calc(50% - 24px));
     }
     #mobile-cover-hero-actions a, #mobile-cover-hero-actions button {
-      display: flex; align-items: center; gap: 7px; min-height: 42px;
-      padding: 7px 10px; border-radius: 24px; border: 1px solid rgba(255,255,255,.18);
+      display: flex; align-items: center; gap: 5px; min-height: 32px; max-width: 100%;
+      padding: 5px 9px; border-radius: 18px; border: 1px solid rgba(255,255,255,.18);
       background: rgba(8,8,9,.5); color: #fff; cursor: pointer; text-decoration: none;
-      font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 400; text-align: left;
+      font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 400; line-height: 1.3; text-align: left;
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     }
     #mobile-cover-hero-actions .hero-action-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    #mobile-cover-hero-actions .hero-action-icon { flex-shrink: 0; }
+    #mobile-cover-hero-actions .hero-action-icon { width: 14px; height: 14px; flex-shrink: 0; }
     #mobile-cover-hero-actions :is(a,button):focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
     #mobile-cover-hero::before {
       content: ''; position: absolute; inset: 0; z-index: -1;
@@ -2101,13 +2101,13 @@
     <div id="mobile-cover-hero-art" aria-hidden="true"></div>
     <nav id="mobile-cover-hero-actions" aria-label="Accesos del Rater">
       <a id="mobile-hero-vault" href="https://album-vault.vercel.app/" aria-label="Ir al Vault">
-        <span class="hero-action-icon" aria-hidden="true">🗄</span><span class="hero-action-label">Ir al Vault</span>
+        <svg class="hero-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 12h16M10 7.5h4M10 16.5h4"/></svg><span class="hero-action-label">Ir al Vault</span>
       </a>
       <button type="button" id="mobile-hero-dedup" onclick="openDedupModal()" aria-label="Borrar duplicados">
-        <span class="hero-action-icon" aria-hidden="true">🗑</span><span class="hero-action-label">Borrar duplicados</span>
+        <svg class="hero-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7"/></svg><span class="hero-action-label">Borrar duplicados</span>
       </button>
       <button type="button" id="mobile-hero-settings" onclick="openDiscordSettings()" aria-label="Configuración">
-        <span class="hero-action-icon" aria-hidden="true">⚙</span><span class="hero-action-label">Configuración</span>
+        <svg class="hero-action-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 6h7M15 6h5M4 12h2M10 12h10M4 18h10M18 18h2"/><circle cx="13" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="18" r="2"/></svg><span class="hero-action-label">Configuración</span>
       </button>
     </nav>
     <button type="button" id="user-session-chip-mobile" style="display:none;" onclick="openDiscordSettings()" aria-label="Abrir configuración de tu cuenta">
