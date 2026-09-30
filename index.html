@@ -2075,16 +2075,13 @@
   .out-card.fast-rate-card .out-final-avg { display:none; }
   .out-card.fast-rate-card .out-final-rank { font-size:3rem; min-width:92px; text-align:center; }
 
-  /* Mobile SVG experiment: desktop retains the original glyphs. */
-  .mobile-ui-icon > svg { display: none; }
-  @media (max-width: 899px) {
-    .mobile-ui-icon {
-      display: inline-block; width: 1.1em; height: 1.1em;
-      line-height: 1; vertical-align: -.18em; flex-shrink: 0;
-    }
-    .mobile-ui-icon > .mobile-ui-icon-original { display: none; }
-    .mobile-ui-icon > svg { display: block; width: 100%; height: 100%; }
+  /* Shared SVG interface icons on desktop and mobile. */
+  .mobile-ui-icon {
+    display: inline-block; width: 1.1em; height: 1.1em;
+    line-height: 1; vertical-align: -.18em; flex-shrink: 0;
   }
+  .mobile-ui-icon > .mobile-ui-icon-original { display: none; }
+  .mobile-ui-icon > svg { display: block; width: 100%; height: 100%; }
 </style>
 <style id="fast-rate-export-styles">
   .fast-export-preview { width:100%; aspect-ratio:1; position:relative; overflow:hidden; border-radius:18px; }
@@ -2273,8 +2270,8 @@
               <span id="user-session-name-desktop" style="font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,0.8);max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
             </div>
             <a href="https://album-vault.vercel.app/" style="display:inline-block;padding:5px 12px;border-radius:6px;border:1px solid rgba(200,240,96,0.4);background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);color:var(--accent);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;text-decoration:none;letter-spacing:0.05em;" data-mobile-icons>🗄 Vault</a>
-            <button onclick="openDiscordSettings()" style="padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);color:rgba(255,255,255,0.7);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;" data-mobile-icons>⚙</button>
-            <button onclick="openDedupModal()" style="padding:5px 12px;border-radius:6px;border:1px solid rgba(220,60,60,0.4);background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);color:#e05555;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;" data-mobile-icons>🗑</button>
+            <button onclick="openDiscordSettings()" aria-label="Configuración" style="padding:5px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);color:rgba(255,255,255,0.7);font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;" data-mobile-icons>⚙</button>
+            <button onclick="openDedupModal()" aria-label="Borrar duplicados" style="padding:5px 12px;border-radius:6px;border:1px solid rgba(220,60,60,0.4);background:rgba(0,0,0,0.35);backdrop-filter:blur(8px);color:#e05555;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;" data-mobile-icons>🗑</button>
           </div>
         </div>
         <h1 id="desktop-hero-title">Califica<br><span>tus álbumes</span></h1>
@@ -7516,12 +7513,11 @@
     });
   }
 </script>
-<script id="mobile-ui-icons-experiment">
-// Mobile UI icon experiment. Revert to commit 308c4154c90f737814ffdf9110a65e9f0a252c9c to undo.
+<script id="ui-icons">
+// Shared interface icons; preserve original text and exclude rating export content.
 (() => {
-  const MOBILE_UI_SVG_ENABLED = true;
-  if (!MOBILE_UI_SVG_ENABLED) return;
-  const media = window.matchMedia('(max-width: 899px)');
+  const UI_SVG_ENABLED = true;
+  if (!UI_SVG_ENABLED) return;
   const ns = 'http://www.w3.org/2000/svg';
   // Shared 24px outline vocabulary; no network request or icon font is needed.
   const shapes = {
@@ -7562,7 +7558,7 @@
   const eligible = [
     '[data-mobile-icons]', 'button.btn', 'button.btn-export', '.preview-load-btn',
     '.cover-refresh-btn', '#confirm-ok', '#dedup-delete-btn', '#toast',
-    '#discord-settings-status', '#dedup-status', '#dedup-list > p',
+    '#discord-settings-status', '#dedup-status', '#dedup-list > p', '#search-status', '#discord-btn-text',
     '#np-art-placeholder', '.preview-cover-ph', '.history-item-cover',
     '.history-plays-loading', '.best-card-pos', '.best-card-label',
     '.pending-empty', '.pending-item-cover'
@@ -7626,7 +7622,6 @@
     }
   }
 
-  let active = false;
   let scheduled = false;
   const pending = new Set();
   function collect(node) {
@@ -7644,7 +7639,6 @@
     scheduled = true;
     queueMicrotask(() => {
       scheduled = false;
-      if (!active) { pending.clear(); return; }
       // Ignore our own replacements and process only changed controls, never the export renderer.
       observer.disconnect();
       pending.forEach(decorate);
@@ -7652,16 +7646,8 @@
       observer.observe(document.body, { childList: true, characterData: true, subtree: true });
     });
   });
-  function sync() {
-    active = media.matches;
-    observer.disconnect();
-    pending.clear();
-    if (!active) return;
-    document.querySelectorAll(eligible).forEach(decorate);
-    observer.observe(document.body, { childList: true, characterData: true, subtree: true });
-  }
-  media.addEventListener('change', sync);
-  sync();
+  document.querySelectorAll(eligible).forEach(decorate);
+  observer.observe(document.body, { childList: true, characterData: true, subtree: true });
 })();
 </script>
 </body>
